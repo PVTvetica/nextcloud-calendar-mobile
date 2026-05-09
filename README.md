@@ -21,7 +21,7 @@ A native mobile calendar client for Nextcloud, built with React Native & Expo.
 
 ## Overview
 
-**Nextcloud Calendar Mobile** brings your Nextcloud calendars natively to iOS and Android. It connects directly to your Nextcloud instance via the CalDAV protocol, supporting multiple accounts, rich event management, and deep Nextcloud integration — including Talk room creation per event.
+**Nextcloud Calendar Mobile** brings your Nextcloud calendars natively to iOS and Android. It connects directly to your Nextcloud instance via the CalDAV protocol, supporting multiple accounts, rich event management, and deep Nextcloud integration, including Talk room creation per event.
 
 ---
 
