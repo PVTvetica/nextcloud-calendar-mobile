@@ -25,6 +25,22 @@ A native mobile calendar client for Nextcloud — built with React Native & Expo
 
 ---
 
+## ⚠️ Active Development Disclaimer
+
+> This project is **actively under development**. APIs, data structures, and behavior may change without prior notice between versions. Breaking changes should be expected until a stable release is published.
+
+Use in production at your own discretion, and pin to a specific commit or tag if stability is required.
+
+---
+
+## 📢 Notice
+
+> This is **not an official Nextcloud application**. It has not been reviewed, endorsed, or certified by the Nextcloud GmbH team or the Nextcloud community.
+>
+> This project was initiated by a private company to address specific client needs around mobile Nextcloud calendar access. It is shared openly in the spirit of collaboration, not as an official integration.
+
+---
+
 ## ✨ Features
 
 ### 📅 Multiple Calendar Views
@@ -58,24 +74,6 @@ Optionally attach a Nextcloud Talk room to any event at creation time, the Talk 
 ---
 
 
-## ⚠️ Active Development Disclaimer
-
-> This project is **actively under development**. APIs, data structures, and behavior may change without prior notice between versions. Breaking changes should be expected until a stable release is published.
-
-Use in production at your own discretion, and pin to a specific commit or tag if stability is required.
-
----
-
-## 📢 Notice
-
-> This is **not an official Nextcloud application**. It has not been reviewed, endorsed, or certified by the Nextcloud GmbH team or the Nextcloud community.
->
-> This project was initiated by a private company to address specific client needs around mobile Nextcloud calendar access. It is shared openly in the spirit of collaboration, not as an official integration.
-
----
-
 ## 🤝 Open to Collaboration
 
 This project is free and open source. If you're interested in contributing, have a partnership opportunity in mind, or want to discuss how this could fit your organization's workflow, feel free to reach out. All conversations welcome.
-
----
