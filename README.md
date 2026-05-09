@@ -43,7 +43,7 @@ Use in production at your own discretion, and pin to a specific commit or tag if
 
 ## ✨ Features
 
-### 📅 Multiple Calendar Views
+### Multiple Calendar Views
 Switch seamlessly between five view modes:
 - **Month** — full month overview
 - **Week** — 7-day scrollable view
@@ -51,28 +51,40 @@ Switch seamlessly between five view modes:
 - **Day** — single-day detail view
 - **Schedule/Agenda** — chronological event list
 
-### 🔗 CalDAV Sync
+### CalDAV Sync
 Full two-way sync with any Nextcloud instance using the CalDAV protocol. Events are fetched, parsed (iCalendar/ICS), and kept up to date via TanStack Query's caching layer.
 
-### 👥 Multi-Account Support
+### Multi-Account Support
 Add and switch between multiple Nextcloud accounts. Each account's calendars are shown with per-calendar visibility toggles and color coding.
 
-### 📝 Event Management
+### Event Management
 Create, view, and edit calendar events with support for:
 - Title, description, location
 - All-day and timed events
 - Attendee lists with display names
 - Recurring event detection
 
-### 💬 Nextcloud Talk Integration
+### Nextcloud Talk Integration
 Optionally attach a Nextcloud Talk room to any event at creation time, the Talk link is stored in the event and surfaced in the event detail view.
 
-### 🎨 Theming & Personalization
+### Theming & Personalization
 - Light, dark, and system-auto theme modes
 - Adjustable zoom level (hour row height: 45–120 px)
 - Configurable week start day (Sunday or Monday)
 ---
 
+
+## 🗺️ Roadmap
+
+Planned improvements for upcoming releases:
+
+- [ ] **Push Notifications** : Event reminders delivered natively on iOS and Android
+- [ ] **UX/UI Polish** : Improved loading states, transitions, and overall visual experience
+- [ ] **Gesture Improvements** : More fluid and intuitive swipe navigation across calendar views
+- [ ] **QR Code Authentication** : Scan the Nextcloud login QR code to authenticate without typing credentials
+- [ ] **Release Pipeline** : CI/CD for automated builds and store submissions
+
+---
 
 ## 🤝 Open to Collaboration
 
