@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "Nextcloud Calendar",
+    "slug": "nextcloud-calendar",
+    "scheme": "nextcloud-calendar",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#109be6"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.soluce.nextcloud-calendar",
+      "icon": "./assets/icon-ios.icon",
+      "infoPlist": {
+        "CFBundleDisplayName": "Nextcloud Calendar",
+        "LSApplicationQueriesSchemes": [
+          "nextcloudtalk"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#109be6"
+      },
+      "package": "com.soluce.nextcloudcalendar"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b344d590-32ff-417f-8c5a-f8e453288f60"
+      }
+    },
+    "owner": "soluce",
+    "plugins": [
+      "@react-native-community/datetimepicker",
+      "expo-router",
+      "expo-secure-store",
+      "expo-web-browser"
+    ]
+  }
+}

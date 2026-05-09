@@ -1,0 +1,202 @@
+import { useMemo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Linking } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
+import dayjs from 'dayjs';
+import { loadAccounts } from '@/api/auth';
+import { fetchEvents } from '@/api/caldav';
+import { useCalendars } from '@/hooks/useCalendars';
+import { useDeleteEvent } from '@/hooks/useMutateEvent';
+import { useAppStore } from '@/store/appStore';
+import { useTheme } from '@/hooks/useTheme';
+import type { CalendarEvent } from '@/types';
+
+// Linking.openURL respects iOS Universal Links and Android App Links.
+// If the Nextcloud Talk app is installed and associated with the server domain,
+// the OS routes directly to the app — no canOpenURL or custom scheme check needed.
+async function openTalkRoom(talkUrl: string) {
+  await Linking.openURL(talkUrl);
+}
+
+export default function EventDetailScreen() {
+  const { uid } = useLocalSearchParams<{ uid: string }>();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const activeAccountId = useAppStore((s) => s.activeAccountId);
+
+  const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: loadAccounts });
+  const activeAccount = accounts?.find((a) => a.id === activeAccountId) ?? null;
+  const { data: calendars = [] } = useCalendars(activeAccount);
+
+  const start = useMemo(() => dayjs().subtract(6, 'months').toDate(), []);
+  const end = useMemo(() => dayjs().add(6, 'months').toDate(), []);
+
+  const { data: allEvents = [], isLoading: eventsLoading } = useQuery<CalendarEvent[]>({
+    queryKey: [activeAccountId, 'events-detail', start.toISOString(), end.toISOString()],
+    queryFn: async () => {
+      if (!activeAccount || calendars.length === 0) return [];
+      const results = await Promise.all(
+        calendars.map((cal) => fetchEvents(activeAccount, cal, start, end))
+      );
+      return results.flat();
+    },
+    enabled: activeAccount !== null && calendars.length > 0,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const event: CalendarEvent | undefined = allEvents.find((e) => e.uid === uid);
+  const calendar = calendars.find((c) => c.id === event?.calendarId);
+  const deleteMutation = useDeleteEvent(activeAccount!);
+
+  function handleDelete() {
+    if (!event) return;
+    Alert.alert('Delete Event', 'Are you sure you want to delete this event?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete', style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteMutation.mutateAsync(event);
+            router.back();
+          } catch (e: any) {
+            Alert.alert('Error', e?.message ?? 'Failed to delete event.');
+          }
+        },
+      },
+    ]);
+  }
+
+  if (eventsLoading) {
+    return (
+      <View style={[styles.center, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
+
+  if (!event) {
+    return (
+      <View style={[styles.center, { backgroundColor: theme.background }]}>
+        <Text style={{ color: theme.textSecondary }}>Event not found.</Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
+          <Text style={{ color: theme.primary }}>← Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const timeStr = event.allDay
+    ? 'All day'
+    : `${dayjs(event.dtstart).format('MMM D, YYYY h:mm A')} – ${dayjs(event.dtend).format('h:mm A')}`;
+
+  return (
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.background }]}
+      contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 16 }}
+    >
+      <View style={[styles.colorBar, { backgroundColor: event.color, marginTop: insets.top }]} />
+      <View style={[styles.content, styles.contentFlex]}>
+        <View style={styles.topRow}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={[styles.backText, { color: theme.primary }]}>← Back</Text>
+          </TouchableOpacity>
+          {!event.isRecurring && (
+            <TouchableOpacity onPress={() => router.push(`/event/edit/${uid}`)}>
+              <Text style={[styles.editText, { color: theme.primary }]}>Edit</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <Text style={[styles.summary, { color: theme.text }]}>{event.summary}</Text>
+        <Text style={[styles.meta, { color: theme.textSecondary }]}>{timeStr}</Text>
+        {calendar && (
+          <Text style={[styles.calendarName, { color: theme.textTertiary }]}>
+            📅 {calendar.displayName}
+          </Text>
+        )}
+
+        {event.location && !event.talkUrl && (
+          <Text style={[styles.field, { color: theme.textSecondary }]}>📍 {event.location}</Text>
+        )}
+
+        {event.talkUrl && (
+          <TouchableOpacity
+            style={[styles.talkBtn, { backgroundColor: theme.talk }]}
+            onPress={() => openTalkRoom(event.talkUrl!)}
+          >
+            <Text style={styles.talkBtnText}>💬 Join Talk Room</Text>
+          </TouchableOpacity>
+        )}
+
+        {event.description && (
+          <View style={[styles.section, { borderTopColor: theme.border }]}>
+            <Text style={[styles.sectionTitle, { color: theme.textTertiary }]}>Description</Text>
+            <Text style={[styles.sectionBody, { color: theme.textSecondary }]}>{event.description}</Text>
+          </View>
+        )}
+
+        {event.attendees.length > 0 && (
+          <View style={[styles.section, { borderTopColor: theme.border }]}>
+            <Text style={[styles.sectionTitle, { color: theme.textTertiary }]}>Attendees</Text>
+            {event.attendees.map((att) => (
+              <Text key={att.email} style={[styles.attendee, { color: theme.textSecondary }]}>
+                {att.displayName ? `${att.displayName} (${att.email})` : att.email}
+              </Text>
+            ))}
+          </View>
+        )}
+
+        {event.isRecurring && (
+          <Text style={[styles.recurringNote, { color: theme.warning }]}>
+            ⚠️ Recurring event — editing not supported in v1.
+          </Text>
+        )}
+
+        <View style={styles.spacer} />
+
+        <TouchableOpacity
+          style={[styles.deleteBtn, { borderColor: theme.danger }]}
+          onPress={handleDelete}
+          disabled={deleteMutation.isPending}
+        >
+          {deleteMutation.isPending
+            ? <ActivityIndicator color={theme.danger} />
+            : <Text style={[styles.deleteBtnText, { color: theme.danger }]}>Delete Event</Text>}
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  contentFlex: { flex: 1 },
+  spacer: { flex: 1, minHeight: 40 },
+  colorBar: { height: 6 },
+  content: { padding: 20 },
+  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  backText: { fontSize: 16 },
+  editText: { fontSize: 16, fontWeight: '600' },
+  summary: { fontSize: 24, fontWeight: '700', marginBottom: 8 },
+  meta: { fontSize: 15, marginBottom: 4 },
+  calendarName: { fontSize: 14, marginBottom: 16 },
+  field: { fontSize: 15, marginBottom: 12 },
+  talkBtn: {
+    borderRadius: 8, paddingVertical: 12,
+    alignItems: 'center', marginBottom: 16,
+  },
+  talkBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  section: { marginTop: 20, paddingTop: 20, borderTopWidth: StyleSheet.hairlineWidth },
+  sectionTitle: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', marginBottom: 6 },
+  sectionBody: { fontSize: 15, lineHeight: 22 },
+  attendee: { fontSize: 14, marginBottom: 4 },
+  recurringNote: { marginTop: 20, fontSize: 13 },
+  deleteBtn: {
+    marginTop: 40, borderWidth: 1,
+    borderRadius: 8, paddingVertical: 12, alignItems: 'center',
+  },
+  deleteBtnText: { fontSize: 15, fontWeight: '600' },
+});
