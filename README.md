@@ -7,7 +7,7 @@
 
 # Nextcloud Calendar Mobile
 
-A native mobile calendar client for Nextcloud — built with React Native & Expo.
+A native mobile calendar client for Nextcloud, built with React Native & Expo.
 
 [![React Native](https://img.shields.io/badge/React%20Native-0.83-61DAFB?logo=react&logoColor=white)](https://reactnative.dev)
 [![Expo](https://img.shields.io/badge/Expo-55-000020?logo=expo&logoColor=white)](https://expo.dev)
@@ -41,6 +41,25 @@ Use in production at your own discretion, and pin to a specific commit or tag if
 
 ---
 
+## 📥 Download
+
+<div >
+
+<a href="#">
+  <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="50" />
+</a>
+&nbsp;&nbsp;
+<a href="#">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" height="50" />
+</a>
+
+</div>
+
+> **Want early access?** Beta builds are available for both platforms. Contact us at [contact@soluce-technologies.com](mailto:contact@soluce-technologies.com) to join the beta.
+
+---
+
+
 ## ✨ Features
 
 ### Multiple Calendar Views
@@ -72,7 +91,6 @@ Optionally attach a Nextcloud Talk room to any event at creation time, the Talk 
 - Adjustable zoom level (hour row height: 45–120 px)
 - Configurable week start day (Sunday or Monday)
 ---
-
 
 ## 🗺️ Roadmap
 
