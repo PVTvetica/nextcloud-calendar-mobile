@@ -43,7 +43,7 @@ Use in production at your own discretion, and pin to a specific commit or tag if
 
 ## 📥 Download
 
-<p align="center">
+<p >
   <a href="#">
     <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="46" />
   </a>
