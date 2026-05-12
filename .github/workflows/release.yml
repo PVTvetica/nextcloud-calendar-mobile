@@ -24,11 +24,12 @@ jobs:
           TITLE="${{ github.event.pull_request.title }}"
           echo "PR title: $TITLE"
 
-          if [[ "$TITLE" == *"[skip-release]"* ]]; then
-            echo "PR title contains [skip-release], skipping release jobs."
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
+          if [[ "$TITLE" == *"[release]"* ]]; then
+            echo "PR title contains [release], proceeding with release jobs."
             echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "PR title does not contain [release], skipping release jobs."
+            echo "skip=true" >> $GITHUB_OUTPUT
           fi
 
   create-release:
