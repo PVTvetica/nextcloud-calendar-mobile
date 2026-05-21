@@ -48,13 +48,13 @@ Use in production at your own discretion, and pin to a specific commit or tag if
     <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="46" />
   </a>
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="#">
+  <a href="https://play.google.com/store/apps/details?id=com.soluce.nextcloudcalendar">
     <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" height="40" />
   </a>
 </p>
 
 <p >
-  Want early access? Beta builds are available — reach out at <a href="mailto:contact@soluce-technologies.com">contact@soluce-technologies.com</a>
+  Want early access? Beta builds are available, reach out at <a href="mailto:contact@soluce-technologies.com">contact@soluce-technologies.com</a>
 </p>
 
 ---
