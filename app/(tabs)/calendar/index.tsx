@@ -83,6 +83,22 @@ export default function CalendarScreen() {
     [commitZoom]
   );
 
+  const navigateMonth = useCallback((dir: 1 | -1) => {
+    setDate((d) => dayjs(d).add(dir, 'month').toDate());
+  }, []);
+
+  const monthSwipeGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetX([-30, 30])
+        .failOffsetY([-15, 15])
+        .onEnd((e) => {
+          if (e.translationX < -50) runOnJS(navigateMonth)(1);
+          else if (e.translationX > 50) runOnJS(navigateMonth)(-1);
+        }),
+    [navigateMonth]
+  );
+
   const [date, setDate] = useState(new Date());
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
@@ -108,23 +124,42 @@ export default function CalendarScreen() {
     prevCtagsRef.current = current;
   }, [calendars, activeAccountId, queryClient]);
 
+  const regularCalendars = visibleCalendars.filter((c) => !c.isSubscribed);
+  const subscribedCalendars = visibleCalendars.filter((c) => c.isSubscribed);
+
   const { data: rawEvents = [], isLoading: eventsLoading, isFetching: eventsFetching } = useQuery<CalendarEvent[]>({
-    queryKey: [activeAccountId, 'events', visibleCalendars.map((c) => c.id), start.toISOString(), end.toISOString()],
+    queryKey: [activeAccountId, 'events', regularCalendars.map((c) => c.id), start.toISOString(), end.toISOString()],
     queryFn: async () => {
-      if (!activeAccount || visibleCalendars.length === 0) return [];
-      const results = await Promise.all(
-        visibleCalendars.map((cal) => fetchEvents(activeAccount, cal, start, end))
+      if (!activeAccount || regularCalendars.length === 0) return [];
+      const results = await Promise.allSettled(
+        regularCalendars.map((cal) => fetchEvents(activeAccount, cal, start, end))
       );
-      return results.flat();
+      return results.flatMap((r) => r.status === 'fulfilled' ? r.value : []);
     },
-    enabled: activeAccount !== null && visibleCalendars.length > 0,
+    enabled: activeAccount !== null && regularCalendars.length > 0,
     staleTime: Infinity,
   });
 
-  const allEvents = normalizeEvents(rawEvents);
+  // Subscribed (external ICS) calendars cached independently — long staleTime so they
+  // survive regular-calendar ctag invalidations without re-fetching the external URL.
+  const { data: subscribedEvents = [] } = useQuery<CalendarEvent[]>({
+    queryKey: [activeAccountId, 'subscribed-events', subscribedCalendars.map((c) => c.sourceUrl ?? c.id)],
+    queryFn: async () => {
+      if (!activeAccount || subscribedCalendars.length === 0) return [];
+      const results = await Promise.allSettled(
+        subscribedCalendars.map((cal) => fetchEvents(activeAccount, cal, start, end))
+      );
+      return results.flatMap((r) => r.status === 'fulfilled' ? r.value : []);
+    },
+    enabled: activeAccount !== null && subscribedCalendars.length > 0,
+    staleTime: 30 * 60 * 1000,
+    retry: 2,
+  });
+
+  const allEvents = normalizeEvents([...rawEvents, ...subscribedEvents]);
 
   useEffect(() => {
-    if (!activeAccount || visibleCalendars.length === 0) return;
+    if (!activeAccount || regularCalendars.length === 0) return;
 
     const prefetchMonth = (monthOffset: -1 | 1) => {
       const adjYear = dayjs(date).add(monthOffset, 'month').year();
@@ -132,9 +167,10 @@ export default function CalendarScreen() {
       const adjStart = new Date(adjYear, adjMonth - 1, 1);
       const adjEnd = new Date(adjYear, adjMonth + 2, 0, 23, 59, 59, 999);
       queryClient.prefetchQuery({
-        queryKey: [activeAccountId, 'events', visibleCalendars.map((c) => c.id), adjStart.toISOString(), adjEnd.toISOString()],
+        queryKey: [activeAccountId, 'events', regularCalendars.map((c) => c.id), adjStart.toISOString(), adjEnd.toISOString()],
         queryFn: () =>
-          Promise.all(visibleCalendars.map((cal) => fetchEvents(activeAccount, cal, adjStart, adjEnd))).then((r) => r.flat()),
+          Promise.allSettled(regularCalendars.map((cal) => fetchEvents(activeAccount, cal, adjStart, adjEnd)))
+            .then((results) => results.flatMap((r) => r.status === 'fulfilled' ? r.value : [])),
         staleTime: Infinity,
       });
     };
@@ -240,6 +276,11 @@ export default function CalendarScreen() {
     [router]
   );
 
+  const eventCellStyle = useCallback(
+    (event: any) => ({ backgroundColor: (event.color as string) || theme.primary }),
+    [theme.primary]
+  );
+
   const handlePressEventFromMonth = useCallback(
     (event: CalendarEvent) => { router.push(`/event/${event.uid}`); },
     [router]
@@ -310,14 +351,18 @@ export default function CalendarScreen() {
       </SafeAreaView>
 
       {viewMode === 'month' ? (
-        <MonthDayView
-          date={date}
-          events={allEvents}
-          weekStartsOn={weekStartsOn}
-          onSelectDate={setDate}
-          onPressEvent={handlePressEventFromMonth}
-          onPressCell={handlePressCell}
-        />
+        <GestureDetector gesture={monthSwipeGesture}>
+          <View style={{ flex: 1 }}>
+            <MonthDayView
+              date={date}
+              events={allEvents}
+              weekStartsOn={weekStartsOn}
+              onSelectDate={setDate}
+              onPressEvent={handlePressEventFromMonth}
+              onPressCell={handlePressCell}
+            />
+          </View>
+        </GestureDetector>
       ) : (
         <GestureDetector gesture={pinchGesture}>
           <View style={styles.calendarWrapper}>
@@ -337,6 +382,8 @@ export default function CalendarScreen() {
               scrollOffsetMinutes={scrollOffset}
               renderHeader={FixedCalendarHeader}
               renderEvent={renderEvent}
+              eventCellStyle={eventCellStyle}
+              allDayEventCellStyle={eventCellStyle}
               theme={{
                 palette: {
                   primary: { main: theme.primary },
