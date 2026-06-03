@@ -9,9 +9,13 @@ interface ParseCalMeta {
 
 const TALK_URL_PATTERN = /\/call\//;
 
+const MAX_OCCURRENCES = 1000;
+
 export function parseIcsObjects(
   items: { ics: string; href: string }[],
-  meta: ParseCalMeta
+  meta: ParseCalMeta,
+  rangeStart?: Date,
+  rangeEnd?: Date,
 ): CalendarEvent[] {
   const events: CalendarEvent[] = [];
 
@@ -22,10 +26,9 @@ export function parseIcsObjects(
       const vevents = comp.getAllSubcomponents('vevent');
 
       for (const vevent of vevents) {
-        const event = new ICAL.Event(vevent);
-        const startDate = event.startDate;
-        const endDate = event.endDate;
-        const isAllDay = startDate.isDate;
+        if (vevent.getFirstPropertyValue('recurrence-id')) continue;
+
+        const icalEvent = new ICAL.Event(vevent);
 
         const attendeePropList = vevent.getAllProperties('attendee');
         const attendees: Attendee[] = attendeePropList.map((prop: any) => {
@@ -35,7 +38,7 @@ export function parseIcsObjects(
           return { email, displayName };
         });
 
-        const location = event.location ?? undefined;
+        const location = icalEvent.location ?? undefined;
         const talkUrl = location && TALK_URL_PATTERN.test(location) ? location : undefined;
 
         const organizerProp = vevent.getFirstProperty('organizer');
@@ -43,28 +46,72 @@ export function parseIcsObjects(
           ? (organizerProp.getFirstValue() as string).replace(/^mailto:/i, '')
           : undefined;
 
-        const isRecurring = !!vevent.getFirstPropertyValue('rrule');
+        const rruleProp = vevent.getFirstProperty('rrule');
+        const isRecurring = !!rruleProp;
+        const rruleStr: string | undefined = rruleProp
+          ? rruleProp.toICALString()
+          : undefined;
 
-        events.push({
-          uid: event.uid,
+        const base = {
+          uid: icalEvent.uid,
           href,
           calendarId: meta.calendarId,
           accountId: meta.accountId,
-          summary: event.summary,
-          description: event.description ?? undefined,
+          summary: icalEvent.summary,
+          description: icalEvent.description ?? undefined,
           location,
-          dtstart: startDate.toJSDate(),
-          dtend: endDate.toJSDate(),
-          allDay: isAllDay,
+          allDay: icalEvent.startDate.isDate,
           color: meta.color,
           attendees,
           organizerEmail,
           talkUrl,
           isRecurring,
-        });
+          rrule: rruleStr,
+        };
+
+        if (isRecurring && (rangeStart || rangeEnd)) {
+          const expandComp = new ICAL.Component(jcal);
+          const expandEvent = new ICAL.Event(expandComp.getFirstSubcomponent('vevent')!, {
+            strictExceptions: false,
+          });
+          const iter = expandEvent.iterator();
+          let count = 0;
+          let nextTime: ICAL.Time;
+
+          while ((nextTime = iter.next()) && count < MAX_OCCURRENCES) {
+            const occStart = nextTime.toJSDate();
+
+            if (rangeEnd && occStart >= rangeEnd) break;
+
+            const details = expandEvent.getOccurrenceDetails(nextTime);
+            const occEnd = details.endDate.toJSDate();
+
+            // Before the start of the requested range — skip but keep iterating
+            if (rangeStart && occEnd <= rangeStart) {
+              count++;
+              continue;
+            }
+
+            events.push({
+              ...base,
+              uid: `${icalEvent.uid}_occ_${nextTime.toUnixTime()}`,
+              href,
+              dtstart: occStart,
+              dtend: occEnd,
+              allDay: details.startDate.isDate,
+            });
+            count++;
+          }
+        } else {
+          events.push({
+            ...base,
+            dtstart: icalEvent.startDate.toJSDate(),
+            dtend: icalEvent.endDate.toJSDate(),
+          });
+        }
       }
     } catch {
-      // Skip malformed
+      // Skip malformed ICS
     }
   }
 
