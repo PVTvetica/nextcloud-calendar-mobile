@@ -1,6 +1,5 @@
 import {
   Animated,
-  Pressable,
   ScrollView,
   Switch,
   StyleSheet,
@@ -9,7 +8,6 @@ import {
   View,
 } from 'react-native';
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AvatarImage } from '@/components/AvatarImage';
@@ -54,10 +52,11 @@ export function CalendarDrawer({
 
   return (
     <>
-      <AnimatedPressable
+      <Animated.View
         style={[styles.overlay, { opacity: overlayAnim }]}
-        onPress={onClose}
         pointerEvents={open ? 'auto' : 'none'}
+        onStartShouldSetResponder={() => true}
+        onResponderRelease={onClose}
       />
       <Animated.View
         pointerEvents={open ? 'auto' : 'none'}
