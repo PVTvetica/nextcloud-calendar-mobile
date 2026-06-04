@@ -99,8 +99,6 @@ Planned improvements for upcoming releases:
 - [ ] **Push Notifications** : Event reminders delivered natively on iOS and Android
 - [ ] **UX/UI Polish** : Improved loading states, transitions, and overall visual experience
 - [ ] **Gesture Improvements** : More fluid and intuitive swipe navigation across calendar views
-- [ ] **QR Code Authentication** : Scan the Nextcloud login QR code to authenticate without typing credentials
-- [ ] **Release Pipeline** : CI/CD for automated builds and store submissions
 
 ---
 
