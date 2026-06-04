@@ -187,12 +187,12 @@ export default function CalendarScreen() {
   const showSmallLoader = (eventsFetching || calsFetching) && !showFullOverlay;
 
   function openDrawer() {
+    Animated.timing(drawerAnim, { toValue: 0, duration: 160, useNativeDriver: true }).start();
     setDrawerOpen(true);
-    Animated.timing(drawerAnim, { toValue: 0, duration: 250, useNativeDriver: true }).start();
   }
 
   function closeDrawer() {
-    Animated.timing(drawerAnim, { toValue: -DRAWER_WIDTH, duration: 200, useNativeDriver: true }).start(
+    Animated.timing(drawerAnim, { toValue: -DRAWER_WIDTH, duration: 160, useNativeDriver: true }).start(
       () => setDrawerOpen(false)
     );
   }
@@ -421,19 +421,17 @@ export default function CalendarScreen() {
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>
 
-      {drawerOpen && (
-        <CalendarDrawer
-          open={drawerOpen}
-          drawerAnim={drawerAnim}
-          insets={insets}
-          activeAccount={activeAccount}
-          calendars={calendars}
-          hiddenCalendarIds={hiddenCalendarIds}
-          toggleCalendarVisibility={toggleCalendarVisibility}
-          onClose={closeDrawer}
-          onNavigateSettings={() => { closeDrawer(); router.push('/(tabs)/settings'); }}
-        />
-      )}
+      <CalendarDrawer
+        open={drawerOpen}
+        drawerAnim={drawerAnim}
+        insets={insets}
+        activeAccount={activeAccount}
+        calendars={calendars}
+        hiddenCalendarIds={hiddenCalendarIds}
+        toggleCalendarVisibility={toggleCalendarVisibility}
+        onClose={closeDrawer}
+        onNavigateSettings={() => { closeDrawer(); router.push('/(tabs)/settings'); }}
+      />
     </View>
   );
 }
