@@ -11,13 +11,9 @@ const TALK_URL_PATTERN = /\/call\//;
 
 const MAX_OCCURRENCES = 1000;
 
-// iCal DATE values (all-day) have no timezone. Convert using local year/month/day
-// so the date doesn't shift when the device is not in UTC.
+
 function icalTimeToDate(t: ICAL.Time, isEnd = false): Date {
   if (t.isDate) {
-    // iCal all-day DTEND is exclusive (next day midnight). Subtract 1 day to get the
-    // last inclusive day, keeping the time at 00:00 so the library's isAllDayEvent()
-    // check (hour===0 && minute===0) still classifies it as an all-day event.
     return isEnd
       ? new Date(t.year, t.month - 1, t.day - 1)
       : new Date(t.year, t.month - 1, t.day);

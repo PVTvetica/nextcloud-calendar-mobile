@@ -140,8 +140,6 @@ export default function CalendarScreen() {
     staleTime: Infinity,
   });
 
-  // Subscribed (external ICS) calendars cached independently — long staleTime so they
-  // survive regular-calendar ctag invalidations without re-fetching the external URL.
   const { data: subscribedEvents = [] } = useQuery<CalendarEvent[]>({
     queryKey: [activeAccountId, 'subscribed-events', subscribedCalendars.map((c) => c.sourceUrl ?? c.id)],
     queryFn: async () => {

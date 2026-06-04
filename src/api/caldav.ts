@@ -160,8 +160,6 @@ export async function fetchEvents(
   </c:filter>
 </c:calendar-query>`;
 
-  // cs:subscribed calendars are external ICS feeds — Nextcloud stores only the source URL,
-  // not the events. Fetch the ICS directly instead of using CalDAV REPORT.
   if (calendar.isSubscribed && calendar.sourceUrl) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 20000);

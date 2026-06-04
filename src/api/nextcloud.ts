@@ -49,8 +49,6 @@ export async function fetchCapabilities(
     const json = await res.json();
     const apps: Record<string, unknown> = json?.ocs?.data?.capabilities ?? {};
 
-    // The calendar app exposes its capabilities under the "dav" key (CalDAV is always present
-    // if the calendar app is enabled). Talk exposes its capabilities under "spreed".
     const calendarEnabled = 'dav' in apps || 'calendar' in apps;
     const talkEnabled = 'spreed' in apps;
 

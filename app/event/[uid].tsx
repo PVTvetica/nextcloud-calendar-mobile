@@ -65,7 +65,6 @@ export default function EventDetailScreen() {
   const [cachedEvent, setCachedEvent] = useState<CalendarEvent | undefined>(() => findInCache());
 
   useEffect(() => {
-    // Subscribe once — ref always points to latest findInCache without re-subscribing.
     return queryClient.getQueryCache().subscribe(() => {
       setCachedEvent((prev) => {
         const next = findInCacheRef.current();
