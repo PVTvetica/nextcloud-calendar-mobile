@@ -109,6 +109,7 @@ export default function CalendarScreen() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const overlayAnim = useRef(new Animated.Value(0)).current;
+  const drawerAnimation = useRef<Animated.CompositeAnimation | null>(null);
 
   const year = dayjs(date).year();
   const month = dayjs(date).month(); // 0-based
@@ -192,8 +193,9 @@ export default function CalendarScreen() {
   const showSmallLoader = (eventsFetching || calsFetching) && !showFullOverlay;
 
   function openDrawer() {
+    drawerAnimation.current?.stop();
     setDrawerOpen(true);
-    Animated.parallel([
+    drawerAnimation.current = Animated.parallel([
       Animated.spring(drawerAnim, {
         toValue: 0,
         useNativeDriver: true,
@@ -202,11 +204,13 @@ export default function CalendarScreen() {
         mass: 0.8,
       }),
       Animated.timing(overlayAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
-    ]).start();
+    ]);
+    drawerAnimation.current.start();
   }
 
   function closeDrawer() {
-    Animated.parallel([
+    drawerAnimation.current?.stop();
+    drawerAnimation.current = Animated.parallel([
       Animated.spring(drawerAnim, {
         toValue: -DRAWER_WIDTH,
         useNativeDriver: true,
@@ -215,7 +219,10 @@ export default function CalendarScreen() {
         mass: 0.8,
       }),
       Animated.timing(overlayAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-    ]).start(() => setDrawerOpen(false));
+    ]);
+    drawerAnimation.current.start(({ finished }) => {
+      if (finished) setDrawerOpen(false);
+    });
   }
 
   const overlapMap = useMemo(() => computeOverlapMap(allEvents), [allEvents]);
