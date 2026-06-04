@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Switch,
-  StyleSheet, ScrollView, Platform,
+  StyleSheet, ScrollView, Platform, KeyboardAvoidingView,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
@@ -80,6 +80,16 @@ export function EventForm({
 
   const scrollRef = useRef<ScrollView>(null);
   const attendeeFocused = useRef(false);
+  const inputOffsets = useRef<Record<string, number>>({});
+
+  function scrollToField(key: string) {
+    const y = inputOffsets.current[key];
+    if (y != null) scrollRef.current?.scrollTo({ y: Math.max(0, y - 80), animated: true });
+  }
+
+  function onFieldLayout(key: string, event: any) {
+    inputOffsets.current[key] = event.nativeEvent.layout.y;
+  }
 
   function openStartPicker() {
     if (Platform.OS === 'android') {
@@ -169,20 +179,24 @@ export function EventForm({
     : androidStep?.target === 'start' ? dtstart : dtend;
 
   return (
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <ScrollView
       ref={scrollRef}
       style={[styles.scroll, { backgroundColor: theme.background }]}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="none"
     >
-      <Text style={labelStyle}>Title *</Text>
-      <TextInput
-        style={inputStyle}
-        value={summary}
-        onChangeText={setSummary}
-        placeholder="Event title"
-        placeholderTextColor={theme.textTertiary}
-      />
+      <View onLayout={(e) => onFieldLayout('title', e)}>
+        <Text style={labelStyle}>Title *</Text>
+        <TextInput
+          style={inputStyle}
+          value={summary}
+          onChangeText={setSummary}
+          placeholder="Event title"
+          placeholderTextColor={theme.textTertiary}
+          onFocus={() => scrollToField('title')}
+        />
+      </View>
 
       <Text style={labelStyle}>Calendar</Text>
       {writableCalendars.length === 0 && (
@@ -268,28 +282,34 @@ export function EventForm({
 
       <RecurrencePicker value={rrule} onChange={setRrule} />
 
-      <Text style={[labelStyle, { marginTop: 16 }]}>Location</Text>
-      <TextInput
-        style={inputStyle}
-        value={location}
-        onChangeText={setLocation}
-        placeholder="Room or address"
-        placeholderTextColor={theme.textTertiary}
-      />
+      <View onLayout={(e) => onFieldLayout('location', e)}>
+        <Text style={[labelStyle, { marginTop: 16 }]}>Location</Text>
+        <TextInput
+          style={inputStyle}
+          value={location}
+          onChangeText={setLocation}
+          placeholder="Room or address"
+          placeholderTextColor={theme.textTertiary}
+          onFocus={() => scrollToField('location')}
+        />
+      </View>
 
-      <Text style={labelStyle}>Description</Text>
-      <TextInput
-        style={[inputStyle, styles.multiline]}
-        value={description}
-        onChangeText={setDescription}
-        placeholder="Details..."
-        placeholderTextColor={theme.textTertiary}
-        multiline
-        numberOfLines={3}
-      />
+      <View onLayout={(e) => onFieldLayout('description', e)}>
+        <Text style={labelStyle}>Description</Text>
+        <TextInput
+          style={[inputStyle, styles.multiline]}
+          value={description}
+          onChangeText={setDescription}
+          placeholder="Details..."
+          placeholderTextColor={theme.textTertiary}
+          multiline
+          numberOfLines={3}
+          onFocus={() => scrollToField('description')}
+        />
+      </View>
 
       <Text style={labelStyle}>Attendees</Text>
-      <View style={styles.attendeeRow}>
+      <View onLayout={(e) => onFieldLayout('attendee', e)} style={styles.attendeeRow}>
         <TextInput
           style={[inputStyle, styles.attendeeInput]}
           value={attendeeInput}
@@ -299,12 +319,7 @@ export function EventForm({
           autoCapitalize="none"
           keyboardType="email-address"
           onSubmitEditing={addAttendee}
-          onFocus={() => {
-            if (!attendeeFocused.current) {
-              attendeeFocused.current = true;
-              scrollRef.current?.scrollToEnd({ animated: true });
-            }
-          }}
+          onFocus={() => scrollToField('attendee')}
           onBlur={() => { attendeeFocused.current = false; }}
         />
         <TouchableOpacity style={[styles.addBtn, { backgroundColor: theme.primary }]} onPress={addAttendee}>
@@ -337,6 +352,7 @@ export function EventForm({
         <Text style={styles.saveBtnText}>{loading ? 'Saving…' : submitLabel}</Text>
       </TouchableOpacity>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

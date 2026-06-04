@@ -1,4 +1,6 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert, Modal, Linking, Image, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable, ScrollView, Alert, Modal, Linking, Image } from 'react-native';
+import { startTransition, useState, useEffect } from 'react';
+import { Pressable as GHPressable } from 'react-native-gesture-handler';
 import { styles } from '@/styles/settingsScreen';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -10,7 +12,6 @@ import { useTheme } from '@/hooks/useTheme';
 import { AccountCard } from '@/components/AccountCard';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
-import { useState } from 'react';
 
 const GITHUB_URL = 'https://github.com/SoluceTechnologies/nextcloud-calendar-mobile';
 const ISSUES_URL = 'https://github.com/SoluceTechnologies/nextcloud-calendar-mobile/issues/new';
@@ -35,6 +36,11 @@ export default function SettingsScreen() {
   const setHourRowHeight = useAppStore((s) => s.setHourRowHeight);
   const weekStartsOn = useAppStore((s) => s.weekStartsOn);
   const setWeekStartsOn = useAppStore((s) => s.setWeekStartsOn);
+
+  const [pendingTheme, setPendingTheme] = useState(themePreference);
+  const [pendingWeek, setPendingWeek] = useState(weekStartsOn);
+  useEffect(() => { setPendingTheme(themePreference); }, [themePreference]);
+  useEffect(() => { setPendingWeek(weekStartsOn); }, [weekStartsOn]);
 
   const DEFAULT_ZOOM = 60;
   const zoomLabel = hourRowHeight <= 45 ? 'Compact' : hourRowHeight <= 75 ? 'Normal' : hourRowHeight <= 120 ? 'Expanded' : 'Large';
@@ -119,34 +125,37 @@ export default function SettingsScreen() {
         </Pressable>
       </Modal>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight + 16 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight + 16 }} keyboardShouldPersistTaps="handled">
         <Text style={[styles.sectionHeader, { color: theme.textTertiary }]}>Appearance</Text>
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Text style={[styles.cardLabel, { color: theme.text }]}>Theme</Text>
           <View style={styles.themeRow}>
             {THEME_OPTIONS.map((opt) => (
-              <TouchableOpacity
+              <GHPressable
                 key={opt.value}
                 style={[
                   styles.themeChip,
                   { backgroundColor: theme.chip, borderColor: theme.border },
-                  themePreference === opt.value && {
+                  pendingTheme === opt.value && {
                     backgroundColor: theme.chipActive,
                     borderColor: theme.primary,
                   },
                 ]}
-                onPress={() => setThemePreference(opt.value)}
+                onPress={() => {
+                  setPendingTheme(opt.value);
+                  startTransition(() => setThemePreference(opt.value));
+                }}
               >
                 <Text
                   style={[
                     styles.themeChipText,
                     { color: theme.textSecondary },
-                    themePreference === opt.value && { color: theme.primaryText, fontWeight: '600' },
+                    pendingTheme === opt.value && { color: theme.primaryText, fontWeight: '600' },
                   ]}
                 >
                   {opt.label}
                 </Text>
-              </TouchableOpacity>
+              </GHPressable>
             ))}
           </View>
         </View>
@@ -158,28 +167,31 @@ export default function SettingsScreen() {
               { label: 'Sunday', value: 0 },
               { label: 'Monday', value: 1 },
             ] as const).map((opt) => (
-              <TouchableOpacity
+              <GHPressable
                 key={String(opt.value)}
                 style={[
                   styles.themeChip,
                   { backgroundColor: theme.chip, borderColor: theme.border },
-                  weekStartsOn === opt.value && {
+                  pendingWeek === opt.value && {
                     backgroundColor: theme.chipActive,
                     borderColor: theme.primary,
                   },
                 ]}
-                onPress={() => setWeekStartsOn(opt.value)}
+                onPress={() => {
+                  setPendingWeek(opt.value);
+                  startTransition(() => setWeekStartsOn(opt.value));
+                }}
               >
                 <Text
                   style={[
                     styles.themeChipText,
                     { color: theme.textSecondary },
-                    weekStartsOn === opt.value && { color: theme.primaryText, fontWeight: '600' },
+                    pendingWeek === opt.value && { color: theme.primaryText, fontWeight: '600' },
                   ]}
                 >
                   {opt.label}
                 </Text>
-              </TouchableOpacity>
+              </GHPressable>
             ))}
           </View>
         </View>

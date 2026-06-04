@@ -36,7 +36,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#109be6"
       },
-      "package": "com.soluce.nextcloudcalendar"
+      "package": "com.soluce.nextcloudcalendar",
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "favicon": "./assets/favicon.png"

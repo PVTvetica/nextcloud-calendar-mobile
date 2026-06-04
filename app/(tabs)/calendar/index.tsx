@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import {
   View, TouchableOpacity, Text, StyleSheet, ScrollView,
   useWindowDimensions, Animated, ActivityIndicator, Platform,
 } from 'react-native';
 import { styles } from '@/styles/calendarScreen';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import { GestureDetector, Gesture, Pressable as GHPressable } from 'react-native-gesture-handler';
 import { useSharedValue, runOnJS } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -42,6 +42,8 @@ export default function CalendarScreen() {
   const activeAccountId = useAppStore((s) => s.activeAccountId);
   const viewMode = useAppStore((s) => s.viewMode);
   const setViewMode = useAppStore((s) => s.setViewMode);
+  const [pendingMode, setPendingMode] = useState(viewMode);
+  useEffect(() => { setPendingMode(viewMode); }, [viewMode]);
   const hiddenCalendarIds = useAppStore((s) => s.hiddenCalendarIds);
   const toggleCalendarVisibility = useAppStore((s) => s.toggleCalendarVisibility);
   const hourRowHeight = useAppStore((s) => s.hourRowHeight);
@@ -325,25 +327,28 @@ export default function CalendarScreen() {
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modePills}>
           {VIEW_MODES.map((mode) => (
-            <TouchableOpacity
+            <GHPressable
               key={mode}
               style={[
                 styles.modeBtn,
                 { backgroundColor: theme.chip },
-                viewMode === mode && { backgroundColor: theme.chipActive },
+                pendingMode === mode && { backgroundColor: theme.chipActive },
               ]}
-              onPress={() => setViewMode(mode)}
+              onPress={() => {
+                setPendingMode(mode);
+                startTransition(() => setViewMode(mode));
+              }}
             >
               <Text
                 style={[
                   styles.modeBtnText,
                   { color: theme.textSecondary },
-                  viewMode === mode && { color: theme.primaryText, fontWeight: '600' },
+                  pendingMode === mode && { color: theme.primaryText, fontWeight: '600' },
                 ]}
               >
                 {VIEW_LABELS[mode]}
               </Text>
-            </TouchableOpacity>
+            </GHPressable>
           ))}
         </ScrollView>
       </SafeAreaView>
