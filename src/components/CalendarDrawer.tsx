@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AvatarImage } from '@/components/AvatarImage';
@@ -19,6 +21,7 @@ const DRAWER_WIDTH = 280;
 interface CalendarDrawerProps {
   open: boolean;
   drawerAnim: Animated.Value;
+  overlayAnim: Animated.Value;
   insets: { top: number };
   activeAccount: Account | null;
   calendars: CalendarMeta[];
@@ -31,6 +34,7 @@ interface CalendarDrawerProps {
 export function CalendarDrawer({
   open,
   drawerAnim,
+  overlayAnim,
   insets,
   activeAccount,
   calendars,
@@ -50,8 +54,8 @@ export function CalendarDrawer({
 
   return (
     <>
-      <Pressable
-        style={[styles.overlay, !open && styles.overlayHidden]}
+      <AnimatedPressable
+        style={[styles.overlay, { opacity: overlayAnim }]}
         onPress={onClose}
         pointerEvents={open ? 'auto' : 'none'}
       />
@@ -113,7 +117,6 @@ export function CalendarDrawer({
 
 const styles = StyleSheet.create({
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)', zIndex: 10 },
-  overlayHidden: { backgroundColor: 'transparent' },
   drawer: {
     position: 'absolute', left: 0, top: 0, bottom: 0,
     width: DRAWER_WIDTH,

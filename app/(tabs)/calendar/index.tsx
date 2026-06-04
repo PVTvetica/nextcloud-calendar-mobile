@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import {
   View, TouchableOpacity, Text, StyleSheet, ScrollView,
   useWindowDimensions, Animated, ActivityIndicator, Platform,
 } from 'react-native';
 import { styles } from '@/styles/calendarScreen';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import { GestureDetector, Gesture, Pressable as GHPressable } from 'react-native-gesture-handler';
 import { useSharedValue, runOnJS } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -24,6 +24,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CalendarEvent, ViewMode } from '@/types';
 import { computeOverlapMap } from '@/utils/overlapMap';
 import { normalizeEvents } from '@/utils/normalizeEvent';
+import { AgendaView, type AgendaViewHandle } from '@/components/AgendaView';
 
 dayjs.extend(isoWeek);
 
@@ -42,6 +43,8 @@ export default function CalendarScreen() {
   const activeAccountId = useAppStore((s) => s.activeAccountId);
   const viewMode = useAppStore((s) => s.viewMode);
   const setViewMode = useAppStore((s) => s.setViewMode);
+  const [pendingMode, setPendingMode] = useState(viewMode);
+  useEffect(() => { setPendingMode(viewMode); }, [viewMode]);
   const hiddenCalendarIds = useAppStore((s) => s.hiddenCalendarIds);
   const toggleCalendarVisibility = useAppStore((s) => s.toggleCalendarVisibility);
   const hourRowHeight = useAppStore((s) => s.hourRowHeight);
@@ -49,6 +52,9 @@ export default function CalendarScreen() {
   const weekStartsOn = useAppStore((s) => s.weekStartsOn);
   const [calendarKey, setCalendarKey] = useState(0);
   const [committedHeight, setCommittedHeight] = useState(hourRowHeight);
+  const [agendaVisibleDate, setAgendaVisibleDate] = useState(date);
+  useEffect(() => { if (viewMode === 'schedule') setAgendaVisibleDate(date); }, [date, viewMode]);
+  const agendaRef = useRef<AgendaViewHandle>(null);
 
   useFocusEffect(useCallback(() => {
     if (committedHeight !== hourRowHeight) {
@@ -102,6 +108,7 @@ export default function CalendarScreen() {
   const [date, setDate] = useState(new Date());
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+  const overlayAnim = useRef(new Animated.Value(0)).current;
 
   const year = dayjs(date).year();
   const month = dayjs(date).month(); // 0-based
@@ -185,14 +192,30 @@ export default function CalendarScreen() {
   const showSmallLoader = (eventsFetching || calsFetching) && !showFullOverlay;
 
   function openDrawer() {
-    Animated.timing(drawerAnim, { toValue: 0, duration: 160, useNativeDriver: true }).start();
     setDrawerOpen(true);
+    Animated.parallel([
+      Animated.spring(drawerAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        damping: 20,
+        stiffness: 200,
+        mass: 0.8,
+      }),
+      Animated.timing(overlayAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+    ]).start();
   }
 
   function closeDrawer() {
-    Animated.timing(drawerAnim, { toValue: -DRAWER_WIDTH, duration: 160, useNativeDriver: true }).start(
-      () => setDrawerOpen(false)
-    );
+    Animated.parallel([
+      Animated.spring(drawerAnim, {
+        toValue: -DRAWER_WIDTH,
+        useNativeDriver: true,
+        damping: 20,
+        stiffness: 200,
+        mass: 0.8,
+      }),
+      Animated.timing(overlayAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+    ]).start(() => setDrawerOpen(false));
   }
 
   const overlapMap = useMemo(() => computeOverlapMap(allEvents), [allEvents]);
@@ -289,16 +312,18 @@ export default function CalendarScreen() {
     [router]
   );
 
-  const isToday = dayjs(date).isSame(dayjs(), 'day');
+  const isToday = viewMode === 'schedule'
+    ? dayjs(agendaVisibleDate).isSame(dayjs(), 'day')
+    : dayjs(date).isSame(dayjs(), 'day');
 
   const headerTitle = useMemo(() => {
-    const d = dayjs(date);
+    const d = dayjs(viewMode === 'schedule' ? agendaVisibleDate : date);
     const monthYear = d.format('MMMM YYYY');
     if (viewMode === 'week' || viewMode === '3days' || viewMode === 'day') {
       return `${monthYear}  ·  W${d.isoWeek()}`;
     }
     return monthYear;
-  }, [date, viewMode]);
+  }, [date, agendaVisibleDate, viewMode]);
 
   const headerHeight = 44 + 40 + insets.top;
   const calHeight = windowHeight - headerHeight - insets.bottom - 49;
@@ -317,7 +342,10 @@ export default function CalendarScreen() {
           </Text>
           <TouchableOpacity
             style={[styles.todayBtn, { opacity: isToday ? 0.35 : 1 }]}
-            onPress={() => setDate(new Date())}
+            onPress={() => {
+              setDate(new Date());
+              agendaRef.current?.scrollToToday();
+            }}
             disabled={isToday}
           >
             <Text style={[styles.todayBtnText, { color: theme.primary }]}>Today</Text>
@@ -325,25 +353,28 @@ export default function CalendarScreen() {
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modePills}>
           {VIEW_MODES.map((mode) => (
-            <TouchableOpacity
+            <GHPressable
               key={mode}
               style={[
                 styles.modeBtn,
                 { backgroundColor: theme.chip },
-                viewMode === mode && { backgroundColor: theme.chipActive },
+                pendingMode === mode && { backgroundColor: theme.chipActive },
               ]}
-              onPress={() => setViewMode(mode)}
+              onPress={() => {
+                setPendingMode(mode);
+                startTransition(() => setViewMode(mode));
+              }}
             >
               <Text
                 style={[
                   styles.modeBtnText,
                   { color: theme.textSecondary },
-                  viewMode === mode && { color: theme.primaryText, fontWeight: '600' },
+                  pendingMode === mode && { color: theme.primaryText, fontWeight: '600' },
                 ]}
               >
                 {VIEW_LABELS[mode]}
               </Text>
-            </TouchableOpacity>
+            </GHPressable>
           ))}
         </ScrollView>
       </SafeAreaView>
@@ -361,6 +392,15 @@ export default function CalendarScreen() {
             />
           </View>
         </GestureDetector>
+      ) : viewMode === 'schedule' ? (
+        <AgendaView
+          ref={agendaRef}
+          events={allEvents}
+          date={date}
+          onPressEvent={handlePressEventFromMonth}
+          onPressCell={handlePressCell}
+          onVisibleDateChange={setAgendaVisibleDate}
+        />
       ) : (
         <GestureDetector gesture={pinchGesture}>
           <View style={styles.calendarWrapper}>
@@ -422,6 +462,7 @@ export default function CalendarScreen() {
       <CalendarDrawer
         open={drawerOpen}
         drawerAnim={drawerAnim}
+        overlayAnim={overlayAnim}
         insets={insets}
         activeAccount={activeAccount}
         calendars={calendars}
