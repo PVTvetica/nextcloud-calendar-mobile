@@ -3,7 +3,7 @@
     "name": "Nextcloud Calendar",
     "slug": "nextcloud-calendar",
     "scheme": "nextcloud-calendar",
-    "version": "1.0.6",
+    "version": "1.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "platforms": [
@@ -36,7 +36,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#109be6"
       },
-      "package": "com.soluce.nextcloudcalendar"
+      "package": "com.soluce.nextcloudcalendar",
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "favicon": "./assets/favicon.png"
