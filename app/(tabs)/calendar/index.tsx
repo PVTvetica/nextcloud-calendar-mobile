@@ -24,6 +24,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CalendarEvent, ViewMode } from '@/types';
 import { computeOverlapMap } from '@/utils/overlapMap';
 import { normalizeEvents } from '@/utils/normalizeEvent';
+import { AgendaView, type AgendaViewHandle } from '@/components/AgendaView';
 
 dayjs.extend(isoWeek);
 
@@ -51,6 +52,9 @@ export default function CalendarScreen() {
   const weekStartsOn = useAppStore((s) => s.weekStartsOn);
   const [calendarKey, setCalendarKey] = useState(0);
   const [committedHeight, setCommittedHeight] = useState(hourRowHeight);
+  const [agendaVisibleDate, setAgendaVisibleDate] = useState(date);
+  useEffect(() => { if (viewMode === 'schedule') setAgendaVisibleDate(date); }, [date, viewMode]);
+  const agendaRef = useRef<AgendaViewHandle>(null);
 
   useFocusEffect(useCallback(() => {
     if (committedHeight !== hourRowHeight) {
@@ -291,16 +295,18 @@ export default function CalendarScreen() {
     [router]
   );
 
-  const isToday = dayjs(date).isSame(dayjs(), 'day');
+  const isToday = viewMode === 'schedule'
+    ? dayjs(agendaVisibleDate).isSame(dayjs(), 'day')
+    : dayjs(date).isSame(dayjs(), 'day');
 
   const headerTitle = useMemo(() => {
-    const d = dayjs(date);
+    const d = dayjs(viewMode === 'schedule' ? agendaVisibleDate : date);
     const monthYear = d.format('MMMM YYYY');
     if (viewMode === 'week' || viewMode === '3days' || viewMode === 'day') {
       return `${monthYear}  ·  W${d.isoWeek()}`;
     }
     return monthYear;
-  }, [date, viewMode]);
+  }, [date, agendaVisibleDate, viewMode]);
 
   const headerHeight = 44 + 40 + insets.top;
   const calHeight = windowHeight - headerHeight - insets.bottom - 49;
@@ -319,7 +325,10 @@ export default function CalendarScreen() {
           </Text>
           <TouchableOpacity
             style={[styles.todayBtn, { opacity: isToday ? 0.35 : 1 }]}
-            onPress={() => setDate(new Date())}
+            onPress={() => {
+              setDate(new Date());
+              agendaRef.current?.scrollToToday();
+            }}
             disabled={isToday}
           >
             <Text style={[styles.todayBtnText, { color: theme.primary }]}>Today</Text>
@@ -366,6 +375,15 @@ export default function CalendarScreen() {
             />
           </View>
         </GestureDetector>
+      ) : viewMode === 'schedule' ? (
+        <AgendaView
+          ref={agendaRef}
+          events={allEvents}
+          date={date}
+          onPressEvent={handlePressEventFromMonth}
+          onPressCell={handlePressCell}
+          onVisibleDateChange={setAgendaVisibleDate}
+        />
       ) : (
         <GestureDetector gesture={pinchGesture}>
           <View style={styles.calendarWrapper}>
