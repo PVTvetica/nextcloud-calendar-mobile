@@ -108,6 +108,7 @@ export default function CalendarScreen() {
   const [date, setDate] = useState(new Date());
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+  const overlayAnim = useRef(new Animated.Value(0)).current;
 
   const year = dayjs(date).year();
   const month = dayjs(date).month(); // 0-based
@@ -191,14 +192,30 @@ export default function CalendarScreen() {
   const showSmallLoader = (eventsFetching || calsFetching) && !showFullOverlay;
 
   function openDrawer() {
-    Animated.timing(drawerAnim, { toValue: 0, duration: 160, useNativeDriver: true }).start();
     setDrawerOpen(true);
+    Animated.parallel([
+      Animated.spring(drawerAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        damping: 20,
+        stiffness: 200,
+        mass: 0.8,
+      }),
+      Animated.timing(overlayAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+    ]).start();
   }
 
   function closeDrawer() {
-    Animated.timing(drawerAnim, { toValue: -DRAWER_WIDTH, duration: 160, useNativeDriver: true }).start(
-      () => setDrawerOpen(false)
-    );
+    Animated.parallel([
+      Animated.spring(drawerAnim, {
+        toValue: -DRAWER_WIDTH,
+        useNativeDriver: true,
+        damping: 20,
+        stiffness: 200,
+        mass: 0.8,
+      }),
+      Animated.timing(overlayAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+    ]).start(() => setDrawerOpen(false));
   }
 
   const overlapMap = useMemo(() => computeOverlapMap(allEvents), [allEvents]);
@@ -445,6 +462,7 @@ export default function CalendarScreen() {
       <CalendarDrawer
         open={drawerOpen}
         drawerAnim={drawerAnim}
+        overlayAnim={overlayAnim}
         insets={insets}
         activeAccount={activeAccount}
         calendars={calendars}
