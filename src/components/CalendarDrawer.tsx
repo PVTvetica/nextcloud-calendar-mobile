@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AvatarImage } from '@/components/AvatarImage';
 import { useTheme } from '@/hooks/useTheme';
 import type { Account, CalendarMeta } from '@/types';
@@ -27,6 +29,7 @@ interface CalendarDrawerProps {
 }
 
 export function CalendarDrawer({
+  open,
   drawerAnim,
   insets,
   activeAccount,
@@ -37,36 +40,53 @@ export function CalendarDrawer({
   onNavigateSettings,
 }: CalendarDrawerProps) {
   const theme = useTheme();
+  const safeInsets = useSafeAreaInsets();
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const [drawerHeight, setDrawerHeight] = useState(0);
+
+  const scrollHeight = drawerHeight > 0 && headerHeight > 0
+    ? drawerHeight - headerHeight - safeInsets.bottom - 16
+    : undefined;
 
   return (
     <>
-      <Pressable style={styles.overlay} onPress={onClose} />
+      <Pressable
+        style={[styles.overlay, !open && styles.overlayHidden]}
+        onPress={onClose}
+        pointerEvents={open ? 'auto' : 'none'}
+      />
       <Animated.View
+        pointerEvents={open ? 'auto' : 'none'}
+        onLayout={(e) => setDrawerHeight(e.nativeEvent.layout.height)}
         style={[
           styles.drawer,
           { transform: [{ translateX: drawerAnim }], paddingTop: insets.top, backgroundColor: theme.surface },
         ]}
       >
-        <Text style={[styles.drawerSection, { color: theme.textTertiary }]}>ACCOUNT</Text>
-        <View style={styles.drawerAccountRow}>
-          {activeAccount && <AvatarImage account={activeAccount} size={48} />}
-          <View style={styles.drawerAccountText}>
-            <Text style={[styles.drawerAccount, { color: theme.text }]} numberOfLines={1}>
-              {activeAccount?.displayName ?? activeAccount?.username ?? '—'}
-            </Text>
-            <Text style={[styles.drawerAccountSub, { color: theme.textSecondary }]} numberOfLines={1}>
-              {activeAccount?.username}
-            </Text>
+        <View onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
+          <Text style={[styles.drawerSection, { color: theme.textTertiary }]}>ACCOUNT</Text>
+          <View style={styles.drawerAccountRow}>
+            {activeAccount && <AvatarImage account={activeAccount} size={48} />}
+            <View style={styles.drawerAccountText}>
+              <Text style={[styles.drawerAccount, { color: theme.text }]} numberOfLines={1}>
+                {activeAccount?.displayName ?? activeAccount?.username ?? '—'}
+              </Text>
+              <Text style={[styles.drawerAccountSub, { color: theme.textSecondary }]} numberOfLines={1}>
+                {activeAccount?.username}
+              </Text>
+            </View>
           </View>
+          <TouchableOpacity style={styles.drawerSettingsBtn} onPress={onNavigateSettings}>
+            <Text style={[styles.drawerSettingsBtnText, { color: theme.primary }]}>Manage accounts →</Text>
+          </TouchableOpacity>
+          <View style={[styles.drawerDivider, { backgroundColor: theme.border }]} />
+          <Text style={[styles.drawerSection, { color: theme.textTertiary }]}>CALENDARS</Text>
         </View>
-        <TouchableOpacity style={styles.drawerSettingsBtn} onPress={onNavigateSettings}>
-          <Text style={[styles.drawerSettingsBtnText, { color: theme.primary }]}>Manage accounts →</Text>
-        </TouchableOpacity>
 
-        <View style={[styles.drawerDivider, { backgroundColor: theme.border }]} />
-        <Text style={[styles.drawerSection, { color: theme.textTertiary }]}>CALENDARS</Text>
-
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={scrollHeight != null ? { height: scrollHeight } : { flex: 1 }}
+        >
           {calendars.map((cal) => {
             const visible = !hiddenCalendarIds.includes(cal.id);
             return (
@@ -93,19 +113,20 @@ export function CalendarDrawer({
 
 const styles = StyleSheet.create({
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)', zIndex: 10 },
+  overlayHidden: { backgroundColor: 'transparent' },
   drawer: {
     position: 'absolute', left: 0, top: 0, bottom: 0,
     width: DRAWER_WIDTH,
-    zIndex: 11, paddingHorizontal: 20, paddingBottom: 24,
+    zIndex: 11, paddingHorizontal: 20,
     shadowColor: '#000', shadowOffset: { width: 2, height: 0 },
     shadowOpacity: 0.2, shadowRadius: 8, elevation: 10,
   },
-  drawerSection: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginTop: 20, marginBottom: 6 },
+  drawerSection: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginTop: 14, marginBottom: 6 },
   drawerAccount: { fontSize: 16, fontWeight: '700' },
   drawerAccountSub: { fontSize: 13, marginTop: 2 },
-  drawerSettingsBtn: { marginTop: 10 },
+  drawerSettingsBtn: { marginTop: 8 },
   drawerSettingsBtnText: { fontSize: 13 },
-  drawerDivider: { height: StyleSheet.hairlineWidth, marginVertical: 16 },
+  drawerDivider: { height: StyleSheet.hairlineWidth, marginVertical: 10 },
   drawerCalRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 10 },
   calDot: { width: 12, height: 12, borderRadius: 6, flexShrink: 0 },
   drawerCalName: { flex: 1, fontSize: 14 },
