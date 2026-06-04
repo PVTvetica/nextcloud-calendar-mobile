@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { styles } from '@/styles/settingsScreen';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { loadAccounts, deleteAccount, setActiveAccountId, clearActiveAccountId } from '@/api/auth';
@@ -29,6 +30,8 @@ export default function SettingsScreen() {
 
   const DEFAULT_ZOOM = 60;
   const zoomLabel = hourRowHeight <= 45 ? 'Compact' : hourRowHeight <= 75 ? 'Normal' : hourRowHeight <= 120 ? 'Expanded' : 'Large';
+
+  const tabBarHeight = useBottomTabBarHeight();
 
   const { data: accounts = [] } = useQuery({
     queryKey: ['accounts'],
@@ -70,8 +73,8 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView>
+    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.background }]}>
+      <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight + 16 }}>
         <Text style={[styles.sectionHeader, { color: theme.textTertiary }]}>Appearance</Text>
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Text style={[styles.cardLabel, { color: theme.text }]}>Theme</Text>
