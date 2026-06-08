@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -10,6 +10,7 @@ import { useAppStore } from '@/store/appStore';
 import { useTheme } from '@/hooks/useTheme';
 import { EventForm } from '@/components/EventForm';
 import type { CreateEventInput } from '@/types';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 export default function NewEventScreen() {
   const { date } = useLocalSearchParams<{ date?: string }>();
@@ -61,14 +62,19 @@ export default function NewEventScreen() {
         <Text style={[styles.title, { color: theme.text }]}>New Event</Text>
         <View style={styles.spacer} />
       </View>
-      <EventForm
-        calendars={calendars}
-        defaultDate={defaultDate}
-        organizerEmail={organizerEmail}
-        organizerName={activeAccount.displayName}
-        onSubmit={handleSubmit}
-        loading={createMutation.isPending}
-      />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <EventForm
+          calendars={calendars}
+          defaultDate={defaultDate}
+          organizerEmail={organizerEmail}
+          organizerName={activeAccount.displayName}
+          onSubmit={handleSubmit}
+          loading={createMutation.isPending}
+        />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
