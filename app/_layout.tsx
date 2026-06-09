@@ -11,7 +11,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { loadAccounts, getActiveAccountId, setActiveAccountId } from '@/api/auth';
 import { fetchCapabilities } from '@/api/nextcloud';
 import { useAppStore } from '@/store/appStore';
-
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
