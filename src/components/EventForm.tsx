@@ -179,7 +179,7 @@ export function EventForm({
     : androidStep?.target === 'start' ? dtstart : dtend;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
     <ScrollView
       ref={scrollRef}
       style={[styles.scroll, { backgroundColor: theme.background }]}

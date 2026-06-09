@@ -11,8 +11,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { loadAccounts, getActiveAccountId, setActiveAccountId } from '@/api/auth';
 import { fetchCapabilities } from '@/api/nextcloud';
 import { useAppStore } from '@/store/appStore';
-import { KeyboardProvider } from "react-native-keyboard-controller";
-
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
@@ -69,15 +67,13 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <KeyboardProvider>
-        <PersistQueryClientProvider
-          client={queryClient}
-          persistOptions={{ persister: asyncStoragePersister }}
-        >
-          <ThemedStatusBar />
-          <Stack screenOptions={{ headerShown: false }} />
-        </PersistQueryClientProvider>
-      </KeyboardProvider>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{ persister: asyncStoragePersister }}
+      >
+        <ThemedStatusBar />
+        <Stack screenOptions={{ headerShown: false }} />
+      </PersistQueryClientProvider>
     </GestureHandlerRootView>
   );
 }
