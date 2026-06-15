@@ -12,6 +12,7 @@ import { loadAccounts, getActiveAccountId, setActiveAccountId } from '@/api/auth
 import { fetchCapabilities } from '@/api/nextcloud';
 import { useAppStore } from '@/store/appStore';
 import { queryClient } from '@/api/queryClient';
+import { setupOnlineManager } from '@/api/network';
 SplashScreen.preventAutoHideAsync();
 
 const asyncStoragePersister = createAsyncStoragePersister({
@@ -25,8 +26,6 @@ function ThemedStatusBar() {
   const themePreference = useAppStore((s) => s.themePreference);
   const resolved =
     themePreference === 'system' ? (systemScheme ?? 'light') : themePreference;
-  // Defer so the status bar flips together with the deferred theme repaint
-  // instead of ahead of it.
   const deferredResolved = useDeferredValue(resolved);
   return <StatusBar style={deferredResolved === 'dark' ? 'light' : 'dark'} />;
 }
@@ -37,10 +36,14 @@ export default function RootLayout() {
   const setCapabilities = useAppStore((s) => s.setCapabilities);
 
   useEffect(() => {
+    const teardownOnline = setupOnlineManager();
     const sub = AppState.addEventListener('change', (status: AppStateStatus) => {
       focusManager.setFocused(status === 'active');
     });
-    return () => sub.remove();
+    return () => {
+      sub.remove();
+      teardownOnline();
+    };
   }, []);
 
   useEffect(() => {

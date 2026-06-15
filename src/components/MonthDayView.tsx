@@ -48,12 +48,6 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
   const theme = useTheme();
   const { height } = useWindowDimensions();
 
-  // The selected day is derived from the `date` prop — the parent owns it as
-  // the single source of truth. This is what makes the "Today" button work in
-  // month view: pressing it sets the parent date to now, which flows straight
-  // through to the highlighted cell and the day list. (Previously `selectedDay`
-  // was seeded from `date` once via useState and never re-synced, so Today did
-  // nothing when today was already in the visible month.)
   const selected = useMemo(() => dayjs(date), [date]);
 
   const year = dayjs(date).year();
@@ -69,7 +63,7 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
       if (!map.has(key)) map.set(key, new Set());
       map.get(key)!.add(ev.color);
     }
-    // Also add all-day events
+
     for (const ev of events) {
       if (!ev.allDay) continue;
       const key = dayjs(ev.dtstart).format('YYYY-MM-DD');
@@ -88,8 +82,6 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
 
   const today = dayjs();
 
-  // Tapping a day just reports the selection upward; the parent updates `date`,
-  // which flows back down into `selected` above — one source of truth.
   const handleDayPress = useCallback((d: dayjs.Dayjs) => {
     onSelectDate(d.toDate());
   }, [onSelectDate]);

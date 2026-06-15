@@ -1,5 +1,6 @@
 import type { Account, CalendarMeta, CalendarEvent } from '@/types';
 import { parseIcsObjectsAsync } from '@/utils/caldav-parse';
+import { settleAllOrThrow } from '@/utils/settle';
 
 function basicAuth(account: Pick<Account, 'username' | 'appPassword'>): string {
   return 'Basic ' + btoa(`${account.username}:${account.appPassword}`);
@@ -201,6 +202,23 @@ export async function fetchEvents(
     accountId: account.id,
     color: calendar.color,
   }, start, end);
+}
+
+/**
+ * Fetch events across several calendars for a window. Throws if ANY calendar
+ * fails, so a low-network blip can't replace good cached events with a partial
+ * (or empty) result. The caller's query keeps its last good data via
+ * keepPreviousData and heals on retry / reconnect. See {@link settleAllOrThrow}.
+ */
+export function fetchEventsForCalendars(
+  account: Account,
+  calendars: CalendarMeta[],
+  start: Date,
+  end: Date,
+): Promise<CalendarEvent[]> {
+  return settleAllOrThrow(
+    calendars.map((cal) => () => fetchEvents(account, cal, start, end)),
+  );
 }
 
 /** Fetch the raw ICS text of a single event resource. */

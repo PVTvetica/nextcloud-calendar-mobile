@@ -29,8 +29,6 @@ interface Props extends LiveProps {
 }
 
 function CalendarInstanceImpl({ mode, calendarKey, visible, ...live }: Props) {
-  // Hold the last props rendered while visible; reuse them (same refs) while
-  // hidden so the memo'd <Calendar> does not rebuild on unrelated state changes.
   const frozen = useRef<LiveProps>(live);
   const { props, nextFrozen } = resolveFrozenProps(visible, live as LiveProps, frozen.current);
   frozen.current = nextFrozen;

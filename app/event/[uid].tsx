@@ -127,9 +127,6 @@ export default function EventDetailScreen() {
           {
             text: 'Delete', style: 'destructive',
             onPress: () => {
-              // Optimistic: the event disappears from the calendar at once
-              // (onMutate), and we leave immediately. A server failure rolls the
-              // deletion back and alerts globally (see src/api/queryClient.ts).
               deleteMutation.mutate({ event, scope });
               if (router.canGoBack()) router.back();
               else router.replace('/(tabs)/calendar');

@@ -41,10 +41,6 @@ export default function SettingsScreen() {
   useEffect(() => { setPendingTheme(themePreference); }, [themePreference]);
   useEffect(() => { setPendingWeek(weekStartsOn); }, [weekStartsOn]);
 
-  // The repaint after a theme change runs on a deferred (low-priority) pass via
-  // useTheme. This tracks that pass: themePreference updates urgently, its
-  // deferred copy catches up only when the whole repaint commits — so the gap
-  // marks "applying". Drives the inline spinner on the tapped chip.
   const deferredThemePref = useDeferredValue(themePreference);
   const themeSwitching = themePreference !== deferredThemePref;
 

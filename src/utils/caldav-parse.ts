@@ -104,7 +104,6 @@ export function parseIcsItem(
           const occAllDay = details.startDate.isDate;
           const occEnd = icalTimeToDate(details.endDate, true);
 
-          // Before the start of the requested range — skip but keep iterating
           if (rangeStart && occEnd <= rangeStart) {
             count++;
             continue;
