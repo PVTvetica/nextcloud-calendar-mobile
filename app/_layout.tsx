@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useDeferredValue, useEffect } from 'react';
 import { AppState, type AppStateStatus, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { loadAccounts, getActiveAccountId, setActiveAccountId } from '@/api/auth';
@@ -25,7 +25,10 @@ function ThemedStatusBar() {
   const themePreference = useAppStore((s) => s.themePreference);
   const resolved =
     themePreference === 'system' ? (systemScheme ?? 'light') : themePreference;
-  return <StatusBar style={resolved === 'dark' ? 'light' : 'dark'} />;
+  // Defer so the status bar flips together with the deferred theme repaint
+  // instead of ahead of it.
+  const deferredResolved = useDeferredValue(resolved);
+  return <StatusBar style={deferredResolved === 'dark' ? 'light' : 'dark'} />;
 }
 
 export default function RootLayout() {
