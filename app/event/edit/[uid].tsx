@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -12,6 +12,7 @@ import { useAppStore } from '@/store/appStore';
 import { useTheme } from '@/hooks/useTheme';
 import { EventForm } from '@/components/EventForm';
 import { normalizeEvent, normalizeEvents } from '@/utils/normalizeEvent';
+import { EVENTS_STALE } from '@/api/queryConfig';
 import type { CalendarEvent, CreateEventInput, RecurrenceEditScope } from '@/types';
 
 export default function EditEventScreen() {
@@ -37,8 +38,8 @@ export default function EditEventScreen() {
     return undefined;
   }, [queryClient, activeAccountId, uid]);
 
-  const start = useMemo(() => dayjs().subtract(6, 'months').toDate(), []);
-  const end = useMemo(() => dayjs().add(6, 'months').toDate(), []);
+  const start = useMemo(() => dayjs().subtract(3, 'months').toDate(), []);
+  const end = useMemo(() => dayjs().add(3, 'months').toDate(), []);
 
   const { data: fetchedEvents = [], isLoading: eventsLoading } = useQuery<CalendarEvent[]>({
     queryKey: [activeAccountId, 'events-detail', start.toISOString(), end.toISOString()],
@@ -50,7 +51,7 @@ export default function EditEventScreen() {
       return results.flat();
     },
     enabled: activeAccount !== null && calendars.length > 0 && cachedEvent === undefined,
-    staleTime: 2 * 60 * 1000,
+    staleTime: EVENTS_STALE,
   });
 
   const event: CalendarEvent | undefined = cachedEvent ?? normalizeEvents(fetchedEvents).find((e) => e.uid === uid);
@@ -62,19 +63,11 @@ export default function EditEventScreen() {
 
   const updateMutation = useUpdateEvent(activeAccount!, calendars);
 
-  async function handleSubmit(input: CreateEventInput) {
+  function handleSubmit(input: CreateEventInput) {
     if (!activeAccount || !event) return;
-    try {
-      await updateMutation.mutateAsync({ event, input, scope });
-      if (router.canGoBack()) router.back();
-      else router.replace('/(tabs)/calendar');
-    } catch (e: any) {
-      const msg = e?.message ?? '';
-      Alert.alert(
-        'Failed to update event',
-        msg.includes('403') ? 'Permission denied. This calendar is read-only or shared without write access.' : (msg || 'Unknown error.')
-      );
-    }
+    updateMutation.mutate({ event, input, scope });
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)/calendar');
   }
 
   const isLoading = eventsLoading && cachedEvent === undefined;

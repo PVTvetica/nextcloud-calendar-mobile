@@ -55,9 +55,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "lts/*"
-          cache: "npm"
 
-      - run: npm ci
+      - run: corepack enable
+
+      - run: yarn install --immutable
 
       - run: |
           git config --global user.name 'github-actions[bot]'
@@ -68,10 +69,10 @@ jobs:
         run: |
           git pull origin main
           
-          VERSION=$(npm exec -- release-it --ci --release-version)
+          VERSION=$(yarn release-it --ci --release-version)
           echo $VERSION
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          OUTPUT=$(npm exec -- release-it --ci)
+          OUTPUT=$(yarn release-it --ci)
           echo "$OUTPUT"
           
           DRAFT_TAG=$(echo "$OUTPUT" | grep -oE 'untagged-[a-z0-9]+')
@@ -102,6 +103,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apk
+          path: ./apk
+
+      - name: Attach APK to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ needs.create-release.outputs.draft_tag }} ./apk/app-release.apk --clobber
 
       - name: Publish GitHub Release
         id: publish_release_step

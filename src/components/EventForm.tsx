@@ -34,10 +34,7 @@ interface Props {
   disableCalendarChange?: boolean;
 }
 
-/**
- * Android: @react-native-community/datetimepicker does not support mode="datetime".
- * We use a two-step flow: first pick the date, then pick the time.
- */
+
 type AndroidPickerStep = null | { target: 'start' | 'end'; step: 'date' | 'time'; partial?: Date };
 
 export function EventForm({
@@ -47,9 +44,6 @@ export function EventForm({
   const theme = useTheme();
 
   const [summary, setSummary] = useState(initialValues?.summary ?? '');
-  // Only offer writable calendars for new events; read-only calendars
-  // (external subscriptions, manager-controlled shared calendars) cannot
-  // receive new VEVENTs via PUT.
   const writableCalendars = calendars.filter((c) => !c.isReadOnly && !c.isSubscribed);
 
   const defaultCalendarId =
@@ -71,11 +65,9 @@ export function EventForm({
   const [rrule, setRrule] = useState<RecurrenceRule | undefined>(initialValues?.rrule);
   const [error, setError] = useState<string | null>(null);
 
-  // iOS: simple show/hide booleans
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
 
-  // Android: two-step date→time picker state
   const [androidStep, setAndroidStep] = useState<AndroidPickerStep>(null);
 
   const scrollRef = useRef<ScrollView>(null);
@@ -179,7 +171,7 @@ export function EventForm({
     : androidStep?.target === 'start' ? dtstart : dtend;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
     <ScrollView
       ref={scrollRef}
       style={[styles.scroll, { backgroundColor: theme.background }]}
