@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity, Pressable, ScrollView, Alert, Modal, Linking, Image } from 'react-native';
-import { startTransition, useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Pressable, ScrollView, Alert, Modal, Linking, Image, ActivityIndicator } from 'react-native';
+import { useDeferredValue, useState, useEffect } from 'react';
 import { styles } from '@/styles/settingsScreen';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -40,6 +40,13 @@ export default function SettingsScreen() {
   const [pendingWeek, setPendingWeek] = useState(weekStartsOn);
   useEffect(() => { setPendingTheme(themePreference); }, [themePreference]);
   useEffect(() => { setPendingWeek(weekStartsOn); }, [weekStartsOn]);
+
+  // The repaint after a theme change runs on a deferred (low-priority) pass via
+  // useTheme. This tracks that pass: themePreference updates urgently, its
+  // deferred copy catches up only when the whole repaint commits — so the gap
+  // marks "applying". Drives the inline spinner on the tapped chip.
+  const deferredThemePref = useDeferredValue(themePreference);
+  const themeSwitching = themePreference !== deferredThemePref;
 
   const DEFAULT_ZOOM = 60;
   const zoomLabel = hourRowHeight <= 45 ? 'Compact' : hourRowHeight <= 75 ? 'Normal' : hourRowHeight <= 120 ? 'Expanded' : 'Large';
@@ -142,18 +149,22 @@ export default function SettingsScreen() {
                 ]}
                 onPress={() => {
                   setPendingTheme(opt.value);
-                  startTransition(() => setThemePreference(opt.value));
+                  setThemePreference(opt.value);
                 }}
               >
-                <Text
-                  style={[
-                    styles.themeChipText,
-                    { color: theme.textSecondary },
-                    pendingTheme === opt.value && { color: theme.primaryText, fontWeight: '600' },
-                  ]}
-                >
-                  {opt.label}
-                </Text>
+                {themeSwitching && pendingTheme === opt.value ? (
+                  <ActivityIndicator size="small" color={theme.primaryText} style={styles.themeChipSpinner} />
+                ) : (
+                  <Text
+                    style={[
+                      styles.themeChipText,
+                      { color: theme.textSecondary },
+                      pendingTheme === opt.value && { color: theme.primaryText, fontWeight: '600' },
+                    ]}
+                  >
+                    {opt.label}
+                  </Text>
+                )}
               </TouchableOpacity>
             ))}
           </View>
@@ -178,7 +189,7 @@ export default function SettingsScreen() {
                 ]}
                 onPress={() => {
                   setPendingWeek(opt.value);
-                  startTransition(() => setWeekStartsOn(opt.value));
+                  setWeekStartsOn(opt.value);
                 }}
               >
                 <Text

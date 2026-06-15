@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
@@ -23,6 +23,7 @@ import { CalendarTopBar } from './components/CalendarTopBar';
 import { TimeGridView } from './components/TimeGridView';
 import { TimeGridEvent } from './components/TimeGridEvent';
 import { toBigCalendarEvents } from './utils/toCalendarEvents';
+import { isCalMode } from './constants';
 
 dayjs.extend(isoWeek);
 
@@ -35,11 +36,40 @@ export default function CalendarScreen() {
   const toggleCalendarVisibility = useAppStore((s) => s.toggleCalendarVisibility);
 
   const nav = useCalendarNavigation();
-  const { viewMode, isCalendarMode, date, fetchDate, agendaVisibleDate, navigateMonth } = nav;
+  const { viewMode, date, fetchDate, agendaVisibleDate, navigateMonth, goToday } = nav;
+
+  // Defer the values that drive the expensive react-native-big-calendar rebuild
+  // (beta.12's 5-page time-grid). The store/state writes behind a view switch,
+  // "Today", or a theme change stay urgent for the chrome (pills, top bar) so the
+  // tap feels instant, while the heavy grid rebuild runs at low priority on a
+  // separate, interruptible render pass instead of blocking the JS thread.
+  // useDeferredValue (not startTransition) because viewMode/theme come from a
+  // Zustand store via useSyncExternalStore, whose updates are always urgent and
+  // ignore transitions.
+  const deferredViewMode = useDeferredValue(viewMode);
+  const deferredCalDates = useDeferredValue(nav.calDates);
+  const deferredDate = useDeferredValue(date);
+  const deferredWeekStartsOn = useDeferredValue(weekStartsOn);
+  const deferredIsCalendarMode = isCalMode(deferredViewMode);
+  // theme is already deferred inside useTheme(), so no extra deferral needed here.
+
+  // "Today" jump runs on the deferred pass (deferredDate/deferredCalDates) so it
+  // never blocks. Show a spinner in the Today button from tap until that pass
+  // commits — i.e. until the deferred values catch up to the live ones.
+  const [todayPending, setTodayPending] = useState(false);
+  const handleToday = useCallback(() => {
+    setTodayPending(true);
+    goToday();
+  }, [goToday]);
+  useEffect(() => {
+    if (todayPending && date === deferredDate && nav.calDates === deferredCalDates) {
+      setTodayPending(false);
+    }
+  }, [todayPending, date, deferredDate, nav.calDates, deferredCalDates]);
 
   const { hourRowHeight, calendarKey, pinchGesture } = useZoom();
   const { activeAccount, calendars, allEvents, showFullOverlay, showSmallLoader } = useCalendarData(fetchDate);
-  const { insets, onViewAreaLayout, heightFor, scrollOffset } = useCalendarLayout(allEvents, weekStartsOn, hourRowHeight);
+  const { insets, onViewAreaLayout, heightFor, scrollOffset } = useCalendarLayout(allEvents, deferredWeekStartsOn, hourRowHeight);
   const drawer = useCalendarDrawer();
 
   const overlapMap = useMemo(() => computeOverlapMap(allEvents), [allEvents]);
@@ -132,23 +162,24 @@ export default function CalendarScreen() {
       <CalendarTopBar
         headerTitle={headerTitle}
         isToday={isToday}
+        todayLoading={todayPending}
         viewMode={viewMode}
         onOpenDrawer={drawer.openDrawer}
-        onToday={nav.goToday}
+        onToday={handleToday}
         onSwitchMode={nav.switchMode}
       />
 
       <View style={styles.viewContainer} onLayout={onViewAreaLayout}>
         <View
-          style={[styles.viewLayer, viewMode === 'month' ? styles.layerActive : styles.layerHidden]}
-          pointerEvents={viewMode === 'month' ? 'auto' : 'none'}
+          style={[styles.viewLayer, deferredViewMode === 'month' ? styles.layerActive : styles.layerHidden]}
+          pointerEvents={deferredViewMode === 'month' ? 'auto' : 'none'}
         >
           <GestureDetector gesture={monthSwipeGesture}>
             <View style={{ flex: 1 }}>
               <MonthDayView
-                date={date}
+                date={deferredDate}
                 events={allEvents}
-                weekStartsOn={weekStartsOn}
+                weekStartsOn={deferredWeekStartsOn}
                 onSelectDate={nav.setDate}
                 onPressEvent={handlePressEventFromMonth}
                 onPressCell={handlePressCell}
@@ -158,8 +189,8 @@ export default function CalendarScreen() {
         </View>
 
         <View
-          style={[styles.viewLayer, viewMode === 'schedule' ? styles.layerActive : styles.layerHidden]}
-          pointerEvents={viewMode === 'schedule' ? 'auto' : 'none'}
+          style={[styles.viewLayer, deferredViewMode === 'schedule' ? styles.layerActive : styles.layerHidden]}
+          pointerEvents={deferredViewMode === 'schedule' ? 'auto' : 'none'}
         >
           <AgendaView
             ref={nav.agendaRef}
@@ -172,19 +203,19 @@ export default function CalendarScreen() {
         </View>
 
         <View
-          style={[styles.viewLayer, isCalendarMode ? styles.layerActive : styles.layerHidden]}
-          pointerEvents={isCalendarMode ? 'auto' : 'none'}
+          style={[styles.viewLayer, deferredIsCalendarMode ? styles.layerActive : styles.layerHidden]}
+          pointerEvents={deferredIsCalendarMode ? 'auto' : 'none'}
         >
           <TimeGridView
             pinchGesture={pinchGesture}
             mountedCalModes={nav.mountedCalModes}
-            viewMode={viewMode}
+            viewMode={deferredViewMode}
             calendarKey={calendarKeyFull}
             events={calendarEvents}
-            calDates={nav.calDates}
+            calDates={deferredCalDates}
             heightFor={heightFor}
             hourRowHeight={hourRowHeight}
-            weekStartsOn={weekStartsOn}
+            weekStartsOn={deferredWeekStartsOn}
             scrollOffset={scrollOffset}
             onPressEvent={handlePressEvent}
             onPressCell={handlePressCell}
