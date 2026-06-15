@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useDeferredValue, useMemo, useRef } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
@@ -23,6 +23,7 @@ import { CalendarTopBar } from './components/CalendarTopBar';
 import { TimeGridView } from './components/TimeGridView';
 import { TimeGridEvent } from './components/TimeGridEvent';
 import { toBigCalendarEvents } from './utils/toCalendarEvents';
+import { isCalMode } from './constants';
 
 dayjs.extend(isoWeek);
 
@@ -35,7 +36,20 @@ export default function CalendarScreen() {
   const toggleCalendarVisibility = useAppStore((s) => s.toggleCalendarVisibility);
 
   const nav = useCalendarNavigation();
-  const { viewMode, isCalendarMode, date, fetchDate, agendaVisibleDate, navigateMonth } = nav;
+  const { viewMode, date, fetchDate, agendaVisibleDate, navigateMonth } = nav;
+
+  // Defer the values that drive the expensive react-native-big-calendar rebuild
+  // (beta.12's 5-page time-grid). The store/state writes behind a view switch,
+  // "Today", or a theme change stay urgent for the chrome (pills, top bar) so the
+  // tap feels instant, while the heavy grid rebuild runs at low priority on a
+  // separate, interruptible render pass instead of blocking the JS thread.
+  // useDeferredValue (not startTransition) because viewMode/theme come from a
+  // Zustand store via useSyncExternalStore, whose updates are always urgent and
+  // ignore transitions.
+  const deferredViewMode = useDeferredValue(viewMode);
+  const deferredCalDates = useDeferredValue(nav.calDates);
+  const deferredTheme = useDeferredValue(theme);
+  const deferredIsCalendarMode = isCalMode(deferredViewMode);
 
   const { hourRowHeight, calendarKey, pinchGesture } = useZoom();
   const { activeAccount, calendars, allEvents, showFullOverlay, showSmallLoader } = useCalendarData(fetchDate);
@@ -85,29 +99,29 @@ export default function CalendarScreen() {
         event={event}
         touchableProps={touchableProps}
         hourRowHeight={hourRowHeight}
-        primaryColor={theme.primary}
+        primaryColor={deferredTheme.primary}
       />
     );
-  }, [hourRowHeight, theme.primary]);
+  }, [hourRowHeight, deferredTheme.primary]);
 
   const eventCellStyle = useCallback(
-    (event: any) => ({ backgroundColor: (event.color as string) || theme.primary }),
-    [theme.primary]
+    (event: any) => ({ backgroundColor: (event.color as string) || deferredTheme.primary }),
+    [deferredTheme.primary]
   );
 
   const bigCalendarTheme = useMemo(
     () => ({
       palette: {
-        primary: { main: theme.primary },
+        primary: { main: deferredTheme.primary },
         gray: {
-          '100': theme.borderSubtle,
-          '200': theme.border,
-          '500': theme.textSecondary,
-          '800': theme.text,
+          '100': deferredTheme.borderSubtle,
+          '200': deferredTheme.border,
+          '500': deferredTheme.textSecondary,
+          '800': deferredTheme.text,
         },
       },
     }),
-    [theme.primary, theme.borderSubtle, theme.border, theme.textSecondary, theme.text]
+    [deferredTheme.primary, deferredTheme.borderSubtle, deferredTheme.border, deferredTheme.textSecondary, deferredTheme.text]
   );
 
   const isToday = viewMode === 'schedule'
@@ -140,8 +154,8 @@ export default function CalendarScreen() {
 
       <View style={styles.viewContainer} onLayout={onViewAreaLayout}>
         <View
-          style={[styles.viewLayer, viewMode === 'month' ? styles.layerActive : styles.layerHidden]}
-          pointerEvents={viewMode === 'month' ? 'auto' : 'none'}
+          style={[styles.viewLayer, deferredViewMode === 'month' ? styles.layerActive : styles.layerHidden]}
+          pointerEvents={deferredViewMode === 'month' ? 'auto' : 'none'}
         >
           <GestureDetector gesture={monthSwipeGesture}>
             <View style={{ flex: 1 }}>
@@ -158,8 +172,8 @@ export default function CalendarScreen() {
         </View>
 
         <View
-          style={[styles.viewLayer, viewMode === 'schedule' ? styles.layerActive : styles.layerHidden]}
-          pointerEvents={viewMode === 'schedule' ? 'auto' : 'none'}
+          style={[styles.viewLayer, deferredViewMode === 'schedule' ? styles.layerActive : styles.layerHidden]}
+          pointerEvents={deferredViewMode === 'schedule' ? 'auto' : 'none'}
         >
           <AgendaView
             ref={nav.agendaRef}
@@ -172,16 +186,16 @@ export default function CalendarScreen() {
         </View>
 
         <View
-          style={[styles.viewLayer, isCalendarMode ? styles.layerActive : styles.layerHidden]}
-          pointerEvents={isCalendarMode ? 'auto' : 'none'}
+          style={[styles.viewLayer, deferredIsCalendarMode ? styles.layerActive : styles.layerHidden]}
+          pointerEvents={deferredIsCalendarMode ? 'auto' : 'none'}
         >
           <TimeGridView
             pinchGesture={pinchGesture}
             mountedCalModes={nav.mountedCalModes}
-            viewMode={viewMode}
+            viewMode={deferredViewMode}
             calendarKey={calendarKeyFull}
             events={calendarEvents}
-            calDates={nav.calDates}
+            calDates={deferredCalDates}
             heightFor={heightFor}
             hourRowHeight={hourRowHeight}
             weekStartsOn={weekStartsOn}
