@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useMemo, useRef } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
@@ -36,7 +36,7 @@ export default function CalendarScreen() {
   const toggleCalendarVisibility = useAppStore((s) => s.toggleCalendarVisibility);
 
   const nav = useCalendarNavigation();
-  const { viewMode, date, fetchDate, agendaVisibleDate, navigateMonth } = nav;
+  const { viewMode, date, fetchDate, agendaVisibleDate, navigateMonth, goToday } = nav;
 
   // Defer the values that drive the expensive react-native-big-calendar rebuild
   // (beta.12's 5-page time-grid). The store/state writes behind a view switch,
@@ -48,12 +48,28 @@ export default function CalendarScreen() {
   // ignore transitions.
   const deferredViewMode = useDeferredValue(viewMode);
   const deferredCalDates = useDeferredValue(nav.calDates);
-  const deferredTheme = useDeferredValue(theme);
+  const deferredDate = useDeferredValue(date);
+  const deferredWeekStartsOn = useDeferredValue(weekStartsOn);
   const deferredIsCalendarMode = isCalMode(deferredViewMode);
+  // theme is already deferred inside useTheme(), so no extra deferral needed here.
+
+  // "Today" jump runs on the deferred pass (deferredDate/deferredCalDates) so it
+  // never blocks. Show a spinner in the Today button from tap until that pass
+  // commits — i.e. until the deferred values catch up to the live ones.
+  const [todayPending, setTodayPending] = useState(false);
+  const handleToday = useCallback(() => {
+    setTodayPending(true);
+    goToday();
+  }, [goToday]);
+  useEffect(() => {
+    if (todayPending && date === deferredDate && nav.calDates === deferredCalDates) {
+      setTodayPending(false);
+    }
+  }, [todayPending, date, deferredDate, nav.calDates, deferredCalDates]);
 
   const { hourRowHeight, calendarKey, pinchGesture } = useZoom();
   const { activeAccount, calendars, allEvents, showFullOverlay, showSmallLoader } = useCalendarData(fetchDate);
-  const { insets, onViewAreaLayout, heightFor, scrollOffset } = useCalendarLayout(allEvents, weekStartsOn, hourRowHeight);
+  const { insets, onViewAreaLayout, heightFor, scrollOffset } = useCalendarLayout(allEvents, deferredWeekStartsOn, hourRowHeight);
   const drawer = useCalendarDrawer();
 
   const overlapMap = useMemo(() => computeOverlapMap(allEvents), [allEvents]);
@@ -99,29 +115,29 @@ export default function CalendarScreen() {
         event={event}
         touchableProps={touchableProps}
         hourRowHeight={hourRowHeight}
-        primaryColor={deferredTheme.primary}
+        primaryColor={theme.primary}
       />
     );
-  }, [hourRowHeight, deferredTheme.primary]);
+  }, [hourRowHeight, theme.primary]);
 
   const eventCellStyle = useCallback(
-    (event: any) => ({ backgroundColor: (event.color as string) || deferredTheme.primary }),
-    [deferredTheme.primary]
+    (event: any) => ({ backgroundColor: (event.color as string) || theme.primary }),
+    [theme.primary]
   );
 
   const bigCalendarTheme = useMemo(
     () => ({
       palette: {
-        primary: { main: deferredTheme.primary },
+        primary: { main: theme.primary },
         gray: {
-          '100': deferredTheme.borderSubtle,
-          '200': deferredTheme.border,
-          '500': deferredTheme.textSecondary,
-          '800': deferredTheme.text,
+          '100': theme.borderSubtle,
+          '200': theme.border,
+          '500': theme.textSecondary,
+          '800': theme.text,
         },
       },
     }),
-    [deferredTheme.primary, deferredTheme.borderSubtle, deferredTheme.border, deferredTheme.textSecondary, deferredTheme.text]
+    [theme.primary, theme.borderSubtle, theme.border, theme.textSecondary, theme.text]
   );
 
   const isToday = viewMode === 'schedule'
@@ -146,9 +162,10 @@ export default function CalendarScreen() {
       <CalendarTopBar
         headerTitle={headerTitle}
         isToday={isToday}
+        todayLoading={todayPending}
         viewMode={viewMode}
         onOpenDrawer={drawer.openDrawer}
-        onToday={nav.goToday}
+        onToday={handleToday}
         onSwitchMode={nav.switchMode}
       />
 
@@ -160,9 +177,9 @@ export default function CalendarScreen() {
           <GestureDetector gesture={monthSwipeGesture}>
             <View style={{ flex: 1 }}>
               <MonthDayView
-                date={date}
+                date={deferredDate}
                 events={allEvents}
-                weekStartsOn={weekStartsOn}
+                weekStartsOn={deferredWeekStartsOn}
                 onSelectDate={nav.setDate}
                 onPressEvent={handlePressEventFromMonth}
                 onPressCell={handlePressCell}
@@ -198,7 +215,7 @@ export default function CalendarScreen() {
             calDates={deferredCalDates}
             heightFor={heightFor}
             hourRowHeight={hourRowHeight}
-            weekStartsOn={weekStartsOn}
+            weekStartsOn={deferredWeekStartsOn}
             scrollOffset={scrollOffset}
             onPressEvent={handlePressEvent}
             onPressCell={handlePressCell}

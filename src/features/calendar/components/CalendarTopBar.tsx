@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '@/styles/calendarScreen';
 import { useTheme } from '@/hooks/useTheme';
@@ -9,13 +9,14 @@ import { VIEW_MODES, VIEW_LABELS } from '../constants';
 interface Props {
   headerTitle: string;
   isToday: boolean;
+  todayLoading: boolean;
   viewMode: ViewMode;
   onOpenDrawer: () => void;
   onToday: () => void;
   onSwitchMode: (mode: ViewMode) => void;
 }
 
-function CalendarTopBarImpl({ headerTitle, isToday, viewMode, onOpenDrawer, onToday, onSwitchMode }: Props) {
+function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOpenDrawer, onToday, onSwitchMode }: Props) {
   const theme = useTheme();
 
   return (
@@ -31,11 +32,15 @@ function CalendarTopBarImpl({ headerTitle, isToday, viewMode, onOpenDrawer, onTo
           {headerTitle}
         </Text>
         <TouchableOpacity
-          style={[styles.todayBtn, { opacity: isToday ? 0.35 : 1 }]}
+          style={[styles.todayBtn, { opacity: isToday && !todayLoading ? 0.35 : 1 }]}
           onPress={onToday}
-          disabled={isToday}
+          disabled={isToday || todayLoading}
         >
-          <Text style={[styles.todayBtnText, { color: theme.primary }]}>Today</Text>
+          {todayLoading ? (
+            <ActivityIndicator size="small" color={theme.primary} />
+          ) : (
+            <Text style={[styles.todayBtnText, { color: theme.primary }]}>Today</Text>
+          )}
         </TouchableOpacity>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modePills}>
