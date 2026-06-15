@@ -1,19 +1,10 @@
-/**
- * iOS-style month view: grid on top, day event list on bottom.
- *
- * Top half: 7-column month grid. Each cell shows the day number and
- * color dots (one per calendar with events that day, up to 3).
- * Bottom half: scrollable list of events for the selected day.
- */
-
-import { useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, FlatList, StyleSheet,
   useWindowDimensions,
 } from 'react-native';
 import dayjs from 'dayjs';
 import { useTheme } from '@/hooks/useTheme';
-import { normalizeEvents } from '@/utils/normalizeEvent';
 import type { CalendarEvent } from '@/types';
 
 const DAYS_OF_WEEK = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -53,11 +44,17 @@ function buildMonthGrid(year: number, month: number, weekStartsOn: 0 | 1): (dayj
   return rows;
 }
 
-export function MonthDayView({ date, events: rawEvents, weekStartsOn, onSelectDate, onPressEvent, onPressCell }: Props) {
+function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEvent, onPressCell }: Props) {
   const theme = useTheme();
   const { height } = useWindowDimensions();
-  const [selectedDay, setSelectedDay] = useState<dayjs.Dayjs>(dayjs(date));
-  const events = normalizeEvents(rawEvents);
+
+  // The selected day is derived from the `date` prop — the parent owns it as
+  // the single source of truth. This is what makes the "Today" button work in
+  // month view: pressing it sets the parent date to now, which flows straight
+  // through to the highlighted cell and the day list. (Previously `selectedDay`
+  // was seeded from `date` once via useState and never re-synced, so Today did
+  // nothing when today was already in the visible month.)
+  const selected = useMemo(() => dayjs(date), [date]);
 
   const year = dayjs(date).year();
   const month = dayjs(date).month();
@@ -83,16 +80,17 @@ export function MonthDayView({ date, events: rawEvents, weekStartsOn, onSelectDa
   }, [events]);
 
   const dayEvents = useMemo(() => {
-    const sel = selectedDay.format('YYYY-MM-DD');
+    const sel = selected.format('YYYY-MM-DD');
     return events
       .filter((e) => dayjs(e.dtstart).format('YYYY-MM-DD') === sel)
       .sort((a, b) => a.dtstart.getTime() - b.dtstart.getTime());
-  }, [events, selectedDay]);
+  }, [events, selected]);
 
   const today = dayjs();
 
+  // Tapping a day just reports the selection upward; the parent updates `date`,
+  // which flows back down into `selected` above — one source of truth.
   const handleDayPress = useCallback((d: dayjs.Dayjs) => {
-    setSelectedDay(d);
     onSelectDate(d.toDate());
   }, [onSelectDate]);
 
@@ -123,7 +121,7 @@ export function MonthDayView({ date, events: rawEvents, weekStartsOn, onSelectDa
               }
               const key = d.format('YYYY-MM-DD');
               const isToday = d.isSame(today, 'day');
-              const isSelected = d.isSame(selectedDay, 'day');
+              const isSelected = d.isSame(selected, 'day');
               const dots = Array.from(dotMap.get(key) ?? []).slice(0, 3);
 
               return (
@@ -161,7 +159,7 @@ export function MonthDayView({ date, events: rawEvents, weekStartsOn, onSelectDa
 
       <View style={styles.dayList}>
         <Text style={[styles.dayListHeader, { color: theme.textSecondary }]}>
-          {selectedDay.format('dddd, MMMM D')}
+          {selected.format('dddd, MMMM D')}
         </Text>
         {dayEvents.length === 0 ? (
           <Text style={[styles.emptyText, { color: theme.textTertiary }]}>No events</Text>
@@ -194,6 +192,8 @@ export function MonthDayView({ date, events: rawEvents, weekStartsOn, onSelectDa
     </View>
   );
 }
+
+export const MonthDayView = memo(MonthDayViewImpl);
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

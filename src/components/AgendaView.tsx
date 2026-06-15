@@ -17,12 +17,12 @@ interface Props {
 
 const DAYS_AHEAD = 120;
 
+type AgendaSection = { key: string; date: Date; data: CalendarEvent[] };
+
 function formatTime(d: Date, allDay: boolean): string {
   if (allDay) return 'All day';
   return dayjs(d).format('HH:mm');
 }
-
-// ─── memoized row components ────────────────────────────────────────────────
 
 interface DayHeaderProps {
   sectionDate: Date;
@@ -109,13 +109,12 @@ export interface AgendaViewHandle {
   scrollToToday: () => void;
 }
 
-// ─── main component ──────────────────────────────────────────────────────────
 
-export const AgendaView = forwardRef<AgendaViewHandle, Props>(function AgendaView(
+const AgendaViewImpl = forwardRef<AgendaViewHandle, Props>(function AgendaView(
   { events, date, onPressEvent, onPressCell, onVisibleDateChange }, ref
 ) {
   const theme = useTheme();
-  const listRef = useRef<SectionList>(null);
+  const listRef = useRef<SectionList<CalendarEvent, AgendaSection>>(null);
 
   const sections = useMemo(() => {
     const today = dayjs();
@@ -138,7 +137,7 @@ export const AgendaView = forwardRef<AgendaViewHandle, Props>(function AgendaVie
       }
     }
 
-    const result = [];
+    const result: AgendaSection[] = [];
     let cur = start.clone();
     while (cur.isBefore(end)) {
       const key = cur.format('YYYY-MM-DD');
@@ -185,15 +184,15 @@ export const AgendaView = forwardRef<AgendaViewHandle, Props>(function AgendaVie
   const keyExtractor = useCallback((item: CalendarEvent, index: number) => `${item.uid}-${index}`, []);
 
   return (
-    <SectionList
+    <SectionList<CalendarEvent, AgendaSection>
       ref={listRef}
       sections={sections}
       keyExtractor={keyExtractor}
       renderItem={renderItem}
       renderSectionHeader={renderSectionHeader}
       stickySectionHeadersEnabled
-      initialNumToRender={20}
-      maxToRenderPerBatch={15}
+      initialNumToRender={8}
+      maxToRenderPerBatch={8}
       updateCellsBatchingPeriod={50}
       windowSize={7}
       removeClippedSubviews
@@ -205,6 +204,8 @@ export const AgendaView = forwardRef<AgendaViewHandle, Props>(function AgendaVie
     />
   );
 });
+
+export const AgendaView = memo(AgendaViewImpl);
 
 const EVENT_ROW_HEIGHT = 72;
 
