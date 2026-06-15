@@ -12,6 +12,7 @@ import { loadAccounts, getActiveAccountId, setActiveAccountId } from '@/api/auth
 import { fetchCapabilities } from '@/api/nextcloud';
 import { useAppStore } from '@/store/appStore';
 import { queryClient } from '@/api/queryClient';
+import { setupOnlineManager } from '@/api/network';
 SplashScreen.preventAutoHideAsync();
 
 const asyncStoragePersister = createAsyncStoragePersister({
@@ -37,10 +38,14 @@ export default function RootLayout() {
   const setCapabilities = useAppStore((s) => s.setCapabilities);
 
   useEffect(() => {
+    const teardownOnline = setupOnlineManager();
     const sub = AppState.addEventListener('change', (status: AppStateStatus) => {
       focusManager.setFocused(status === 'active');
     });
-    return () => sub.remove();
+    return () => {
+      sub.remove();
+      teardownOnline();
+    };
   }, []);
 
   useEffect(() => {

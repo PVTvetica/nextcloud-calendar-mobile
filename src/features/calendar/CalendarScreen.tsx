@@ -9,6 +9,7 @@ import { styles } from '@/styles/calendarScreen';
 import { useAppStore } from '@/store/appStore';
 import { useTheme } from '@/hooks/useTheme';
 import { CalendarDrawer } from '@/components/CalendarDrawer';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { MonthDayView } from '@/components/MonthDayView';
 import { AgendaView } from '@/components/AgendaView';
 import { computeOverlapMap } from '@/utils/overlapMap';
@@ -168,6 +169,8 @@ export default function CalendarScreen() {
         onToday={handleToday}
         onSwitchMode={nav.switchMode}
       />
+
+      <OfflineBanner />
 
       <View style={styles.viewContainer} onLayout={onViewAreaLayout}>
         <View
