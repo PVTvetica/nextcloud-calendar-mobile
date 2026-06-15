@@ -7,7 +7,7 @@ export interface DateRange {
 
 export function monthRange(date: Date): DateRange {
   const y = dayjs(date).year();
-  const m = dayjs(date).month(); // 0-based
+  const m = dayjs(date).month();
   return {
     start: new Date(y, m - 1, 1),
     end: new Date(y, m + 2, 0, 23, 59, 59, 999),

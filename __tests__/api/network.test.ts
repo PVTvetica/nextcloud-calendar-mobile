@@ -19,7 +19,6 @@ function lastNetworkCallback(): (state: any) => void {
 
 describe('setupOnlineManager', () => {
   afterEach(() => {
-    // Reset onlineManager to its default listener so cases don't bleed.
     onlineManager.setEventListener(() => () => undefined);
     onlineManager.setOnline(true);
     addNetworkStateListener.mockClear();

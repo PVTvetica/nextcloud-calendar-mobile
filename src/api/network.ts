@@ -24,7 +24,6 @@ function isOnline(state: Network.NetworkState): boolean {
  */
 export function setupOnlineManager(): () => void {
   onlineManager.setEventListener((setOnline) => {
-    // addNetworkStateListener fires only on change, so seed the current state.
     Network.getNetworkStateAsync()
       .then((state) => setOnline(isOnline(state)))
       .catch(() => undefined);

@@ -26,8 +26,6 @@ function ThemedStatusBar() {
   const themePreference = useAppStore((s) => s.themePreference);
   const resolved =
     themePreference === 'system' ? (systemScheme ?? 'light') : themePreference;
-  // Defer so the status bar flips together with the deferred theme repaint
-  // instead of ahead of it.
   const deferredResolved = useDeferredValue(resolved);
   return <StatusBar style={deferredResolved === 'dark' ? 'light' : 'dark'} />;
 }

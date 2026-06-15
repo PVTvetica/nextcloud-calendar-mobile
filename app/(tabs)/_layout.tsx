@@ -3,9 +3,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '@/hooks/useTheme';
 
 export default function TabsLayout() {
-  // Read through useTheme so the tab bar recolors in the SAME deferred pass as
-  // the rest of the UI. Computing the theme inline here (urgent) made the tab bar
-  // flip first and the deferred useTheme consumers follow — the visible stagger.
   const theme = useTheme();
 
   return (

@@ -149,7 +149,6 @@ export function useCreateEvent(account: Account, calendars: CalendarMeta[]) {
       const uid = Crypto.randomUUID();
       const ics = buildIcsForInput(uid, input, resolved.location, resolved.description, timezone);
       await putEvent(account, calendar, uid, ics);
-      // Return the real event so the cache can swap out the placeholder.
       return eventFromInput(uid, input, calendar, account, resolved);
     },
 

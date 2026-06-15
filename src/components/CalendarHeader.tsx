@@ -18,10 +18,6 @@ export function FixedCalendarHeader<T extends ICalendarEventBase>({
 }: CalendarHeaderProps<T> & { mode: Mode }) {
   const theme = useTheme();
 
-  // Compute the all-day events that fall on each column once per render. The old
-  // code filtered allDayEvents twice (height calc + render) with a fresh
-  // dayjs().startOf('day') per event per cell — O(days × events) dayjs objects on
-  // every calendar rebuild. Single pass, reused below.
   const { allDaySectionHeight, matchedByDate } = useMemo(() => {
     if (!showAllDayEventCell || allDayEvents.length === 0) {
       return { allDaySectionHeight: 0, matchedByDate: [] as T[][] };

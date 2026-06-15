@@ -27,9 +27,6 @@ export default function NewEventScreen() {
 
   function handleSubmit(input: CreateEventInput) {
     if (!activeAccount) return;
-    // Optimistic: fire the mutation and leave immediately. The event appears in
-    // the calendar at once (onMutate patches the cache); a server failure rolls
-    // it back and surfaces an alert globally (see src/api/queryClient.ts).
     createMutation.mutate(input);
     if (router.canGoBack()) router.back();
     else router.replace('/(tabs)/calendar');
