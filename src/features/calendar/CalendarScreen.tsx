@@ -1,5 +1,6 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
@@ -31,6 +32,7 @@ dayjs.extend(isoWeek);
 export default function CalendarScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const weekStartsOn = useAppStore((s) => s.weekStartsOn);
   const hiddenCalendarIds = useAppStore((s) => s.hiddenCalendarIds);
@@ -215,7 +217,7 @@ export default function CalendarScreen() {
       {showFullOverlay && (
         <View style={[styles.loadingOverlay, { backgroundColor: theme.background }]}>
           <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading calendar…</Text>
+          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>{t('calendar.loadingCalendar')}</Text>
         </View>
       )}
       {showSmallLoader && (
