@@ -82,7 +82,13 @@
     "dayWe": "Mi",
     "dayTh": "Ju",
     "dayFr": "Vi",
-    "daySa": "Sa"
+    "daySa": "Sa",
+    "talkCreateRoom": "Crear sala Talk",
+    "talkRoomHint": "Se creará una sala Talk y se añadirá al evento.",
+    "talkInviteOnly": "Solo por invitación",
+    "talkPublicLink": "Enlace público",
+    "talkAnyoneWithLink": "Cualquiera con el enlace puede unirse",
+    "talkOnlyInvited": "Solo participantes invitados"
   },
   "settings": {
     "title": "Ajustes",
