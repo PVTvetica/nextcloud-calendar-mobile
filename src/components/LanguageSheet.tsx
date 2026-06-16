@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useDeferredValue } from 'react';
+import { useRef, useState, useDeferredValue } from 'react';
 import { View, Text, TouchableOpacity, Modal, Pressable, ScrollView, ActivityIndicator, StyleSheet, Dimensions } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
@@ -20,21 +20,12 @@ export function LanguageSheet() {
   const setLanguage = useAppStore((s) => s.setLanguage);
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
-  const [pending, setPending] = useState<AppLanguage | null>(null);
   const triggerRef = useRef<View>(null);
 
   // Mirror the theme-switch UX: while the deferred language lags behind the
   // selected one, the heavy calendar rebuild is in flight — show a spinner.
   const deferredLanguage = useDeferredValue(language);
   const switching = language !== deferredLanguage;
-
-  // Close the dropdown only once the deferred switch has settled.
-  useEffect(() => {
-    if (pending && !switching) {
-      setPending(null);
-      setOpen(false);
-    }
-  }, [pending, switching]);
 
   const active = LANGUAGES.find((l) => l.code === language) ?? LANGUAGES[0];
 
@@ -44,12 +35,8 @@ export function LanguageSheet() {
   }
 
   function select(code: AppLanguage) {
-    if (code === language) {
-      setOpen(false);
-      return;
-    }
-    setPending(code);
-    setLanguage(code);
+    setOpen(false);
+    if (code !== language) setLanguage(code);
   }
 
   const screenH = Dimensions.get('window').height;
@@ -88,7 +75,7 @@ export function LanguageSheet() {
               <TouchableOpacity
                 key={l.code}
                 accessibilityRole="button"
-                accessibilityState={{ selected: l.code === language, busy: pending === l.code }}
+                accessibilityState={{ selected: l.code === language }}
                 style={[
                   styles.option,
                   i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border },
@@ -99,9 +86,7 @@ export function LanguageSheet() {
                 <Text style={[styles.name, { color: theme.text }]}>{l.label}</Text>
                 <Text style={[styles.code, { color: theme.textTertiary }]}>({l.region})</Text>
                 <View style={styles.spacer} />
-                {pending === l.code
-                  ? <ActivityIndicator size="small" color={theme.primary} />
-                  : l.code === language && <Ionicons name="checkmark" size={20} color={theme.primary} />}
+                {l.code === language && <Ionicons name="checkmark" size={20} color={theme.primary} />}
               </TouchableOpacity>
             ))}
           </ScrollView>
