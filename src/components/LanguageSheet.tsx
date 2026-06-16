@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/appStore';
 import { useTheme } from '@/hooks/useTheme';
 import { LANGUAGES } from '@/i18n/languages';
+import { Flag } from '@/i18n/flags';
 
 export function LanguageSheet() {
   const theme = useTheme();
@@ -19,14 +20,16 @@ export function LanguageSheet() {
     <>
       <TouchableOpacity
         accessibilityRole="button"
-        style={[styles.row, { backgroundColor: theme.surface, borderColor: theme.border }]}
+        accessibilityLabel={t('common.language')}
+        style={[styles.trigger, { backgroundColor: theme.surface, borderColor: theme.border }]}
         onPress={() => setOpen(true)}
       >
-        <Text style={[styles.label, { color: theme.text }]}>{t('common.language')}</Text>
-        <View style={styles.value}>
-          <Text style={{ color: theme.textSecondary }}>{active.label}</Text>
-          <Ionicons name="chevron-down" size={16} color={theme.textTertiary} style={{ marginLeft: 6 }} />
-        </View>
+        <Ionicons name="globe-outline" size={20} color={theme.textTertiary} />
+        <Flag code={active.code} size={24} />
+        <Text style={[styles.triggerText, { color: theme.text }]} numberOfLines={1}>
+          {active.label}
+        </Text>
+        <Ionicons name="chevron-down" size={20} color={theme.textTertiary} />
       </TouchableOpacity>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -35,17 +38,25 @@ export function LanguageSheet() {
             style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.border }]}
             onPress={() => {}}
           >
-            {LANGUAGES.map((l) => (
+            {LANGUAGES.map((l, i) => (
               <TouchableOpacity
                 key={l.code}
-                style={styles.option}
+                accessibilityRole="button"
+                accessibilityState={{ selected: l.code === language }}
+                style={[
+                  styles.option,
+                  i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border },
+                ]}
                 onPress={() => {
                   setLanguage(l.code);
                   setOpen(false);
                 }}
               >
+                <Flag code={l.code} size={30} />
                 <Text style={[styles.optionText, { color: theme.text }]}>{l.label}</Text>
-                {l.code === language && <Ionicons name="checkmark" size={18} color={theme.primary} />}
+                {l.code === language && (
+                  <Ionicons name="checkmark" size={20} color={theme.primary} />
+                )}
               </TouchableOpacity>
             ))}
           </Pressable>
@@ -56,25 +67,24 @@ export function LanguageSheet() {
 }
 
 const styles = StyleSheet.create({
-  row: {
+  trigger: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 12,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 13,
+    paddingVertical: 12,
   },
-  label: { fontSize: 14, fontWeight: '600' },
-  value: { flexDirection: 'row', alignItems: 'center' },
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 32 },
+  triggerText: { flex: 1, fontSize: 16 },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 24 },
   sheet: { borderWidth: 1, borderRadius: 14, overflow: 'hidden' },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 14,
     paddingHorizontal: 18,
-    paddingVertical: 15,
+    paddingVertical: 14,
   },
-  optionText: { fontSize: 16 },
+  optionText: { flex: 1, fontSize: 16 },
 });

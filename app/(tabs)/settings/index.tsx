@@ -12,7 +12,7 @@ import { AccountCard } from '@/components/AccountCard';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
-import { LANGUAGES } from '@/i18n/languages';
+import { LanguageSheet } from '@/components/LanguageSheet';
 
 const GITHUB_URL = 'https://github.com/SoluceTechnologies/nextcloud-calendar-mobile';
 const ISSUES_URL = 'https://github.com/SoluceTechnologies/nextcloud-calendar-mobile/issues/new';
@@ -31,8 +31,6 @@ export default function SettingsScreen() {
   const queryClient = useQueryClient();
   const theme = useTheme();
   const { t } = useTranslation();
-  const language = useAppStore((s) => s.language);
-  const setLanguage = useAppStore((s) => s.setLanguage);
   const activeAccountId = useAppStore((s) => s.activeAccountId);
   const setStoreId = useAppStore((s) => s.setActiveAccountId);
   const themePreference = useAppStore((s) => s.themePreference);
@@ -178,29 +176,7 @@ export default function SettingsScreen() {
 
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Text style={[styles.cardLabel, { color: theme.text }]}>{t('common.language')}</Text>
-          <View style={styles.themeRow}>
-            {LANGUAGES.map((opt) => (
-              <TouchableOpacity
-                key={opt.code}
-                style={[
-                  styles.themeChip,
-                  { backgroundColor: theme.chip, borderColor: theme.border },
-                  language === opt.code && { backgroundColor: theme.chipActive, borderColor: theme.primary },
-                ]}
-                onPress={() => setLanguage(opt.code)}
-              >
-                <Text
-                  style={[
-                    styles.themeChipText,
-                    { color: theme.textSecondary },
-                    language === opt.code && { color: theme.primaryText, fontWeight: '600' },
-                  ]}
-                >
-                  {opt.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <LanguageSheet />
         </View>
 
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>

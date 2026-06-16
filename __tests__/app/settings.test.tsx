@@ -28,16 +28,20 @@ describe('SettingsScreen i18n', () => {
     expect(getByText('Language')).toBeTruthy();
   });
 
-  it('renders all four language chips', () => {
-    const { getByText } = render(<SettingsScreen />, { wrapper });
-    expect(getByText('English')).toBeTruthy();
-    expect(getByText('Français')).toBeTruthy();
+  it('opens the dropdown and lists all four languages', () => {
+    const { getByText, queryByText } = render(<SettingsScreen />, { wrapper });
+    // modal closed initially: other languages not rendered yet
+    expect(queryByText('Deutsch')).toBeNull();
+    // trigger shows the active language label; pressing it opens the sheet
+    fireEvent.press(getByText('English'));
     expect(getByText('Deutsch')).toBeTruthy();
+    expect(getByText('Français')).toBeTruthy();
     expect(getByText('Español')).toBeTruthy();
   });
 
-  it('tapping a chip updates the store language', () => {
+  it('selecting a language from the dropdown updates the store', () => {
     const { getByText } = render(<SettingsScreen />, { wrapper });
+    fireEvent.press(getByText('English'));
     fireEvent.press(getByText('Deutsch'));
     expect(useAppStore.getState().language).toBe('de');
   });
