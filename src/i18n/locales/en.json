@@ -68,7 +68,21 @@
     "saveEvent": "Save Event",
     "errorTitleRequired": "Title is required.",
     "errorSelectCalendar": "Select a calendar.",
-    "errorEndAfterStart": "End time must be after start time."
+    "errorEndAfterStart": "End time must be after start time.",
+    "repeat": "Repeat",
+    "onDays": "On days",
+    "freqNone": "None",
+    "freqDaily": "Daily",
+    "freqWeekly": "Weekly",
+    "freqMonthly": "Monthly",
+    "freqYearly": "Yearly",
+    "daySu": "Su",
+    "dayMo": "Mo",
+    "dayTu": "Tu",
+    "dayWe": "We",
+    "dayTh": "Th",
+    "dayFr": "Fr",
+    "daySa": "Sa"
   },
   "settings": {
     "title": "Settings",

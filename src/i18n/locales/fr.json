@@ -68,7 +68,21 @@
     "saveEvent": "Enregistrer l'événement",
     "errorTitleRequired": "Le titre est obligatoire.",
     "errorSelectCalendar": "Sélectionnez un agenda.",
-    "errorEndAfterStart": "L'heure de fin doit être après l'heure de début."
+    "errorEndAfterStart": "L'heure de fin doit être après l'heure de début.",
+    "repeat": "Répéter",
+    "onDays": "Les jours",
+    "freqNone": "Jamais",
+    "freqDaily": "Chaque jour",
+    "freqWeekly": "Chaque semaine",
+    "freqMonthly": "Chaque mois",
+    "freqYearly": "Chaque année",
+    "daySu": "Di",
+    "dayMo": "Lu",
+    "dayTu": "Ma",
+    "dayWe": "Me",
+    "dayTh": "Je",
+    "dayFr": "Ve",
+    "daySa": "Sa"
   },
   "settings": {
     "title": "Paramètres",

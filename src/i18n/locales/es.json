@@ -68,7 +68,21 @@
     "saveEvent": "Guardar evento",
     "errorTitleRequired": "El título es obligatorio.",
     "errorSelectCalendar": "Selecciona un calendario.",
-    "errorEndAfterStart": "La hora de fin debe ser posterior a la hora de inicio."
+    "errorEndAfterStart": "La hora de fin debe ser posterior a la hora de inicio.",
+    "repeat": "Repetir",
+    "onDays": "Los días",
+    "freqNone": "Nunca",
+    "freqDaily": "Diariamente",
+    "freqWeekly": "Semanalmente",
+    "freqMonthly": "Mensualmente",
+    "freqYearly": "Anualmente",
+    "daySu": "Do",
+    "dayMo": "Lu",
+    "dayTu": "Ma",
+    "dayWe": "Mi",
+    "dayTh": "Ju",
+    "dayFr": "Vi",
+    "daySa": "Sa"
   },
   "settings": {
     "title": "Ajustes",

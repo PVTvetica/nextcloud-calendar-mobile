@@ -68,7 +68,21 @@
     "saveEvent": "Ereignis speichern",
     "errorTitleRequired": "Titel ist erforderlich.",
     "errorSelectCalendar": "Bitte einen Kalender auswählen.",
-    "errorEndAfterStart": "Die Endzeit muss nach der Startzeit liegen."
+    "errorEndAfterStart": "Die Endzeit muss nach der Startzeit liegen.",
+    "repeat": "Wiederholen",
+    "onDays": "An Tagen",
+    "freqNone": "Keine",
+    "freqDaily": "Täglich",
+    "freqWeekly": "Wöchentlich",
+    "freqMonthly": "Monatlich",
+    "freqYearly": "Jährlich",
+    "daySu": "So",
+    "dayMo": "Mo",
+    "dayTu": "Di",
+    "dayWe": "Mi",
+    "dayTh": "Do",
+    "dayFr": "Fr",
+    "daySa": "Sa"
   },
   "settings": {
     "title": "Einstellungen",
