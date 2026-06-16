@@ -1,15 +1,14 @@
 import { View, StyleSheet } from 'react-native';
 import CountryFlag from 'react-native-country-flag';
-import type { AppLanguage } from './languages';
+import { LANGUAGES, type AppLanguage } from './languages';
 
-// Maps each supported app language to an ISO 3166-1 alpha-2 country whose flag
-// represents it. react-native-country-flag loads the flag image from flagcdn.com.
-const ISO: Record<AppLanguage, string> = { en: 'us', fr: 'fr', de: 'de', es: 'es' };
-
+// Flag image comes from react-native-country-flag (flagcdn.com), keyed by each
+// language's representative ISO country (LANGUAGES[].region), clipped to a circle.
 export function Flag({ code, size = 28 }: { code: AppLanguage; size?: number }) {
+  const region = LANGUAGES.find((l) => l.code === code)?.region ?? 'US';
   return (
     <View style={[styles.circle, { width: size, height: size, borderRadius: size / 2 }]}>
-      <CountryFlag isoCode={ISO[code]} size={size} />
+      <CountryFlag isoCode={region.toLowerCase()} size={size} />
     </View>
   );
 }

@@ -1,10 +1,10 @@
 import { getLocales } from 'expo-localization';
 
 export const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'fr', label: 'Français' },
-  { code: 'de', label: 'Deutsch' },
-  { code: 'es', label: 'Español' },
+  { code: 'en', label: 'English', region: 'US' },
+  { code: 'fr', label: 'Français', region: 'FR' },
+  { code: 'de', label: 'Deutsch', region: 'DE' },
+  { code: 'es', label: 'Español', region: 'ES' },
 ] as const;
 
 export type AppLanguage = (typeof LANGUAGES)[number]['code'];
