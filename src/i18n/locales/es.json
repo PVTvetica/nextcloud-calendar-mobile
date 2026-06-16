@@ -90,7 +90,13 @@
     "talkAnyoneWithLink": "Cualquiera con el enlace puede unirse",
     "talkOnlyInvited": "Solo participantes invitados",
     "loadingCalendars": "Cargando calendarios…",
-    "newEvent": "Nuevo evento"
+    "newEvent": "Nuevo evento",
+    "editEvent": "Editar evento",
+    "updateEvent": "Actualizar evento",
+    "eventNotFound": "Evento no encontrado.",
+    "back": "← Atrás",
+    "scopeThisOccurrence": "Esta ocurrencia",
+    "scopeThisAndFollowing": "Esta y siguientes"
   },
   "settings": {
     "title": "Ajustes",

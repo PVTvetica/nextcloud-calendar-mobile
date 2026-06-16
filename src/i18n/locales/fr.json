@@ -90,7 +90,13 @@
     "talkAnyoneWithLink": "Toute personne ayant le lien peut rejoindre",
     "talkOnlyInvited": "Uniquement les participants invités",
     "loadingCalendars": "Chargement des agendas…",
-    "newEvent": "Nouvel événement"
+    "newEvent": "Nouvel événement",
+    "editEvent": "Modifier l'événement",
+    "updateEvent": "Mettre à jour l'événement",
+    "eventNotFound": "Événement introuvable.",
+    "back": "← Retour",
+    "scopeThisOccurrence": "Cette occurrence",
+    "scopeThisAndFollowing": "Celle-ci et suivantes"
   },
   "settings": {
     "title": "Paramètres",
