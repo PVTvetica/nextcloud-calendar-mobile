@@ -35,6 +35,7 @@ export default function CalendarScreen() {
   const { t } = useTranslation();
 
   const weekStartsOn = useAppStore((s) => s.weekStartsOn);
+  const language = useAppStore((s) => s.language);
   const hiddenCalendarIds = useAppStore((s) => s.hiddenCalendarIds);
   const toggleCalendarVisibility = useAppStore((s) => s.toggleCalendarVisibility);
 
@@ -132,12 +133,12 @@ export default function CalendarScreen() {
 
   const headerTitle = useMemo(() => {
     const d = dayjs(viewMode === 'schedule' ? agendaVisibleDate : date);
-    const monthYear = d.format('MMMM YYYY');
+    const monthYear = d.locale(language).format('MMMM YYYY');
     if (viewMode === 'week' || viewMode === '3days' || viewMode === 'day') {
       return `${monthYear}  ·  W${d.isoWeek()}`;
     }
     return monthYear;
-  }, [date, agendaVisibleDate, viewMode]);
+  }, [date, agendaVisibleDate, viewMode, language]);
 
 
   const calendarKeyFull = String(calendarKey);
