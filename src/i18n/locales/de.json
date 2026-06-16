@@ -140,6 +140,7 @@
       "description": "Eine quelloffene mobile Kalender-App für Nextcloud.",
       "github": "Auf GitHub ansehen",
       "reportBug": "Fehler melden"
-    }
+    },
+    "accountActive": "Aktiv"
   }
 }

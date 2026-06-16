@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 import { AvatarImage } from '@/components/AvatarImage';
 import type { Account } from '@/types';
@@ -12,6 +13,7 @@ interface Props {
 
 export function AccountCard({ account, isActive, onSetActive, onDelete }: Props) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const hostname = (() => { try { return new URL(account.baseUrl).hostname; } catch { return account.baseUrl; } })();
 
   const cardBg = isActive
@@ -27,10 +29,10 @@ export function AccountCard({ account, isActive, onSetActive, onDelete }: Props)
           <Text style={[styles.displayName, { color: theme.text }]}>{account.displayName}</Text>
           <Text style={[styles.meta, { color: theme.textSecondary }]}>{account.username}</Text>
         </View>
-        {isActive && <Text style={[styles.activeBadge, { color: theme.primary }]}>Active</Text>}
+        {isActive && <Text style={[styles.activeBadge, { color: theme.primary }]}>{t('settings.accountActive')}</Text>}
       </TouchableOpacity>
       <TouchableOpacity onPress={onDelete} style={styles.deleteBtn}>
-        <Text style={[styles.deleteText, { color: theme.danger }]}>Remove</Text>
+        <Text style={[styles.deleteText, { color: theme.danger }]}>{t('common.remove')}</Text>
       </TouchableOpacity>
     </View>
   );
