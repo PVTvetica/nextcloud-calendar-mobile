@@ -47,8 +47,6 @@ export default function SettingsScreen() {
   useEffect(() => { setPendingTheme(themePreference); }, [themePreference]);
   useEffect(() => { setPendingWeek(weekStartsOn); }, [weekStartsOn]);
 
-  // Reset the accordion to its default (Accounts open, Appearance collapsed)
-  // when leaving the screen, so it's fresh on the next visit.
   useFocusEffect(
     useCallback(() => {
       return () => {

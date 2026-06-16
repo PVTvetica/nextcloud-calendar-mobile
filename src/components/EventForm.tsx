@@ -105,7 +105,6 @@ export function EventForm({
   }
 
   function handleIosStartChange(_: any, d?: Date) {
-    // Keep picker open — onChange fires while scrolling; user taps button again to dismiss
     if (d) setDtstart(d);
   }
 

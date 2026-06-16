@@ -31,8 +31,6 @@ interface Props extends LiveProps {
 
 function CalendarInstanceImpl({ mode, calendarKey, visible, ...live }: Props) {
   const language = useAppStore((s) => s.language);
-  // Defer the locale so the heavy react-native-big-calendar rebuild happens in a
-  // low-priority render (lets the language picker's loading spinner stay smooth).
   const deferredLanguage = useDeferredValue(language);
   const frozen = useRef<LiveProps>(live);
   const { props, nextFrozen } = resolveFrozenProps(visible, live as LiveProps, frozen.current);

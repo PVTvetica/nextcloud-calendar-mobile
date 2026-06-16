@@ -1,4 +1,3 @@
-// __tests__/utils/caldav-parse.test.ts
 import { parseIcsObjects, parseIcsObjectsAsync } from '../../src/utils/caldav-parse';
 
 const sampleIcs = `BEGIN:VCALENDAR

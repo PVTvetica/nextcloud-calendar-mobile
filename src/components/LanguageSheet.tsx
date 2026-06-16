@@ -23,8 +23,6 @@ export function LanguageSheet({ variant = 'row' }: { variant?: 'row' | 'icon' } 
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const triggerRef = useRef<View>(null);
 
-  // Mirror the theme-switch UX: while the deferred language lags behind the
-  // selected one, the heavy calendar rebuild is in flight — show a spinner.
   const deferredLanguage = useDeferredValue(language);
   const switching = language !== deferredLanguage;
 
@@ -46,7 +44,6 @@ export function LanguageSheet({ variant = 'row' }: { variant?: 'row' | 'icon' } 
   if (!a) {
     dropdownPos = { top: 120, left: 16, right: 16 };
   } else if (variant === 'icon') {
-    // anchor under the icon, right-aligned, fixed width
     dropdownPos = { top: a.y + a.height + 8, left: Math.max(8, a.x + a.width - ICON_DROPDOWN_WIDTH), width: ICON_DROPDOWN_WIDTH };
   } else {
     const openUp = a.y + a.height + MAX_LIST_HEIGHT + 8 > screenH;

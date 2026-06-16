@@ -162,7 +162,6 @@ export function injectExdate(masterIcs: string, occurrenceDtstart: Date, timezon
   const stamp = `${g('year')}${g('month')}${g('day')}T${g('hour')}${g('minute')}${g('second')}`;
   const exdateLine = `EXDATE;TZID=${timezone}:${stamp}`;
 
-  // Insert before END:VEVENT
   return masterIcs.replace(/(END:VEVENT)/, `${exdateLine}\r\n$1`);
 }
 

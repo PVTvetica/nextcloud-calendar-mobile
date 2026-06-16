@@ -1,4 +1,3 @@
-// __tests__/utils/ics.test.ts
 import { buildIcs, buildAllDayIcs } from '../../src/utils/ics';
 import type { Attendee } from '../../src/types';
 

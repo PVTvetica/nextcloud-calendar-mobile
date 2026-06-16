@@ -1,4 +1,3 @@
-// __tests__/utils/caldav-entities.test.ts
 import { decodeXmlEntities } from '../../src/api/caldav';
 import { parseIcsObjects } from '../../src/utils/caldav-parse';
 
@@ -23,9 +22,7 @@ describe('decodeXmlEntities', () => {
   });
 
   it('is single-pass: does not cascade-decode (no double unescape)', () => {
-    // &amp;lt; is the XML encoding of the literal text "&lt;" -> must stay "&lt;"
     expect(decodeXmlEntities('x &amp;lt; y')).toBe('x &lt; y');
-    // &amp;amp; -> "&amp;" (one level only)
     expect(decodeXmlEntities('&amp;amp;')).toBe('&amp;');
   });
 });
@@ -33,8 +30,6 @@ describe('decodeXmlEntities', () => {
 describe('CalDAV REPORT extraction: ICS arrives XML-escaped', () => {
   const calMeta = { calendarId: 'cal-1', accountId: 'acc-1', color: '#0082c9' };
 
-  // What SabreDAV/Nextcloud returns inside <cal:calendar-data>: the raw ICS with
-  // & < > XML-escaped. A title "Tom & Jerry" and description "<b>note</b> & more".
   const escapedIcs = `BEGIN:VCALENDAR
 VERSION:2.0
 BEGIN:VEVENT
