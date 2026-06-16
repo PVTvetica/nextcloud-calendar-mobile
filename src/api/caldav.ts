@@ -14,6 +14,39 @@ function extractSlug(url: string): string {
   return url.replace(/\/$/, '').split('/').pop() ?? '';
 }
 
+const NAMED_XML_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+};
+
+/**
+ * Decode XML entities (&amp; &lt; &gt; &quot; &apos; and numeric &#NN; / &#xNN;)
+ * in a single left-to-right pass, so nothing cascade-decodes.
+ *
+ * Needed because we extract <cal:calendar-data> from the CalDAV REPORT response
+ * with a regex instead of an XML parser. SabreDAV (Nextcloud) embeds the ICS as
+ * XML-escaped text, so a raw `&` in a SUMMARY/DESCRIPTION/LOCATION arrives as
+ * `&amp;`. ical.js does not touch XML entities, so without this the literal
+ * `&amp;` would survive into the event and render verbatim in <Text>. Decoding
+ * the whole blob is the exact inverse of SabreDAV's transport escaping and
+ * restores the original on-disk ICS.
+ */
+export function decodeXmlEntities(input: string): string {
+  return input.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z]+);/g, (match, entity) => {
+    if (entity[0] === '#') {
+      const code =
+        entity[1] === 'x' || entity[1] === 'X'
+          ? parseInt(entity.slice(2), 16)
+          : parseInt(entity.slice(1), 10);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : match;
+    }
+    return NAMED_XML_ENTITIES[entity] ?? match;
+  });
+}
+
 function splitResponses(xml: string): string[] {
   const chunks: string[] = [];
   const re = /<d:response[^>]*>([\s\S]*?)<\/d:response>/g;
@@ -193,7 +226,7 @@ export async function fetchEvents(
     const dataMatch = chunk.match(/<cal:calendar-data[^>]*>([\s\S]*?)<\/cal:calendar-data>/);
     if (dataMatch?.[1] && hrefMatch?.[1]) {
       const href = `${account.baseUrl}${hrefMatch[1]}`;
-      items.push({ ics: dataMatch[1].trim(), href });
+      items.push({ ics: decodeXmlEntities(dataMatch[1].trim()), href });
     }
   }
 
