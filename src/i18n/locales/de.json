@@ -32,7 +32,13 @@
       "required": "Alle Felder sind erforderlich.",
       "invalidCreds": "Ungültige Anmeldedaten. Überprüfen Sie Ihr App-Passwort.",
       "connect": "Verbindung fehlgeschlagen: {{msg}}"
-    }
+    },
+    "qrCameraRequired": "Kamerazugriff ist erforderlich, um den QR-Code zu scannen.",
+    "qrAllowCamera": "Kamera erlauben",
+    "qrHeaderTitle": "Nextcloud-QR scannen",
+    "qrInvalidCode": "Kein gültiger Nextcloud-Login-QR-Code. Bitte erneut scannen.",
+    "qrTryAgain": "Erneut versuchen",
+    "qrHint": "Öffnen Sie Ihr Nextcloud-Dashboard → tippen Sie auf Ihren Avatar → „Per QR-Code anmelden“"
   },
   "calendar": {
     "today": "Heute",
