@@ -8,7 +8,7 @@ interface Props {
   value: boolean;
   onChange: (v: boolean) => void;
   roomType: TalkRoomType;
-  onRoomTypeChange: (t: TalkRoomType) => void;
+  onRoomTypeChange: (type: TalkRoomType) => void;
 }
 
 export function TalkToggle({ value, onChange, roomType, onRoomTypeChange }: Props) {

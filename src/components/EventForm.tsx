@@ -309,7 +309,7 @@ export function EventForm({
           style={[inputStyle, styles.attendeeInput]}
           value={attendeeInput}
           onChangeText={setAttendeeInput}
-          placeholder="email@example.com"
+          placeholder={t('event.attendeePlaceholder')}
           placeholderTextColor={theme.textTertiary}
           autoCapitalize="none"
           keyboardType="email-address"

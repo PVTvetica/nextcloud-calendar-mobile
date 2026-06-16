@@ -63,6 +63,7 @@
     "description": "Descripción",
     "descriptionPlaceholder": "Detalles...",
     "attendees": "Asistentes",
+    "attendeePlaceholder": "email@example.com",
     "add": "Añadir",
     "saving": "Guardando…",
     "saveEvent": "Guardar evento",

@@ -63,6 +63,7 @@
     "description": "Description",
     "descriptionPlaceholder": "Details...",
     "attendees": "Attendees",
+    "attendeePlaceholder": "email@example.com",
     "add": "Add",
     "saving": "Saving…",
     "saveEvent": "Save Event",
