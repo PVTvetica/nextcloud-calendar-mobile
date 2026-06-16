@@ -30,9 +30,7 @@ describe('SettingsScreen i18n', () => {
 
   it('opens the dropdown and lists all four languages', () => {
     const { getByText, queryByText } = render(<SettingsScreen />, { wrapper });
-    // modal closed initially: other languages not rendered yet
     expect(queryByText('Deutsch')).toBeNull();
-    // trigger shows the active language label; pressing it opens the sheet
     fireEvent.press(getByText('English'));
     expect(getByText('Deutsch')).toBeTruthy();
     expect(getByText('Français')).toBeTruthy();
