@@ -22,16 +22,20 @@ describe('SettingsScreen i18n', () => {
     useAppStore.setState({ language: 'en' });
   });
 
-  it('renders the English title and Language label', () => {
-    const { getByText } = render(<SettingsScreen />, { wrapper });
+  it('renders the title and the collapsible section headers', () => {
+    const { getByText, queryByText } = render(<SettingsScreen />, { wrapper });
     expect(getByText('Settings')).toBeTruthy();
-    expect(getByText('Language')).toBeTruthy();
+    expect(getByText('Appearance')).toBeTruthy();
+    expect(getByText('Accounts')).toBeTruthy();
+    // Appearance is collapsed by default, so its Language control is hidden
+    expect(queryByText('Language')).toBeNull();
   });
 
-  it('opens the dropdown and lists all four languages', () => {
+  it('expands Appearance, opens the dropdown and lists all four languages', () => {
     const { getByText, queryByText } = render(<SettingsScreen />, { wrapper });
     expect(queryByText('Deutsch')).toBeNull();
-    fireEvent.press(getByText('English'));
+    fireEvent.press(getByText('Appearance')); // expand the section
+    fireEvent.press(getByText('English'));     // open the language dropdown
     expect(getByText('Deutsch')).toBeTruthy();
     expect(getByText('Français')).toBeTruthy();
     expect(getByText('Español')).toBeTruthy();
@@ -39,6 +43,7 @@ describe('SettingsScreen i18n', () => {
 
   it('selecting a language from the dropdown updates the store', () => {
     const { getByText } = render(<SettingsScreen />, { wrapper });
+    fireEvent.press(getByText('Appearance'));
     fireEvent.press(getByText('English'));
     fireEvent.press(getByText('Deutsch'));
     expect(useAppStore.getState().language).toBe('de');

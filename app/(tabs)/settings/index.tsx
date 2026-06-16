@@ -27,6 +27,8 @@ const THEME_LABEL_KEY: Record<ThemePreference, string> = {
 export default function SettingsScreen() {
   const router = useRouter();
   const [aboutVisible, setAboutVisible] = useState(false);
+  const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const [accountsOpen, setAccountsOpen] = useState(true);
   const appVersion = Constants.expoConfig?.version ?? '—';
   const queryClient = useQueryClient();
   const theme = useTheme();
@@ -136,7 +138,17 @@ export default function SettingsScreen() {
       </Modal>
 
       <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight + 16 }} keyboardShouldPersistTaps="handled">
-        <Text style={[styles.sectionHeader, { color: theme.textTertiary }]}>{t('settings.appearance')}</Text>
+        <TouchableOpacity
+          style={styles.accordionHeader}
+          onPress={() => setAppearanceOpen((o) => !o)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: appearanceOpen }}
+        >
+          <Text style={[styles.sectionHeader, styles.accordionTitle, { color: theme.textTertiary }]}>{t('settings.appearance')}</Text>
+          <Ionicons name={appearanceOpen ? 'chevron-up' : 'chevron-down'} size={18} color={theme.textTertiary} />
+        </TouchableOpacity>
+        {appearanceOpen && (
+          <>
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Text style={[styles.cardLabel, { color: theme.text }]}>{t('settings.theme')}</Text>
           <View style={styles.themeRow}>
@@ -240,8 +252,20 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </View>
         </View>
+          </>
+        )}
 
-        <Text style={[styles.sectionHeader, { color: theme.textTertiary }]}>{t('settings.accounts')}</Text>
+        <TouchableOpacity
+          style={styles.accordionHeader}
+          onPress={() => setAccountsOpen((o) => !o)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: accountsOpen }}
+        >
+          <Text style={[styles.sectionHeader, styles.accordionTitle, { color: theme.textTertiary }]}>{t('settings.accounts')}</Text>
+          <Ionicons name={accountsOpen ? 'chevron-up' : 'chevron-down'} size={18} color={theme.textTertiary} />
+        </TouchableOpacity>
+        {accountsOpen && (
+          <>
         {accounts.map((account) => (
           <AccountCard
             key={account.id}
@@ -257,6 +281,8 @@ export default function SettingsScreen() {
         >
           <Text style={[styles.addBtnText, { color: theme.primary }]}>{t('settings.addAccount')}</Text>
         </TouchableOpacity>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
