@@ -50,6 +50,7 @@
     "threeDays": "3G",
     "month": "Mese",
     "schedule": "Agenda",
+    "weekAbbr": "S",
     "loadingCalendar": "Caricamento del calendario…",
     "drawerAccount": "ACCOUNT",
     "manageAccounts": "Gestisci account →",

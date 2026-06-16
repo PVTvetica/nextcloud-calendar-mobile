@@ -50,6 +50,7 @@
     "threeDays": "3д",
     "month": "Месяц",
     "schedule": "Повестка",
+    "weekAbbr": "нед.",
     "loadingCalendar": "Загрузка календаря…",
     "drawerAccount": "АККАУНТ",
     "manageAccounts": "Управление аккаунтами →",

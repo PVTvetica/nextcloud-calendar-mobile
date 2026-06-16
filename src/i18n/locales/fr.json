@@ -50,6 +50,7 @@
     "threeDays": "3J",
     "month": "Mois",
     "schedule": "Agenda",
+    "weekAbbr": "S",
     "loadingCalendar": "Chargement du calendrier…",
     "drawerAccount": "COMPTE",
     "manageAccounts": "Gérer les comptes →",

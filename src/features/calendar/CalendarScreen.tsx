@@ -135,10 +135,10 @@ export default function CalendarScreen() {
     const d = dayjs(viewMode === 'schedule' ? agendaVisibleDate : date);
     const monthYear = d.locale(language).format('MMMM YYYY');
     if (viewMode === 'week' || viewMode === '3days' || viewMode === 'day') {
-      return `${monthYear}  ·  W${d.isoWeek()}`;
+      return `${monthYear}  ·  ${t('calendar.weekAbbr')}${d.isoWeek()}`;
     }
     return monthYear;
-  }, [date, agendaVisibleDate, viewMode, language]);
+  }, [date, agendaVisibleDate, viewMode, language, t]);
 
 
   const calendarKeyFull = String(calendarKey);

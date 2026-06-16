@@ -50,6 +50,7 @@
     "threeDays": "3T",
     "month": "Monat",
     "schedule": "Agenda",
+    "weekAbbr": "KW",
     "loadingCalendar": "Kalender wird geladen…",
     "drawerAccount": "KONTO",
     "manageAccounts": "Konten verwalten →",
