@@ -10,10 +10,11 @@ import { Flag } from '@/i18n/flags';
 const ROW_HEIGHT = 58;
 const MAX_VISIBLE = 5;
 const MAX_LIST_HEIGHT = ROW_HEIGHT * MAX_VISIBLE;
+const ICON_DROPDOWN_WIDTH = 240;
 
 type Anchor = { x: number; y: number; width: number; height: number };
 
-export function LanguageSheet() {
+export function LanguageSheet({ variant = 'row' }: { variant?: 'row' | 'icon' } = {}) {
   const theme = useTheme();
   const { t } = useTranslation();
   const language = useAppStore((s) => s.language);
@@ -41,31 +42,52 @@ export function LanguageSheet() {
 
   const screenH = Dimensions.get('window').height;
   const a = anchor;
-  const openUp = !!a && a.y + a.height + MAX_LIST_HEIGHT + 8 > screenH;
-  const dropdownPos = a
-    ? openUp
+  let dropdownPos: Record<string, number>;
+  if (!a) {
+    dropdownPos = { top: 120, left: 16, right: 16 };
+  } else if (variant === 'icon') {
+    // anchor under the icon, right-aligned, fixed width
+    dropdownPos = { top: a.y + a.height + 8, left: Math.max(8, a.x + a.width - ICON_DROPDOWN_WIDTH), width: ICON_DROPDOWN_WIDTH };
+  } else {
+    const openUp = a.y + a.height + MAX_LIST_HEIGHT + 8 > screenH;
+    dropdownPos = openUp
       ? { bottom: screenH - a.y + 8, left: a.x, width: a.width }
-      : { top: a.y + a.height + 8, left: a.x, width: a.width }
-    : { top: 120, left: 16, right: 16 };
+      : { top: a.y + a.height + 8, left: a.x, width: a.width };
+  }
 
   return (
     <View>
-      <TouchableOpacity
-        ref={triggerRef}
-        accessibilityRole="button"
-        accessibilityLabel={t('common.language')}
-        accessibilityState={{ expanded: open }}
-        style={[styles.trigger, { backgroundColor: theme.surface, borderColor: open ? theme.primary : theme.border }]}
-        onPress={toggle}
-      >
-        <Flag code={active.code} size={26} />
-        <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>{active.label}</Text>
-        <Text style={[styles.code, { color: theme.textTertiary }]}>({active.region})</Text>
-        <View style={styles.spacer} />
-        {switching
-          ? <ActivityIndicator size="small" color={theme.primary} />
-          : <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={20} color={theme.textTertiary} />}
-      </TouchableOpacity>
+      {variant === 'icon' ? (
+        <TouchableOpacity
+          ref={triggerRef}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.language')}
+          accessibilityState={{ expanded: open }}
+          hitSlop={10}
+          onPress={toggle}
+        >
+          {switching
+            ? <ActivityIndicator size="small" color={theme.textSecondary} />
+            : <Ionicons name="globe-outline" size={24} color={theme.textSecondary} />}
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          ref={triggerRef}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.language')}
+          accessibilityState={{ expanded: open }}
+          style={[styles.trigger, { backgroundColor: theme.surface, borderColor: open ? theme.primary : theme.border }]}
+          onPress={toggle}
+        >
+          <Flag code={active.code} size={26} />
+          <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>{active.label}</Text>
+          <Text style={[styles.code, { color: theme.textTertiary }]}>({active.region})</Text>
+          <View style={styles.spacer} />
+          {switching
+            ? <ActivityIndicator size="small" color={theme.primary} />
+            : <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={20} color={theme.textTertiary} />}
+        </TouchableOpacity>
+      )}
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />

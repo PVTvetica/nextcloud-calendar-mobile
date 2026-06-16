@@ -113,10 +113,6 @@ export default function SetupScreen() {
           <Text style={[styles.brandName, { color: theme.primary }]}>{t('setup.brand')}</Text>
           <Text style={[styles.title, { color: theme.text }]}>{t('setup.title')}</Text>
 
-          <View style={{ marginBottom: 20 }}>
-            <LanguageSheet />
-          </View>
-
           <TouchableOpacity
             style={[styles.qrBtn, { backgroundColor: theme.primary }]}
             onPress={() => setShowScanner(true)}
@@ -212,6 +208,10 @@ export default function SetupScreen() {
 
       </KeyboardAvoidingView>
 
+      <View style={styles.langCorner}>
+        <LanguageSheet variant="icon" />
+      </View>
+
       <QrLoginScanner
         visible={showScanner}
         onClose={() => setShowScanner(false)}
@@ -223,6 +223,7 @@ export default function SetupScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
+  langCorner: { position: 'absolute', top: 8, right: 16, zIndex: 10 },
   flex: { flex: 1 },
   content: { padding: 24, paddingTop: 52 },
   brandName: { fontSize: 13, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 },
