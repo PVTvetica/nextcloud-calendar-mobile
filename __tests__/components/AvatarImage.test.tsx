@@ -34,8 +34,6 @@ describe('AvatarImage', () => {
 
     render(<AvatarImage account={account} size={40} />);
 
-    // React Native Image does not have an accessible 'image' role in testing-library;
-    // check by querying the Image component via testID or querying all elements.
     const allImages = screen.UNSAFE_getAllByType(require('react-native').Image);
     expect(allImages).toHaveLength(1);
     expect(allImages[0].props.source).toEqual({ uri: dataUri });

@@ -3,6 +3,7 @@ import {
   View, Text, SectionList, TouchableOpacity, StyleSheet,
 } from 'react-native';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 import type { Theme } from '@/theme';
 import type { CalendarEvent } from '@/types';
@@ -19,8 +20,8 @@ const DAYS_AHEAD = 120;
 
 type AgendaSection = { key: string; date: Date; data: CalendarEvent[] };
 
-function formatTime(d: Date, allDay: boolean): string {
-  if (allDay) return 'All day';
+function formatTime(d: Date, allDay: boolean, allDayLabel: string): string {
+  if (allDay) return allDayLabel;
   return dayjs(d).format('HH:mm');
 }
 
@@ -32,6 +33,7 @@ interface DayHeaderProps {
 }
 
 const DayHeader = memo(({ sectionDate, hasEvents, theme, onPress }: DayHeaderProps) => {
+  const { t } = useTranslation();
   const d = dayjs(sectionDate);
   const isToday = d.isSame(dayjs(), 'day');
   return (
@@ -49,10 +51,10 @@ const DayHeader = memo(({ sectionDate, hasEvents, theme, onPress }: DayHeaderPro
         <Text style={[styles.dayName, { color: isToday ? theme.primary : theme.textSecondary }]}>
           {d.format('ddd').toUpperCase()}
         </Text>
-        {isToday && <Text style={[styles.todayLabel, { color: theme.primary }]}>Today</Text>}
+        {isToday && <Text style={[styles.todayLabel, { color: theme.primary }]}>{t('calendar.today')}</Text>}
       </View>
       {!hasEvents && (
-        <Text style={[styles.noEvents, { color: theme.textTertiary }]}>No events</Text>
+        <Text style={[styles.noEvents, { color: theme.textTertiary }]}>{t('calendar.noEvents')}</Text>
       )}
     </TouchableOpacity>
   );
@@ -65,6 +67,7 @@ interface EventRowProps {
 }
 
 const EventRow = memo(({ event, theme, onPress }: EventRowProps) => {
+  const { t } = useTranslation();
   const duration = event.allDay
     ? null
     : (() => {
@@ -75,6 +78,8 @@ const EventRow = memo(({ event, theme, onPress }: EventRowProps) => {
         return m ? `${h}h ${m}m` : `${h}h`;
       })();
 
+  const allDayLabel = t('calendar.allDay');
+
   return (
     <TouchableOpacity
       style={[styles.eventRow, { backgroundColor: theme.surface }]}
@@ -84,12 +89,12 @@ const EventRow = memo(({ event, theme, onPress }: EventRowProps) => {
       <View style={[styles.colorBar, { backgroundColor: event.color }]} />
       <View style={styles.eventContent}>
         <Text style={[styles.eventTitle, { color: theme.text }]} numberOfLines={2}>
-          {event.summary || '(No title)'}
+          {event.summary || t('calendar.noTitle')}
         </Text>
         <View style={styles.eventMeta}>
           <Text style={[styles.eventTime, { color: theme.textSecondary }]}>
-            {formatTime(event.dtstart, event.allDay)}
-            {!event.allDay && ` – ${formatTime(event.dtend, false)}`}
+            {formatTime(event.dtstart, event.allDay, allDayLabel)}
+            {!event.allDay && ` – ${formatTime(event.dtend, false, allDayLabel)}`}
           </Text>
           {duration && (
             <Text style={[styles.eventDuration, { color: theme.textTertiary }]}>{duration}</Text>

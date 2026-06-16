@@ -1,5 +1,6 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
@@ -31,8 +32,10 @@ dayjs.extend(isoWeek);
 export default function CalendarScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const weekStartsOn = useAppStore((s) => s.weekStartsOn);
+  const language = useAppStore((s) => s.language);
   const hiddenCalendarIds = useAppStore((s) => s.hiddenCalendarIds);
   const toggleCalendarVisibility = useAppStore((s) => s.toggleCalendarVisibility);
 
@@ -130,12 +133,12 @@ export default function CalendarScreen() {
 
   const headerTitle = useMemo(() => {
     const d = dayjs(viewMode === 'schedule' ? agendaVisibleDate : date);
-    const monthYear = d.format('MMMM YYYY');
+    const monthYear = d.locale(language).format('MMMM YYYY');
     if (viewMode === 'week' || viewMode === '3days' || viewMode === 'day') {
-      return `${monthYear}  ·  W${d.isoWeek()}`;
+      return `${monthYear}  ·  ${t('calendar.weekAbbr')}${d.isoWeek()}`;
     }
     return monthYear;
-  }, [date, agendaVisibleDate, viewMode]);
+  }, [date, agendaVisibleDate, viewMode, language, t]);
 
 
   const calendarKeyFull = String(calendarKey);
@@ -215,7 +218,7 @@ export default function CalendarScreen() {
       {showFullOverlay && (
         <View style={[styles.loadingOverlay, { backgroundColor: theme.background }]}>
           <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading calendar…</Text>
+          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>{t('calendar.loadingCalendar')}</Text>
         </View>
       )}
       {showSmallLoader && (

@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { loadAccounts } from '@/api/auth';
 import { fetchEvents } from '@/api/caldav';
 import { useCalendars } from '@/hooks/useCalendars';
@@ -19,6 +20,7 @@ export default function EditEventScreen() {
   const { uid, scope: scopeParam } = useLocalSearchParams<{ uid: string; scope?: string }>();
   const router = useRouter();
   const theme = useTheme();
+  const { t } = useTranslation();
   const activeAccountId = useAppStore((s) => s.activeAccountId);
   const queryClient = useQueryClient();
 
@@ -83,9 +85,9 @@ export default function EditEventScreen() {
   if (!event) {
     return (
       <View style={[styles.center, { backgroundColor: theme.background }]}>
-        <Text style={{ color: theme.textSecondary }}>Event not found.</Text>
+        <Text style={{ color: theme.textSecondary }}>{t('event.eventNotFound')}</Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
-          <Text style={{ color: theme.primary }}>← Back</Text>
+          <Text style={{ color: theme.primary }}>{t('event.back')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -107,18 +109,18 @@ export default function EditEventScreen() {
   };
 
   const scopeLabel =
-    scope === 'this' ? ' (This Occurrence)'
-    : scope === 'thisAndFollowing' ? ' (This & Following)'
+    scope === 'this' ? ` (${t('event.scopeThisOccurrence')})`
+    : scope === 'thisAndFollowing' ? ` (${t('event.scopeThisAndFollowing')})`
     : '';
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={[styles.header, { borderBottomColor: theme.border, backgroundColor: theme.headerBackground }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={[styles.cancel, { color: theme.primary }]}>Cancel</Text>
+          <Text style={[styles.cancel, { color: theme.primary }]}>{t('common.cancel')}</Text>
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
-          Edit Event{scopeLabel}
+          {t('event.editEvent')}{scopeLabel}
         </Text>
         <View style={styles.spacer} />
       </View>
@@ -129,7 +131,7 @@ export default function EditEventScreen() {
         onSubmit={handleSubmit}
         loading={updateMutation.isPending}
         initialValues={initialValues}
-        submitLabel="Update Event"
+        submitLabel={t('event.updateEvent')}
         disableCalendarChange
       />
     </SafeAreaView>

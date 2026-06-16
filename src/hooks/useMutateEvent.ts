@@ -137,7 +137,7 @@ export function useCreateEvent(account: Account, calendars: CalendarMeta[]) {
       eventMutation: true,
       type: 'create',
       accountId: account.id,
-      errorTitle: 'Failed to create event',
+      errorTitleKey: 'event.errorCreateFailed',
     } satisfies EventMutationMeta,
 
     mutationFn: async (input: CreateEventInput): Promise<CalendarEvent> => {
@@ -185,7 +185,7 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
       eventMutation: true,
       type: 'update',
       accountId: account.id,
-      errorTitle: 'Failed to update event',
+      errorTitleKey: 'event.errorUpdateFailed',
     } satisfies EventMutationMeta,
 
     mutationFn: async ({
@@ -277,7 +277,7 @@ export function useDeleteEvent(account: Account) {
       eventMutation: true,
       type: 'delete',
       accountId: account.id,
-      errorTitle: 'Failed to delete event',
+      errorTitleKey: 'event.errorDeleteFailed',
     } satisfies EventMutationMeta,
 
     mutationFn: async ({ event, scope = 'all' }: { event: CalendarEvent; scope?: RecurrenceEditScope }) => {

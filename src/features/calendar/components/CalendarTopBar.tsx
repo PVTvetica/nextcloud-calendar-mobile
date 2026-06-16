@@ -1,10 +1,11 @@
 import { memo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { styles } from '@/styles/calendarScreen';
 import { useTheme } from '@/hooks/useTheme';
 import type { ViewMode } from '@/types';
-import { VIEW_MODES, VIEW_LABELS } from '../constants';
+import { VIEW_MODES } from '../constants';
 
 interface Props {
   headerTitle: string;
@@ -16,8 +17,17 @@ interface Props {
   onSwitchMode: (mode: ViewMode) => void;
 }
 
+const VIEW_MODE_KEYS: Record<ViewMode, string> = {
+  month: 'calendar.month',
+  week: 'calendar.week',
+  '3days': 'calendar.threeDays',
+  day: 'calendar.day',
+  schedule: 'calendar.schedule',
+};
+
 function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOpenDrawer, onToday, onSwitchMode }: Props) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <SafeAreaView
@@ -39,7 +49,7 @@ function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOp
           {todayLoading ? (
             <ActivityIndicator size="small" color={theme.primary} />
           ) : (
-            <Text style={[styles.todayBtnText, { color: theme.primary }]}>Today</Text>
+            <Text style={[styles.todayBtnText, { color: theme.primary }]}>{t('calendar.today')}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -61,7 +71,7 @@ function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOp
                 viewMode === mode && { color: theme.primaryText, fontWeight: '600' },
               ]}
             >
-              {VIEW_LABELS[mode]}
+              {t(VIEW_MODE_KEYS[mode])}
             </Text>
           </TouchableOpacity>
         ))}

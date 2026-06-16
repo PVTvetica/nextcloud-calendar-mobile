@@ -13,6 +13,8 @@ import { fetchCapabilities } from '@/api/nextcloud';
 import { useAppStore } from '@/store/appStore';
 import { queryClient } from '@/api/queryClient';
 import { setupOnlineManager } from '@/api/network';
+import '@/i18n';
+import { useLanguageSync } from '@/hooks/useLanguageSync';
 SplashScreen.preventAutoHideAsync();
 
 const asyncStoragePersister = createAsyncStoragePersister({
@@ -34,6 +36,7 @@ export default function RootLayout() {
   const router = useRouter();
   const setStoreAccountId = useAppStore((s) => s.setActiveAccountId);
   const setCapabilities = useAppStore((s) => s.setCapabilities);
+  useLanguageSync();
 
   useEffect(() => {
     const teardownOnline = setupOnlineManager();

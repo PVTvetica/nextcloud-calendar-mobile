@@ -4,7 +4,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, KeyboardAvoidingView, ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -16,12 +16,16 @@ import { useTheme } from '@/hooks/useTheme';
 import { QrLoginScanner } from '@/components/QrLoginScanner';
 import type { NcLoginData } from '@/components/QrLoginScanner';
 import type { Account } from '@/types';
+import { useTranslation } from 'react-i18next';
+import { LanguageSheet } from '@/components/LanguageSheet';
 
 export default function SetupScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const setStoreId = useAppStore((s) => s.setActiveAccountId);
+  const { t } = useTranslation();
 
   const [baseUrl, setBaseUrl] = useState('');
   const [username, setUsername] = useState('');
@@ -77,8 +81,8 @@ export default function SetupScreen() {
       const msg = e instanceof Error ? e.message : String(e);
       setError(
         msg.includes('401') || msg.includes('auth')
-          ? 'Invalid credentials. Check your app password.'
-          : `Could not connect: ${msg}`
+          ? t('setup.errors.invalidCreds')
+          : t('setup.errors.connect', { msg })
       );
     } finally {
       setLoading(false);
@@ -87,7 +91,7 @@ export default function SetupScreen() {
 
   function handleAdd() {
     if (!baseUrl || !username || !appPassword) {
-      setError('All fields are required.');
+      setError(t('setup.errors.required'));
       return;
     }
     connectWith({ baseUrl, username, appPassword, displayName });
@@ -107,8 +111,8 @@ export default function SetupScreen() {
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
-          <Text style={[styles.brandName, { color: theme.primary }]}>Calendar</Text>
-          <Text style={[styles.title, { color: theme.text }]}>Connect to Nextcloud</Text>
+          <Text style={[styles.brandName, { color: theme.primary }]}>{t('setup.brand')}</Text>
+          <Text style={[styles.title, { color: theme.text }]}>{t('setup.title')}</Text>
 
           <TouchableOpacity
             style={[styles.qrBtn, { backgroundColor: theme.primary }]}
@@ -116,19 +120,19 @@ export default function SetupScreen() {
             disabled={loading}
           >
             <Ionicons name="qr-code-outline" size={22} color="#fff" style={{ marginRight: 10 }} />
-            <Text style={styles.qrBtnText}>Scan QR Code</Text>
+            <Text style={styles.qrBtnText}>{t('setup.scanQr')}</Text>
           </TouchableOpacity>
 
           <View style={styles.dividerRow}>
             <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
-            <Text style={[styles.dividerLabel, { color: theme.textTertiary }]}>or enter manually</Text>
+            <Text style={[styles.dividerLabel, { color: theme.textTertiary }]}>{t('setup.orManual')}</Text>
             <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
           </View>
 
-          <Text style={[styles.label, { color: theme.text }]}>Server URL</Text>
+          <Text style={[styles.label, { color: theme.text }]}>{t('setup.serverUrl')}</Text>
           <TextInput
             style={[styles.input, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
-            placeholder="https://cloud.example.com"
+            placeholder={t('setup.placeholders.serverUrl')}
             placeholderTextColor={theme.textTertiary}
             autoCapitalize="none"
             autoCorrect={false}
@@ -137,10 +141,10 @@ export default function SetupScreen() {
             onChangeText={setBaseUrl}
           />
 
-          <Text style={[styles.label, { color: theme.text }]}>Username</Text>
+          <Text style={[styles.label, { color: theme.text }]}>{t('setup.username')}</Text>
           <TextInput
             style={[styles.input, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
-            placeholder="john.doe"
+            placeholder={t('setup.placeholders.username')}
             placeholderTextColor={theme.textTertiary}
             autoCapitalize="none"
             autoCorrect={false}
@@ -148,11 +152,11 @@ export default function SetupScreen() {
             onChangeText={setUsername}
           />
 
-          <Text style={[styles.label, { color: theme.text }]}>App Password</Text>
+          <Text style={[styles.label, { color: theme.text }]}>{t('setup.appPassword')}</Text>
           <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <TextInput
               style={[styles.inputInner, { color: theme.text }]}
-              placeholder="xxxx-xxxx-xxxx-xxxx"
+              placeholder={t('setup.placeholders.appPassword')}
               placeholderTextColor={theme.textTertiary}
               secureTextEntry={!showPassword}
               autoCapitalize="none"
@@ -170,12 +174,12 @@ export default function SetupScreen() {
           </View>
 
           <Text style={[styles.label, { color: theme.text }]}>
-            Display Name{' '}
-            <Text style={{ color: theme.textTertiary, fontWeight: '400' }}>(optional)</Text>
+            {t('setup.displayName')}{' '}
+            <Text style={{ color: theme.textTertiary, fontWeight: '400' }}>{t('setup.optional')}</Text>
           </Text>
           <TextInput
             style={[styles.input, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
-            placeholder="Work"
+            placeholder={t('setup.placeholders.displayName')}
             placeholderTextColor={theme.textTertiary}
             value={displayName}
             onChangeText={setDisplayName}
@@ -190,20 +194,24 @@ export default function SetupScreen() {
           >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.buttonText}>Connect</Text>}
+              : <Text style={styles.buttonText}>{t('setup.connect')}</Text>}
           </TouchableOpacity>
 
           <Text style={[styles.hint, { color: theme.textTertiary }]}>
-            Generate an app password in Nextcloud → Settings → Security → App passwords.
+            {t('setup.hint')}
           </Text>
 
         </ScrollView>
 
         <Text style={[styles.footer, { color: theme.textTertiary }]}>
-          Made with ♥ for the community · Open Source
+          {t('setup.footer')}
         </Text>
 
       </KeyboardAvoidingView>
+
+      <View style={[styles.langCorner, { top: insets.top + 8 }]}>
+        <LanguageSheet variant="icon" />
+      </View>
 
       <QrLoginScanner
         visible={showScanner}
@@ -216,8 +224,9 @@ export default function SetupScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
+  langCorner: { position: 'absolute', right: 16, zIndex: 10 },
   flex: { flex: 1 },
-  content: { padding: 24, paddingTop: 52 },
+  content: { padding: 24, paddingTop: 24 },
   brandName: { fontSize: 13, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 },
   title: { fontSize: 26, fontWeight: '700', marginBottom: 28 },
   qrBtn: {
@@ -225,10 +234,10 @@ const styles = StyleSheet.create({
     borderRadius: 12, paddingVertical: 16, marginBottom: 8,
   },
   qrBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 20, gap: 10 },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 10, gap: 10, marginBottom:0 },
   dividerLine: { flex: 1, height: StyleSheet.hairlineWidth },
   dividerLabel: { fontSize: 13 },
-  label: { fontSize: 14, fontWeight: '600', marginBottom: 6, marginTop: 18 },
+  label: { fontSize: 14, fontWeight: '600', marginBottom: 6, marginTop:20 },
   input: {
     borderWidth: 1, borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 13, fontSize: 16,

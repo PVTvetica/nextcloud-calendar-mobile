@@ -1,7 +1,8 @@
-import { memo, useRef } from 'react';
+import { memo, useRef, useDeferredValue } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Calendar } from 'react-native-big-calendar';
 import { styles } from '@/styles/calendarScreen';
+import { useAppStore } from '@/store/appStore';
 import { FixedCalendarHeader } from '@/components/CalendarHeader';
 import { resolveFrozenProps } from '../utils/resolveFrozenProps';
 import type { CalMode } from '../constants';
@@ -29,6 +30,8 @@ interface Props extends LiveProps {
 }
 
 function CalendarInstanceImpl({ mode, calendarKey, visible, ...live }: Props) {
+  const language = useAppStore((s) => s.language);
+  const deferredLanguage = useDeferredValue(language);
   const frozen = useRef<LiveProps>(live);
   const { props, nextFrozen } = resolveFrozenProps(visible, live as LiveProps, frozen.current);
   frozen.current = nextFrozen;
@@ -41,6 +44,7 @@ function CalendarInstanceImpl({ mode, calendarKey, visible, ...live }: Props) {
       <View style={styles.calendarWrapper}>
         <Calendar
           key={calendarKey}
+          locale={deferredLanguage}
           events={props.events}
           mode={mode}
           date={props.date}
