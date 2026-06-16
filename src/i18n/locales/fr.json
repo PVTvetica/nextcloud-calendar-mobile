@@ -3,7 +3,10 @@
     "language": "Langue",
     "cancel": "Annuler",
     "remove": "Supprimer",
-    "close": "Fermer"
+    "close": "Fermer",
+    "errorPermission": "Autorisation refusée. Cet agenda est en lecture seule ou partagé sans accès en écriture.",
+    "errorNetwork": "Erreur réseau. Vérifiez votre connexion et réessayez.",
+    "errorGeneric": "Une erreur s'est produite. Veuillez réessayer."
   },
   "tabs": {
     "calendar": "Calendrier",
@@ -116,7 +119,10 @@
     "scopeAllEvents": "Tous les événements",
     "deleteAllMsg": "Supprimer toutes les occurrences de cet événement récurrent ?",
     "deleteThisAndFollowingMsg": "Supprimer cette occurrence et toutes les suivantes ?",
-    "deleteConfirmMsg": "Êtes-vous sûr de vouloir supprimer cet événement ?"
+    "deleteConfirmMsg": "Êtes-vous sûr de vouloir supprimer cet événement ?",
+    "errorCreateFailed": "Échec de la création de l'événement",
+    "errorUpdateFailed": "Échec de la mise à jour de l'événement",
+    "errorDeleteFailed": "Échec de la suppression de l'événement"
   },
   "settings": {
     "title": "Paramètres",

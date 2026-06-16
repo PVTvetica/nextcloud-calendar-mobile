@@ -3,7 +3,10 @@
     "language": "Language",
     "cancel": "Cancel",
     "remove": "Remove",
-    "close": "Close"
+    "close": "Close",
+    "errorPermission": "Permission denied. This calendar is read-only or shared without write access.",
+    "errorNetwork": "Network error. Check your connection and try again.",
+    "errorGeneric": "Something went wrong. Please try again."
   },
   "tabs": {
     "calendar": "Calendar",
@@ -116,7 +119,10 @@
     "scopeAllEvents": "All events",
     "deleteAllMsg": "Delete all occurrences of this recurring event?",
     "deleteThisAndFollowingMsg": "Delete this and all following occurrences?",
-    "deleteConfirmMsg": "Are you sure you want to delete this event?"
+    "deleteConfirmMsg": "Are you sure you want to delete this event?",
+    "errorCreateFailed": "Failed to create event",
+    "errorUpdateFailed": "Failed to update event",
+    "errorDeleteFailed": "Failed to delete event"
   },
   "settings": {
     "title": "Settings",

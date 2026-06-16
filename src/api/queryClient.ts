@@ -9,16 +9,17 @@ import {
   type EventMutationMeta,
 } from '@/hooks/eventMutationReconcile';
 import type { CalendarEvent } from '@/types';
+import i18n from '@/i18n';
 
 export function describeMutationError(error: unknown): string {
   const msg = error instanceof Error ? error.message : String(error ?? '');
   if (msg.includes('403')) {
-    return 'Permission denied. This calendar is read-only or shared without write access.';
+    return i18n.t('common.errorPermission');
   }
   if (/network|fetch|timeout|abort/i.test(msg)) {
-    return 'Network error. Check your connection and try again.';
+    return i18n.t('common.errorNetwork');
   }
-  return msg || 'Something went wrong. Please try again.';
+  return msg || i18n.t('common.errorGeneric');
 }
 
 function eventMeta(mutation: Mutation<any, any, any, any>): EventMutationMeta | undefined {
@@ -36,7 +37,7 @@ export function createQueryClient(): QueryClient {
       if (!meta) return;
       const ctx = context as EventMutationContext | undefined;
       if (ctx?.previous) rollbackEvents(client, ctx.previous);
-      Alert.alert(meta.errorTitle, describeMutationError(error));
+      Alert.alert(i18n.t(meta.errorTitleKey), describeMutationError(error));
     },
 
     onSuccess: (data, _variables, context, mutation) => {

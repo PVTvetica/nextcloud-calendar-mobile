@@ -3,7 +3,10 @@
     "language": "Idioma",
     "cancel": "Cancelar",
     "remove": "Eliminar",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "errorPermission": "Permiso denegado. Este calendario es de solo lectura o está compartido sin acceso de escritura.",
+    "errorNetwork": "Error de red. Comprueba tu conexión e inténtalo de nuevo.",
+    "errorGeneric": "Algo salió mal. Inténtalo de nuevo."
   },
   "tabs": {
     "calendar": "Calendario",
@@ -116,7 +119,10 @@
     "scopeAllEvents": "Todos los eventos",
     "deleteAllMsg": "¿Eliminar todas las ocurrencias de este evento recurrente?",
     "deleteThisAndFollowingMsg": "¿Eliminar esta y todas las siguientes ocurrencias?",
-    "deleteConfirmMsg": "¿Estás seguro de que quieres eliminar este evento?"
+    "deleteConfirmMsg": "¿Estás seguro de que quieres eliminar este evento?",
+    "errorCreateFailed": "No se pudo crear el evento",
+    "errorUpdateFailed": "No se pudo actualizar el evento",
+    "errorDeleteFailed": "No se pudo eliminar el evento"
   },
   "settings": {
     "title": "Ajustes",

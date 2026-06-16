@@ -3,7 +3,10 @@
     "language": "Sprache",
     "cancel": "Abbrechen",
     "remove": "Entfernen",
-    "close": "Schließen"
+    "close": "Schließen",
+    "errorPermission": "Zugriff verweigert. Dieser Kalender ist schreibgeschützt oder ohne Schreibzugriff freigegeben.",
+    "errorNetwork": "Netzwerkfehler. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+    "errorGeneric": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   },
   "tabs": {
     "calendar": "Kalender",
@@ -116,7 +119,10 @@
     "scopeAllEvents": "Alle Ereignisse",
     "deleteAllMsg": "Alle Vorkommen dieses wiederkehrenden Ereignisses löschen?",
     "deleteThisAndFollowingMsg": "Dieses und alle folgenden Vorkommen löschen?",
-    "deleteConfirmMsg": "Möchten Sie dieses Ereignis wirklich löschen?"
+    "deleteConfirmMsg": "Möchten Sie dieses Ereignis wirklich löschen?",
+    "errorCreateFailed": "Ereignis konnte nicht erstellt werden",
+    "errorUpdateFailed": "Ereignis konnte nicht aktualisiert werden",
+    "errorDeleteFailed": "Ereignis konnte nicht gelöscht werden"
   },
   "settings": {
     "title": "Einstellungen",
