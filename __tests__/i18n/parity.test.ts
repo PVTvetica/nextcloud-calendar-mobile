@@ -2,6 +2,8 @@ import en from '../../src/i18n/locales/en.json';
 import fr from '../../src/i18n/locales/fr.json';
 import de from '../../src/i18n/locales/de.json';
 import es from '../../src/i18n/locales/es.json';
+import itLocale from '../../src/i18n/locales/it.json';
+import ru from '../../src/i18n/locales/ru.json';
 
 function keyPaths(obj: Record<string, unknown>, prefix = ''): string[] {
   return Object.entries(obj).flatMap(([k, v]) => {
@@ -18,6 +20,8 @@ describe('locale parity', () => {
     ['fr', fr],
     ['de', de],
     ['es', es],
+    ['it', itLocale],
+    ['ru', ru],
   ])('%s has exactly the same keys as en', (_name, locale) => {
     expect(keyPaths(locale as Record<string, unknown>).sort()).toEqual(base);
   });
