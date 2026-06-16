@@ -4,7 +4,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, KeyboardAvoidingView, ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -22,6 +22,7 @@ import { LanguageSheet } from '@/components/LanguageSheet';
 export default function SetupScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const setStoreId = useAppStore((s) => s.setActiveAccountId);
   const { t } = useTranslation();
@@ -208,7 +209,7 @@ export default function SetupScreen() {
 
       </KeyboardAvoidingView>
 
-      <View style={styles.langCorner}>
+      <View style={[styles.langCorner, { top: insets.top + 8 }]}>
         <LanguageSheet variant="icon" />
       </View>
 
@@ -223,7 +224,7 @@ export default function SetupScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  langCorner: { position: 'absolute', top: 8, right: 16, zIndex: 10 },
+  langCorner: { position: 'absolute', right: 16, zIndex: 10 },
   flex: { flex: 1 },
   content: { padding: 24, paddingTop: 52 },
   brandName: { fontSize: 13, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 },
