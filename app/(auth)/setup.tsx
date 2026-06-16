@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   langCorner: { position: 'absolute', right: 16, zIndex: 10 },
   flex: { flex: 1 },
-  content: { padding: 24, paddingTop: 52 },
+  content: { padding: 24, paddingTop: 24 },
   brandName: { fontSize: 13, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 },
   title: { fontSize: 26, fontWeight: '700', marginBottom: 28 },
   qrBtn: {
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     borderRadius: 12, paddingVertical: 16, marginBottom: 8,
   },
   qrBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 20, gap: 10 },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 10, gap: 10 },
   dividerLine: { flex: 1, height: StyleSheet.hairlineWidth },
   dividerLabel: { fontSize: 13 },
   label: { fontSize: 14, fontWeight: '600', marginBottom: 6, marginTop: 18 },
