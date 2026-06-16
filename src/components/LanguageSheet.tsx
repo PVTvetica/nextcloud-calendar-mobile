@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, Modal, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/appStore';
@@ -7,23 +7,46 @@ import { useTheme } from '@/hooks/useTheme';
 import { LANGUAGES } from '@/i18n/languages';
 import { Flag } from '@/i18n/flags';
 
+const ROW_HEIGHT = 58;
+const MAX_VISIBLE = 5;
+const MAX_LIST_HEIGHT = ROW_HEIGHT * MAX_VISIBLE;
+
+type Anchor = { x: number; y: number; width: number; height: number };
+
 export function LanguageSheet() {
   const theme = useTheme();
   const { t } = useTranslation();
   const language = useAppStore((s) => s.language);
   const setLanguage = useAppStore((s) => s.setLanguage);
   const [open, setOpen] = useState(false);
+  const [anchor, setAnchor] = useState<Anchor | null>(null);
+  const triggerRef = useRef<View>(null);
 
   const active = LANGUAGES.find((l) => l.code === language) ?? LANGUAGES[0];
+
+  function toggle() {
+    triggerRef.current?.measureInWindow?.((x, y, width, height) => setAnchor({ x, y, width, height }));
+    setOpen((v) => !v);
+  }
+
+  const screenH = Dimensions.get('window').height;
+  const a = anchor;
+  const openUp = !!a && a.y + a.height + MAX_LIST_HEIGHT + 8 > screenH;
+  const dropdownPos = a
+    ? openUp
+      ? { bottom: screenH - a.y + 8, left: a.x, width: a.width }
+      : { top: a.y + a.height + 8, left: a.x, width: a.width }
+    : { top: 120, left: 16, right: 16 };
 
   return (
     <View>
       <TouchableOpacity
+        ref={triggerRef}
         accessibilityRole="button"
         accessibilityLabel={t('common.language')}
         accessibilityState={{ expanded: open }}
         style={[styles.trigger, { backgroundColor: theme.surface, borderColor: open ? theme.primary : theme.border }]}
-        onPress={() => setOpen((v) => !v)}
+        onPress={toggle}
       >
         <Flag code={active.code} size={26} />
         <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>{active.label}</Text>
@@ -32,31 +55,34 @@ export function LanguageSheet() {
         <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={20} color={theme.textTertiary} />
       </TouchableOpacity>
 
-      {open && (
-        <View style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          {LANGUAGES.map((l, i) => (
-            <TouchableOpacity
-              key={l.code}
-              accessibilityRole="button"
-              accessibilityState={{ selected: l.code === language }}
-              style={[
-                styles.option,
-                i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border },
-              ]}
-              onPress={() => {
-                setLanguage(l.code);
-                setOpen(false);
-              }}
-            >
-              <Flag code={l.code} size={30} />
-              <Text style={[styles.name, { color: theme.text }]}>{l.label}</Text>
-              <Text style={[styles.code, { color: theme.textTertiary }]}>({l.region})</Text>
-              <View style={styles.spacer} />
-              {l.code === language && <Ionicons name="checkmark" size={20} color={theme.primary} />}
-            </TouchableOpacity>
-          ))}
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
+        <View style={[styles.dropdown, dropdownPos, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <ScrollView style={{ maxHeight: MAX_LIST_HEIGHT }} bounces={false}>
+            {LANGUAGES.map((l, i) => (
+              <TouchableOpacity
+                key={l.code}
+                accessibilityRole="button"
+                accessibilityState={{ selected: l.code === language }}
+                style={[
+                  styles.option,
+                  i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border },
+                ]}
+                onPress={() => {
+                  setLanguage(l.code);
+                  setOpen(false);
+                }}
+              >
+                <Flag code={l.code} size={30} />
+                <Text style={[styles.name, { color: theme.text }]}>{l.label}</Text>
+                <Text style={[styles.code, { color: theme.textTertiary }]}>({l.region})</Text>
+                <View style={styles.spacer} />
+                {l.code === language && <Ionicons name="checkmark" size={20} color={theme.primary} />}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
-      )}
+      </Modal>
     </View>
   );
 }
@@ -70,11 +96,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  sheet: {
-    marginTop: 8,
+  dropdown: {
+    position: 'absolute',
     borderWidth: 1,
     borderRadius: 12,
     overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
   },
   option: {
     flexDirection: 'row',
