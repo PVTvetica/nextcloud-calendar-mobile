@@ -1,0 +1,67 @@
+{
+  "common": {
+    "language": "Idioma",
+    "cancel": "Cancelar",
+    "remove": "Eliminar",
+    "close": "Cerrar"
+  },
+  "tabs": {
+    "calendar": "Calendario",
+    "settings": "Ajustes"
+  },
+  "setup": {
+    "brand": "Calendario",
+    "title": "Conectar con Nextcloud",
+    "scanQr": "Escanear código QR",
+    "orManual": "o introducir manualmente",
+    "serverUrl": "URL del servidor",
+    "username": "Usuario",
+    "appPassword": "Contraseña de aplicación",
+    "displayName": "Nombre visible",
+    "optional": "(opcional)",
+    "connect": "Conectar",
+    "hint": "Genera una contraseña de aplicación en Nextcloud → Configuración → Seguridad → Contraseñas de aplicación.",
+    "footer": "Hecho con ♥ para la comunidad · Código abierto",
+    "placeholders": {
+      "serverUrl": "https://cloud.example.com",
+      "username": "juan.perez",
+      "appPassword": "xxxx-xxxx-xxxx-xxxx",
+      "displayName": "Trabajo"
+    },
+    "errors": {
+      "required": "Todos los campos son obligatorios.",
+      "invalidCreds": "Credenciales no válidas. Comprueba tu contraseña de aplicación.",
+      "connect": "No se pudo conectar: {{msg}}"
+    }
+  },
+  "settings": {
+    "title": "Ajustes",
+    "appearance": "Apariencia",
+    "theme": "Tema",
+    "themeSystem": "Sistema",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "weekStart": "La semana empieza el",
+    "sunday": "Domingo",
+    "monday": "Lunes",
+    "calendarZoom": "Zoom del calendario",
+    "reset": "Restablecer",
+    "zoom": {
+      "compact": "Compacto",
+      "normal": "Normal",
+      "expanded": "Ampliado",
+      "large": "Grande"
+    },
+    "accounts": "Cuentas",
+    "addAccount": "+ Añadir cuenta",
+    "removeTitle": "Eliminar cuenta",
+    "removeMsg": "¿Eliminar «{{name}}» de este dispositivo?",
+    "version": "v{{version}}",
+    "about": {
+      "name": "Nextcloud Calendar",
+      "description": "Una aplicación de calendario móvil de código abierto para Nextcloud.",
+      "github": "Ver en GitHub",
+      "reportBug": "Informar de un error"
+    }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "common": {
+    "language": "Sprache",
+    "cancel": "Abbrechen",
+    "remove": "Entfernen",
+    "close": "Schließen"
+  },
+  "tabs": {
+    "calendar": "Kalender",
+    "settings": "Einstellungen"
+  },
+  "setup": {
+    "brand": "Kalender",
+    "title": "Mit Nextcloud verbinden",
+    "scanQr": "QR-Code scannen",
+    "orManual": "oder manuell eingeben",
+    "serverUrl": "Server-URL",
+    "username": "Benutzername",
+    "appPassword": "App-Passwort",
+    "displayName": "Anzeigename",
+    "optional": "(optional)",
+    "connect": "Verbinden",
+    "hint": "Erstellen Sie ein App-Passwort in Nextcloud → Einstellungen → Sicherheit → App-Passwörter.",
+    "footer": "Mit ♥ für die Community erstellt · Open Source",
+    "placeholders": {
+      "serverUrl": "https://cloud.example.com",
+      "username": "max.mustermann",
+      "appPassword": "xxxx-xxxx-xxxx-xxxx",
+      "displayName": "Arbeit"
+    },
+    "errors": {
+      "required": "Alle Felder sind erforderlich.",
+      "invalidCreds": "Ungültige Anmeldedaten. Überprüfen Sie Ihr App-Passwort.",
+      "connect": "Verbindung fehlgeschlagen: {{msg}}"
+    }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "appearance": "Darstellung",
+    "theme": "Design",
+    "themeSystem": "System",
+    "themeLight": "Hell",
+    "themeDark": "Dunkel",
+    "weekStart": "Woche beginnt am",
+    "sunday": "Sonntag",
+    "monday": "Montag",
+    "calendarZoom": "Kalender-Zoom",
+    "reset": "Zurücksetzen",
+    "zoom": {
+      "compact": "Kompakt",
+      "normal": "Normal",
+      "expanded": "Erweitert",
+      "large": "Groß"
+    },
+    "accounts": "Konten",
+    "addAccount": "+ Konto hinzufügen",
+    "removeTitle": "Konto entfernen",
+    "removeMsg": "„{{name}}“ von diesem Gerät entfernen?",
+    "version": "v{{version}}",
+    "about": {
+      "name": "Nextcloud Calendar",
+      "description": "Eine quelloffene mobile Kalender-App für Nextcloud.",
+      "github": "Auf GitHub ansehen",
+      "reportBug": "Fehler melden"
+    }
+  }
+}

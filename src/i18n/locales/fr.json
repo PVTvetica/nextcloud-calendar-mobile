@@ -1,0 +1,67 @@
+{
+  "common": {
+    "language": "Langue",
+    "cancel": "Annuler",
+    "remove": "Supprimer",
+    "close": "Fermer"
+  },
+  "tabs": {
+    "calendar": "Calendrier",
+    "settings": "Paramètres"
+  },
+  "setup": {
+    "brand": "Calendrier",
+    "title": "Se connecter à Nextcloud",
+    "scanQr": "Scanner le QR Code",
+    "orManual": "ou saisir manuellement",
+    "serverUrl": "URL du serveur",
+    "username": "Nom d'utilisateur",
+    "appPassword": "Mot de passe d'application",
+    "displayName": "Nom affiché",
+    "optional": "(facultatif)",
+    "connect": "Se connecter",
+    "hint": "Générez un mot de passe d'application dans Nextcloud → Paramètres → Sécurité → Mots de passe d'application.",
+    "footer": "Fait avec ♥ pour la communauté · Open Source",
+    "placeholders": {
+      "serverUrl": "https://cloud.example.com",
+      "username": "jean.dupont",
+      "appPassword": "xxxx-xxxx-xxxx-xxxx",
+      "displayName": "Travail"
+    },
+    "errors": {
+      "required": "Tous les champs sont obligatoires.",
+      "invalidCreds": "Identifiants invalides. Vérifiez votre mot de passe d'application.",
+      "connect": "Connexion impossible : {{msg}}"
+    }
+  },
+  "settings": {
+    "title": "Paramètres",
+    "appearance": "Apparence",
+    "theme": "Thème",
+    "themeSystem": "Système",
+    "themeLight": "Clair",
+    "themeDark": "Sombre",
+    "weekStart": "Début de semaine",
+    "sunday": "Dimanche",
+    "monday": "Lundi",
+    "calendarZoom": "Zoom du calendrier",
+    "reset": "Réinitialiser",
+    "zoom": {
+      "compact": "Compact",
+      "normal": "Normal",
+      "expanded": "Étendu",
+      "large": "Grand"
+    },
+    "accounts": "Comptes",
+    "addAccount": "+ Ajouter un compte",
+    "removeTitle": "Supprimer le compte",
+    "removeMsg": "Supprimer « {{name}} » de cet appareil ?",
+    "version": "v{{version}}",
+    "about": {
+      "name": "Nextcloud Calendar",
+      "description": "Une application de calendrier mobile open source pour Nextcloud.",
+      "github": "Voir sur GitHub",
+      "reportBug": "Signaler un bug"
+    }
+  }
+}

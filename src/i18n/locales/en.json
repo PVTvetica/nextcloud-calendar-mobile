@@ -1,0 +1,67 @@
+{
+  "common": {
+    "language": "Language",
+    "cancel": "Cancel",
+    "remove": "Remove",
+    "close": "Close"
+  },
+  "tabs": {
+    "calendar": "Calendar",
+    "settings": "Settings"
+  },
+  "setup": {
+    "brand": "Calendar",
+    "title": "Connect to Nextcloud",
+    "scanQr": "Scan QR Code",
+    "orManual": "or enter manually",
+    "serverUrl": "Server URL",
+    "username": "Username",
+    "appPassword": "App Password",
+    "displayName": "Display Name",
+    "optional": "(optional)",
+    "connect": "Connect",
+    "hint": "Generate an app password in Nextcloud → Settings → Security → App passwords.",
+    "footer": "Made with ♥ for the community · Open Source",
+    "placeholders": {
+      "serverUrl": "https://cloud.example.com",
+      "username": "john.doe",
+      "appPassword": "xxxx-xxxx-xxxx-xxxx",
+      "displayName": "Work"
+    },
+    "errors": {
+      "required": "All fields are required.",
+      "invalidCreds": "Invalid credentials. Check your app password.",
+      "connect": "Could not connect: {{msg}}"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "weekStart": "Week Starts On",
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "calendarZoom": "Calendar Zoom",
+    "reset": "Reset",
+    "zoom": {
+      "compact": "Compact",
+      "normal": "Normal",
+      "expanded": "Expanded",
+      "large": "Large"
+    },
+    "accounts": "Accounts",
+    "addAccount": "+ Add Account",
+    "removeTitle": "Remove Account",
+    "removeMsg": "Remove \"{{name}}\" from this device?",
+    "version": "v{{version}}",
+    "about": {
+      "name": "Nextcloud Calendar",
+      "description": "An open-source mobile calendar app for Nextcloud.",
+      "github": "View on GitHub",
+      "reportBug": "Report a Bug"
+    }
+  }
+}
