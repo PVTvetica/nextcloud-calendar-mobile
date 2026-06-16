@@ -96,7 +96,20 @@
     "eventNotFound": "Evento no encontrado.",
     "back": "← Atrás",
     "scopeThisOccurrence": "Esta ocurrencia",
-    "scopeThisAndFollowing": "Esta y siguientes"
+    "scopeThisAndFollowing": "Esta y siguientes",
+    "edit": "Editar",
+    "recurring": "Recurrente",
+    "joinTalkRoom": "Unirse a la sala Talk",
+    "deleteEvent": "Eliminar evento",
+    "delete": "Eliminar",
+    "allDayTime": "Todo el día",
+    "recurrenceScopeMessage": "¿Qué eventos quieres modificar?",
+    "scopeThisOnly": "Solo este evento",
+    "scopeThisAndFollowingBtn": "Este y los siguientes eventos",
+    "scopeAllEvents": "Todos los eventos",
+    "deleteAllMsg": "¿Eliminar todas las ocurrencias de este evento recurrente?",
+    "deleteThisAndFollowingMsg": "¿Eliminar esta y todas las siguientes ocurrencias?",
+    "deleteConfirmMsg": "¿Estás seguro de que quieres eliminar este evento?"
   },
   "settings": {
     "title": "Ajustes",

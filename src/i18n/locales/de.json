@@ -96,7 +96,20 @@
     "eventNotFound": "Ereignis nicht gefunden.",
     "back": "← Zurück",
     "scopeThisOccurrence": "Dieses Vorkommen",
-    "scopeThisAndFollowing": "Dieses und folgende"
+    "scopeThisAndFollowing": "Dieses und folgende",
+    "edit": "Bearbeiten",
+    "recurring": "Wiederkehrend",
+    "joinTalkRoom": "Talk-Raum beitreten",
+    "deleteEvent": "Ereignis löschen",
+    "delete": "Löschen",
+    "allDayTime": "Ganztägig",
+    "recurrenceScopeMessage": "Welche Ereignisse möchten Sie ändern?",
+    "scopeThisOnly": "Nur dieses Ereignis",
+    "scopeThisAndFollowingBtn": "Dieses und folgende Ereignisse",
+    "scopeAllEvents": "Alle Ereignisse",
+    "deleteAllMsg": "Alle Vorkommen dieses wiederkehrenden Ereignisses löschen?",
+    "deleteThisAndFollowingMsg": "Dieses und alle folgenden Vorkommen löschen?",
+    "deleteConfirmMsg": "Möchten Sie dieses Ereignis wirklich löschen?"
   },
   "settings": {
     "title": "Einstellungen",
