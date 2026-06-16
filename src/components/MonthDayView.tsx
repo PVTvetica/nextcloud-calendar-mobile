@@ -4,6 +4,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 import type { CalendarEvent } from '@/types';
 
@@ -46,6 +47,7 @@ function buildMonthGrid(year: number, month: number, weekStartsOn: 0 | 1): (dayj
 
 function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEvent, onPressCell }: Props) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const { height } = useWindowDimensions();
 
   const selected = useMemo(() => dayjs(date), [date]);
@@ -154,7 +156,7 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
           {selected.format('dddd, MMMM D')}
         </Text>
         {dayEvents.length === 0 ? (
-          <Text style={[styles.emptyText, { color: theme.textTertiary }]}>No events</Text>
+          <Text style={[styles.emptyText, { color: theme.textTertiary }]}>{t('calendar.noEvents')}</Text>
         ) : (
           <FlatList
             data={dayEvents}
@@ -171,7 +173,7 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
                   </Text>
                   <Text style={[styles.eventTime, { color: theme.textSecondary }]}>
                     {item.allDay
-                      ? 'All day'
+                      ? t('calendar.allDay')
                       : `${dayjs(item.dtstart).format('h:mm A')} – ${dayjs(item.dtend).format('h:mm A')}`}
                   </Text>
                 </View>
