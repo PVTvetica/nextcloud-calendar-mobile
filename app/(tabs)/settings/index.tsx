@@ -1,9 +1,9 @@
 import { View, Text, TouchableOpacity, Pressable, ScrollView, Alert, Modal, Linking, Image, ActivityIndicator } from 'react-native';
-import { useDeferredValue, useState, useEffect } from 'react';
+import { useDeferredValue, useState, useEffect, useCallback } from 'react';
 import { styles } from '@/styles/settingsScreen';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { loadAccounts, deleteAccount, setActiveAccountId, clearActiveAccountId } from '@/api/auth';
 import { useAppStore, type ThemePreference } from '@/store/appStore';
@@ -46,6 +46,17 @@ export default function SettingsScreen() {
   const [pendingWeek, setPendingWeek] = useState(weekStartsOn);
   useEffect(() => { setPendingTheme(themePreference); }, [themePreference]);
   useEffect(() => { setPendingWeek(weekStartsOn); }, [weekStartsOn]);
+
+  // Reset the accordion to its default (Accounts open, Appearance collapsed)
+  // when leaving the screen, so it's fresh on the next visit.
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setAppearanceOpen(false);
+        setAccountsOpen(true);
+      };
+    }, [])
+  );
 
   const deferredThemePref = useDeferredValue(themePreference);
   const themeSwitching = themePreference !== deferredThemePref;
