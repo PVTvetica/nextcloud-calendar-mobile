@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 import { TalkToggle } from './TalkToggle';
 import { RecurrencePicker } from './RecurrencePicker';
@@ -35,13 +36,15 @@ interface Props {
 }
 
 
+
 type AndroidPickerStep = null | { target: 'start' | 'end'; step: 'date' | 'time'; partial?: Date };
 
 export function EventForm({
   calendars, defaultDate, organizerEmail, organizerName, onSubmit, loading,
-  initialValues, submitLabel = 'Save Event', disableCalendarChange = false,
+  initialValues, submitLabel, disableCalendarChange = false,
 }: Props) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const [summary, setSummary] = useState(initialValues?.summary ?? '');
   const writableCalendars = calendars.filter((c) => !c.isReadOnly && !c.isSubscribed);
@@ -150,9 +153,9 @@ export function EventForm({
   }
 
   function handleSubmit() {
-    if (!summary.trim()) { setError('Title is required.'); return; }
-    if (!calendarId) { setError('Select a calendar.'); return; }
-    if (!allDay && dtend <= dtstart) { setError('End time must be after start time.'); return; }
+    if (!summary.trim()) { setError(t('event.errorTitleRequired')); return; }
+    if (!calendarId) { setError(t('event.errorSelectCalendar')); return; }
+    if (!allDay && dtend <= dtstart) { setError(t('event.errorEndAfterStart')); return; }
     setError(null);
     onSubmit({
       summary: summary.trim(), calendarId, dtstart, dtend, allDay,
@@ -179,21 +182,21 @@ export function EventForm({
       keyboardDismissMode="none"
     >
       <View onLayout={(e) => onFieldLayout('title', e)}>
-        <Text style={labelStyle}>Title *</Text>
+        <Text style={labelStyle}>{t('event.titleLabel')}</Text>
         <TextInput
           style={inputStyle}
           value={summary}
           onChangeText={setSummary}
-          placeholder="Event title"
+          placeholder={t('event.titlePlaceholder')}
           placeholderTextColor={theme.textTertiary}
           onFocus={() => scrollToField('title')}
         />
       </View>
 
-      <Text style={labelStyle}>Calendar</Text>
+      <Text style={labelStyle}>{t('event.calendar')}</Text>
       {writableCalendars.length === 0 && (
         <Text style={[styles.readOnlyNote, { color: theme.warning }]}>
-          No writable calendars available on this account.
+          {t('event.noWritableCalendars')}
         </Text>
       )}
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -221,7 +224,7 @@ export function EventForm({
       </ScrollView>
 
       <View style={[styles.row, { borderBottomColor: theme.border }]}>
-        <Text style={labelStyle}>All Day</Text>
+        <Text style={labelStyle}>{t('event.allDay')}</Text>
         <Switch
           value={allDay}
           onValueChange={setAllDay}
@@ -230,7 +233,7 @@ export function EventForm({
         />
       </View>
 
-      <Text style={labelStyle}>Start</Text>
+      <Text style={labelStyle}>{t('event.start')}</Text>
       <TouchableOpacity style={inputStyle} onPress={openStartPicker}>
         <Text style={{ color: theme.text }}>
           {allDay ? dayjs(dtstart).format('MMM D, YYYY') : dayjs(dtstart).format('MMM D, YYYY h:mm A')}
@@ -248,7 +251,7 @@ export function EventForm({
 
       {!allDay && (
         <>
-          <Text style={labelStyle}>End</Text>
+          <Text style={labelStyle}>{t('event.end')}</Text>
           <TouchableOpacity style={inputStyle} onPress={openEndPicker}>
             <Text style={{ color: theme.text }}>{dayjs(dtend).format('MMM D, YYYY h:mm A')}</Text>
           </TouchableOpacity>
@@ -275,24 +278,24 @@ export function EventForm({
       <RecurrencePicker value={rrule} onChange={setRrule} />
 
       <View onLayout={(e) => onFieldLayout('location', e)}>
-        <Text style={[labelStyle, { marginTop: 16 }]}>Location</Text>
+        <Text style={[labelStyle, { marginTop: 16 }]}>{t('event.location')}</Text>
         <TextInput
           style={inputStyle}
           value={location}
           onChangeText={setLocation}
-          placeholder="Room or address"
+          placeholder={t('event.locationPlaceholder')}
           placeholderTextColor={theme.textTertiary}
           onFocus={() => scrollToField('location')}
         />
       </View>
 
       <View onLayout={(e) => onFieldLayout('description', e)}>
-        <Text style={labelStyle}>Description</Text>
+        <Text style={labelStyle}>{t('event.description')}</Text>
         <TextInput
           style={[inputStyle, styles.multiline]}
           value={description}
           onChangeText={setDescription}
-          placeholder="Details..."
+          placeholder={t('event.descriptionPlaceholder')}
           placeholderTextColor={theme.textTertiary}
           multiline
           numberOfLines={3}
@@ -300,7 +303,7 @@ export function EventForm({
         />
       </View>
 
-      <Text style={labelStyle}>Attendees</Text>
+      <Text style={labelStyle}>{t('event.attendees')}</Text>
       <View onLayout={(e) => onFieldLayout('attendee', e)} style={styles.attendeeRow}>
         <TextInput
           style={[inputStyle, styles.attendeeInput]}
@@ -315,7 +318,7 @@ export function EventForm({
           onBlur={() => { attendeeFocused.current = false; }}
         />
         <TouchableOpacity style={[styles.addBtn, { backgroundColor: theme.primary }]} onPress={addAttendee}>
-          <Text style={styles.addBtnText}>Add</Text>
+          <Text style={styles.addBtnText}>{t('event.add')}</Text>
         </TouchableOpacity>
       </View>
       {attendees.map((att) => (
@@ -341,7 +344,7 @@ export function EventForm({
         onPress={handleSubmit}
         disabled={loading}
       >
-        <Text style={styles.saveBtnText}>{loading ? 'Saving…' : submitLabel}</Text>
+        <Text style={styles.saveBtnText}>{loading ? t('event.saving') : (submitLabel ?? t('event.saveEvent'))}</Text>
       </TouchableOpacity>
     </ScrollView>
     </KeyboardAvoidingView>

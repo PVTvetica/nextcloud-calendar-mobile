@@ -50,6 +50,26 @@
     "allDay": "Toute la journée",
     "noTitle": "(Sans titre)"
   },
+  "event": {
+    "titleLabel": "Titre *",
+    "titlePlaceholder": "Titre de l'événement",
+    "calendar": "Agenda",
+    "noWritableCalendars": "Aucun agenda modifiable disponible sur ce compte.",
+    "allDay": "Toute la journée",
+    "start": "Début",
+    "end": "Fin",
+    "location": "Lieu",
+    "locationPlaceholder": "Salle ou adresse",
+    "description": "Description",
+    "descriptionPlaceholder": "Détails...",
+    "attendees": "Participants",
+    "add": "Ajouter",
+    "saving": "Enregistrement…",
+    "saveEvent": "Enregistrer l'événement",
+    "errorTitleRequired": "Le titre est obligatoire.",
+    "errorSelectCalendar": "Sélectionnez un agenda.",
+    "errorEndAfterStart": "L'heure de fin doit être après l'heure de début."
+  },
   "settings": {
     "title": "Paramètres",
     "appearance": "Apparence",

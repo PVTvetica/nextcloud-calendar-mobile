@@ -50,6 +50,26 @@
     "allDay": "Todo el día",
     "noTitle": "(Sin título)"
   },
+  "event": {
+    "titleLabel": "Título *",
+    "titlePlaceholder": "Título del evento",
+    "calendar": "Calendario",
+    "noWritableCalendars": "No hay calendarios editables disponibles en esta cuenta.",
+    "allDay": "Todo el día",
+    "start": "Inicio",
+    "end": "Fin",
+    "location": "Ubicación",
+    "locationPlaceholder": "Sala o dirección",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Detalles...",
+    "attendees": "Asistentes",
+    "add": "Añadir",
+    "saving": "Guardando…",
+    "saveEvent": "Guardar evento",
+    "errorTitleRequired": "El título es obligatorio.",
+    "errorSelectCalendar": "Selecciona un calendario.",
+    "errorEndAfterStart": "La hora de fin debe ser posterior a la hora de inicio."
+  },
   "settings": {
     "title": "Ajustes",
     "appearance": "Apariencia",

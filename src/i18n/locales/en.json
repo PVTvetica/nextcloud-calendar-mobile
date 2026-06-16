@@ -50,6 +50,26 @@
     "allDay": "All day",
     "noTitle": "(No title)"
   },
+  "event": {
+    "titleLabel": "Title *",
+    "titlePlaceholder": "Event title",
+    "calendar": "Calendar",
+    "noWritableCalendars": "No writable calendars available on this account.",
+    "allDay": "All Day",
+    "start": "Start",
+    "end": "End",
+    "location": "Location",
+    "locationPlaceholder": "Room or address",
+    "description": "Description",
+    "descriptionPlaceholder": "Details...",
+    "attendees": "Attendees",
+    "add": "Add",
+    "saving": "Saving…",
+    "saveEvent": "Save Event",
+    "errorTitleRequired": "Title is required.",
+    "errorSelectCalendar": "Select a calendar.",
+    "errorEndAfterStart": "End time must be after start time."
+  },
   "settings": {
     "title": "Settings",
     "appearance": "Appearance",

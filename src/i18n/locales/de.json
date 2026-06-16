@@ -50,6 +50,26 @@
     "allDay": "Ganztägig",
     "noTitle": "(Kein Titel)"
   },
+  "event": {
+    "titleLabel": "Titel *",
+    "titlePlaceholder": "Ereignistitel",
+    "calendar": "Kalender",
+    "noWritableCalendars": "Keine beschreibbaren Kalender auf diesem Konto verfügbar.",
+    "allDay": "Ganztägig",
+    "start": "Beginn",
+    "end": "Ende",
+    "location": "Ort",
+    "locationPlaceholder": "Raum oder Adresse",
+    "description": "Beschreibung",
+    "descriptionPlaceholder": "Details...",
+    "attendees": "Teilnehmer",
+    "add": "Hinzufügen",
+    "saving": "Wird gespeichert…",
+    "saveEvent": "Ereignis speichern",
+    "errorTitleRequired": "Titel ist erforderlich.",
+    "errorSelectCalendar": "Bitte einen Kalender auswählen.",
+    "errorEndAfterStart": "Die Endzeit muss nach der Startzeit liegen."
+  },
   "settings": {
     "title": "Einstellungen",
     "appearance": "Darstellung",
