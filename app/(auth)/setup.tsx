@@ -234,10 +234,10 @@ const styles = StyleSheet.create({
     borderRadius: 12, paddingVertical: 16, marginBottom: 8,
   },
   qrBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 6, gap: 10 },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 10, gap: 10 },
   dividerLine: { flex: 1, height: StyleSheet.hairlineWidth },
   dividerLabel: { fontSize: 13 },
-  label: { fontSize: 14, fontWeight: '600', marginBottom: 6, marginTop: 8 },
+  label: { fontSize: 14, fontWeight: '600', marginBottom: 6, marginTop: 12 },
   input: {
     borderWidth: 1, borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 13, fontSize: 16,
