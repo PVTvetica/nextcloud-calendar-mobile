@@ -34,6 +34,22 @@
       "connect": "Connexion impossible : {{msg}}"
     }
   },
+  "calendar": {
+    "today": "Aujourd'hui",
+    "day": "Jour",
+    "week": "Semaine",
+    "threeDays": "3J",
+    "month": "Mois",
+    "schedule": "Agenda",
+    "loadingCalendar": "Chargement du calendrier…",
+    "drawerAccount": "COMPTE",
+    "manageAccounts": "Gérer les comptes →",
+    "drawerCalendars": "CALENDRIERS",
+    "offlineBanner": "Hors ligne — affichage des événements sauvegardés",
+    "noEvents": "Aucun événement",
+    "allDay": "Toute la journée",
+    "noTitle": "(Sans titre)"
+  },
   "settings": {
     "title": "Paramètres",
     "appearance": "Apparence",

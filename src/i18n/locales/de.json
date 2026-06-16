@@ -34,6 +34,22 @@
       "connect": "Verbindung fehlgeschlagen: {{msg}}"
     }
   },
+  "calendar": {
+    "today": "Heute",
+    "day": "Tag",
+    "week": "Woche",
+    "threeDays": "3T",
+    "month": "Monat",
+    "schedule": "Agenda",
+    "loadingCalendar": "Kalender wird geladen…",
+    "drawerAccount": "KONTO",
+    "manageAccounts": "Konten verwalten →",
+    "drawerCalendars": "KALENDER",
+    "offlineBanner": "Offline — gespeicherte Ereignisse werden angezeigt",
+    "noEvents": "Keine Ereignisse",
+    "allDay": "Ganztägig",
+    "noTitle": "(Kein Titel)"
+  },
   "settings": {
     "title": "Einstellungen",
     "appearance": "Darstellung",

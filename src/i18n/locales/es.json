@@ -34,6 +34,22 @@
       "connect": "No se pudo conectar: {{msg}}"
     }
   },
+  "calendar": {
+    "today": "Hoy",
+    "day": "Día",
+    "week": "Semana",
+    "threeDays": "3D",
+    "month": "Mes",
+    "schedule": "Agenda",
+    "loadingCalendar": "Cargando calendario…",
+    "drawerAccount": "CUENTA",
+    "manageAccounts": "Gestionar cuentas →",
+    "drawerCalendars": "CALENDARIOS",
+    "offlineBanner": "Sin conexión — mostrando eventos guardados",
+    "noEvents": "Sin eventos",
+    "allDay": "Todo el día",
+    "noTitle": "(Sin título)"
+  },
   "settings": {
     "title": "Ajustes",
     "appearance": "Apariencia",

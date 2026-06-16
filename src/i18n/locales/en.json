@@ -34,6 +34,22 @@
       "connect": "Could not connect: {{msg}}"
     }
   },
+  "calendar": {
+    "today": "Today",
+    "day": "Day",
+    "week": "Week",
+    "threeDays": "3D",
+    "month": "Month",
+    "schedule": "Agenda",
+    "loadingCalendar": "Loading calendar…",
+    "drawerAccount": "ACCOUNT",
+    "manageAccounts": "Manage accounts →",
+    "drawerCalendars": "CALENDARS",
+    "offlineBanner": "Offline — showing saved events",
+    "noEvents": "No events",
+    "allDay": "All day",
+    "noTitle": "(No title)"
+  },
   "settings": {
     "title": "Settings",
     "appearance": "Appearance",
