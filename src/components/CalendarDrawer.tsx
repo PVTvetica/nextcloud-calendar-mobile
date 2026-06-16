@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AvatarImage } from '@/components/AvatarImage';
 import { useTheme } from '@/hooks/useTheme';
@@ -42,6 +43,7 @@ export function CalendarDrawer({
   onNavigateSettings,
 }: CalendarDrawerProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const safeInsets = useSafeAreaInsets();
   const [headerHeight, setHeaderHeight] = useState(0);
   const [drawerHeight, setDrawerHeight] = useState(0);
@@ -67,7 +69,7 @@ export function CalendarDrawer({
         ]}
       >
         <View onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
-          <Text style={[styles.drawerSection, { color: theme.textTertiary }]}>ACCOUNT</Text>
+          <Text style={[styles.drawerSection, { color: theme.textTertiary }]}>{t('calendar.drawerAccount')}</Text>
           <View style={styles.drawerAccountRow}>
             {activeAccount && <AvatarImage account={activeAccount} size={48} />}
             <View style={styles.drawerAccountText}>
@@ -80,10 +82,10 @@ export function CalendarDrawer({
             </View>
           </View>
           <TouchableOpacity style={styles.drawerSettingsBtn} onPress={onNavigateSettings}>
-            <Text style={[styles.drawerSettingsBtnText, { color: theme.primary }]}>Manage accounts →</Text>
+            <Text style={[styles.drawerSettingsBtnText, { color: theme.primary }]}>{t('calendar.manageAccounts')}</Text>
           </TouchableOpacity>
           <View style={[styles.drawerDivider, { backgroundColor: theme.border }]} />
-          <Text style={[styles.drawerSection, { color: theme.textTertiary }]}>CALENDARS</Text>
+          <Text style={[styles.drawerSection, { color: theme.textTertiary }]}>{t('calendar.drawerCalendars')}</Text>
         </View>
 
         <ScrollView
