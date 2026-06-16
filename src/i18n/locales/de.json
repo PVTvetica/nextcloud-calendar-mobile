@@ -88,7 +88,9 @@
     "talkInviteOnly": "Nur auf Einladung",
     "talkPublicLink": "Öffentlicher Link",
     "talkAnyoneWithLink": "Jeder mit dem Link kann beitreten",
-    "talkOnlyInvited": "Nur eingeladene Teilnehmer"
+    "talkOnlyInvited": "Nur eingeladene Teilnehmer",
+    "loadingCalendars": "Kalender werden geladen…",
+    "newEvent": "Neues Ereignis"
   },
   "settings": {
     "title": "Einstellungen",

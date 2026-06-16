@@ -88,7 +88,9 @@
     "talkInviteOnly": "Invite only",
     "talkPublicLink": "Public link",
     "talkAnyoneWithLink": "Anyone with the link can join",
-    "talkOnlyInvited": "Only invited participants"
+    "talkOnlyInvited": "Only invited participants",
+    "loadingCalendars": "Loading calendars…",
+    "newEvent": "New Event"
   },
   "settings": {
     "title": "Settings",
