@@ -4,10 +4,10 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
+import { useAppStore } from '@/store/appStore';
 import type { CalendarEvent } from '@/types';
-
-const DAYS_OF_WEEK = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 interface Props {
   date: Date;
@@ -46,14 +46,10 @@ function buildMonthGrid(year: number, month: number, weekStartsOn: 0 | 1): (dayj
 
 function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEvent, onPressCell }: Props) {
   const theme = useTheme();
+  const { t } = useTranslation();
+  const language = useAppStore((s) => s.language);
   const { height } = useWindowDimensions();
 
-  // The selected day is derived from the `date` prop — the parent owns it as
-  // the single source of truth. This is what makes the "Today" button work in
-  // month view: pressing it sets the parent date to now, which flows straight
-  // through to the highlighted cell and the day list. (Previously `selectedDay`
-  // was seeded from `date` once via useState and never re-synced, so Today did
-  // nothing when today was already in the visible month.)
   const selected = useMemo(() => dayjs(date), [date]);
 
   const year = dayjs(date).year();
@@ -69,7 +65,7 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
       if (!map.has(key)) map.set(key, new Set());
       map.get(key)!.add(ev.color);
     }
-    // Also add all-day events
+
     for (const ev of events) {
       if (!ev.allDay) continue;
       const key = dayjs(ev.dtstart).format('YYYY-MM-DD');
@@ -88,8 +84,6 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
 
   const today = dayjs();
 
-  // Tapping a day just reports the selection upward; the parent updates `date`,
-  // which flows back down into `selected` above — one source of truth.
   const handleDayPress = useCallback((d: dayjs.Dayjs) => {
     onSelectDate(d.toDate());
   }, [onSelectDate]);
@@ -97,10 +91,11 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
   const dayHeaders = useMemo(() => {
     const headers: string[] = [];
     for (let i = 0; i < 7; i++) {
-      headers.push(DAYS_OF_WEEK[(weekStartsOn + i) % 7]);
+      const dow = (weekStartsOn + i) % 7; // 0 = Sunday
+      headers.push(dayjs().day(dow).locale(language).format('dd'));
     }
     return headers;
-  }, [weekStartsOn]);
+  }, [weekStartsOn, language]);
 
   const gridHeight = height * 0.44;
 
@@ -108,8 +103,8 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={[styles.grid, { height: gridHeight, borderBottomColor: theme.border }]}>
         <View style={styles.dowRow}>
-          {dayHeaders.map((d) => (
-            <Text key={d} style={[styles.dowLabel, { color: theme.textTertiary }]}>{d}</Text>
+          {dayHeaders.map((d, i) => (
+            <Text key={i} style={[styles.dowLabel, { color: theme.textTertiary }]}>{d}</Text>
           ))}
         </View>
 
@@ -159,10 +154,10 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
 
       <View style={styles.dayList}>
         <Text style={[styles.dayListHeader, { color: theme.textSecondary }]}>
-          {selected.format('dddd, MMMM D')}
+          {selected.locale(language).format('dddd, MMMM D')}
         </Text>
         {dayEvents.length === 0 ? (
-          <Text style={[styles.emptyText, { color: theme.textTertiary }]}>No events</Text>
+          <Text style={[styles.emptyText, { color: theme.textTertiary }]}>{t('calendar.noEvents')}</Text>
         ) : (
           <FlatList
             data={dayEvents}
@@ -179,7 +174,7 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
                   </Text>
                   <Text style={[styles.eventTime, { color: theme.textSecondary }]}>
                     {item.allDay
-                      ? 'All day'
+                      ? t('calendar.allDay')
                       : `${dayjs(item.dtstart).format('h:mm A')} – ${dayjs(item.dtend).format('h:mm A')}`}
                   </Text>
                 </View>

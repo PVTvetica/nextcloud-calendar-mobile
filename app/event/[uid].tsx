@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { loadAccounts } from '@/api/auth';
 import { fetchEvents } from '@/api/caldav';
 import { useCalendars } from '@/hooks/useCalendars';
@@ -18,21 +19,33 @@ async function openTalkRoom(talkUrl: string) {
   await Linking.openURL(talkUrl);
 }
 
-function askRecurrenceScope(title: string, onSelect: (scope: RecurrenceEditScope) => void) {
-  Alert.alert(title, 'Which events do you want to modify?', [
+interface RecurrenceScopeStrings {
+  message: string;
+  thisOnly: string;
+  thisAndFollowing: string;
+  all: string;
+  cancel: string;
+}
+
+function askRecurrenceScope(
+  title: string,
+  strings: RecurrenceScopeStrings,
+  onSelect: (scope: RecurrenceEditScope) => void,
+) {
+  Alert.alert(title, strings.message, [
     {
-      text: 'This event only',
+      text: strings.thisOnly,
       onPress: () => onSelect('this'),
     },
     {
-      text: 'This and following events',
+      text: strings.thisAndFollowing,
       onPress: () => onSelect('thisAndFollowing'),
     },
     {
-      text: 'All events',
+      text: strings.all,
       onPress: () => onSelect('all'),
     },
-    { text: 'Cancel', style: 'cancel' },
+    { text: strings.cancel, style: 'cancel' },
   ]);
 }
 
@@ -41,6 +54,7 @@ export default function EventDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
+  const { t } = useTranslation();
   const activeAccountId = useAppStore((s) => s.activeAccountId);
   const queryClient = useQueryClient();
 
@@ -100,10 +114,18 @@ export default function EventDetailScreen() {
   const deleteMutation = useDeleteEvent(activeAccount!);
   const canEdit = !calendar?.isReadOnly && !calendar?.isSubscribed;
 
+  const recurrenceScopeStrings: RecurrenceScopeStrings = {
+    message: t('event.recurrenceScopeMessage'),
+    thisOnly: t('event.scopeThisOnly'),
+    thisAndFollowing: t('event.scopeThisAndFollowingBtn'),
+    all: t('event.scopeAllEvents'),
+    cancel: t('common.cancel'),
+  };
+
   function handleEdit() {
     if (!event) return;
     if (event.isRecurring) {
-      askRecurrenceScope('Edit Event', (scope) => {
+      askRecurrenceScope(t('event.editEvent'), recurrenceScopeStrings, (scope) => {
         router.push({ pathname: `/event/edit/${uid}`, params: { scope } });
       });
     } else {
@@ -116,20 +138,17 @@ export default function EventDetailScreen() {
 
     const doDelete = (scope: RecurrenceEditScope) => {
       Alert.alert(
-        'Delete Event',
+        t('event.deleteEvent'),
         scope === 'all'
-          ? 'Delete all occurrences of this recurring event?'
+          ? t('event.deleteAllMsg')
           : scope === 'thisAndFollowing'
-          ? 'Delete this and all following occurrences?'
-          : 'Are you sure you want to delete this event?',
+          ? t('event.deleteThisAndFollowingMsg')
+          : t('event.deleteConfirmMsg'),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: 'Delete', style: 'destructive',
+            text: t('event.delete'), style: 'destructive',
             onPress: () => {
-              // Optimistic: the event disappears from the calendar at once
-              // (onMutate), and we leave immediately. A server failure rolls the
-              // deletion back and alerts globally (see src/api/queryClient.ts).
               deleteMutation.mutate({ event, scope });
               if (router.canGoBack()) router.back();
               else router.replace('/(tabs)/calendar');
@@ -140,7 +159,7 @@ export default function EventDetailScreen() {
     };
 
     if (event.isRecurring) {
-      askRecurrenceScope('Delete Event', doDelete);
+      askRecurrenceScope(t('event.deleteEvent'), recurrenceScopeStrings, doDelete);
     } else {
       doDelete('all');
     }
@@ -159,16 +178,16 @@ export default function EventDetailScreen() {
   if (!event) {
     return (
       <View style={[styles.center, { backgroundColor: theme.background }]}>
-        <Text style={{ color: theme.textSecondary }}>Event not found.</Text>
+        <Text style={{ color: theme.textSecondary }}>{t('event.eventNotFound')}</Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
-          <Text style={{ color: theme.primary }}>← Back</Text>
+          <Text style={{ color: theme.primary }}>{t('event.back')}</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   const timeStr = event.allDay
-    ? 'All day'
+    ? t('event.allDayTime')
     : `${dayjs(event.dtstart).format('MMM D, YYYY h:mm A')} – ${dayjs(event.dtend).format('h:mm A')}`;
 
   return (
@@ -180,11 +199,11 @@ export default function EventDetailScreen() {
       <View style={[styles.content, styles.contentFlex]}>
         <View style={styles.topRow}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Text style={[styles.backText, { color: theme.primary }]}>← Back</Text>
+            <Text style={[styles.backText, { color: theme.primary }]}>{t('event.back')}</Text>
           </TouchableOpacity>
           {canEdit && (
             <TouchableOpacity onPress={handleEdit}>
-              <Text style={[styles.editText, { color: theme.primary }]}>Edit</Text>
+              <Text style={[styles.editText, { color: theme.primary }]}>{t('event.edit')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -192,7 +211,7 @@ export default function EventDetailScreen() {
         <Text style={[styles.summary, { color: theme.text }]}>{event.summary}</Text>
         <Text style={[styles.meta, { color: theme.textSecondary }]}>{timeStr}</Text>
         {event.isRecurring && (
-          <Text style={[styles.recurringBadge, { color: theme.primary }]}>↻ Recurring</Text>
+          <Text style={[styles.recurringBadge, { color: theme.primary }]}>↻ {t('event.recurring')}</Text>
         )}
         {calendar && (
           <Text style={[styles.calendarName, { color: theme.textTertiary }]}>
@@ -209,20 +228,20 @@ export default function EventDetailScreen() {
             style={[styles.talkBtn, { backgroundColor: theme.talk }]}
             onPress={() => openTalkRoom(event.talkUrl!)}
           >
-            <Text style={styles.talkBtnText}>💬 Join Talk Room</Text>
+            <Text style={styles.talkBtnText}>💬 {t('event.joinTalkRoom')}</Text>
           </TouchableOpacity>
         )}
 
         {event.description && (
           <View style={[styles.section, { borderTopColor: theme.border }]}>
-            <Text style={[styles.sectionTitle, { color: theme.textTertiary }]}>Description</Text>
+            <Text style={[styles.sectionTitle, { color: theme.textTertiary }]}>{t('event.description')}</Text>
             <Text style={[styles.sectionBody, { color: theme.textSecondary }]}>{event.description}</Text>
           </View>
         )}
 
         {event.attendees.length > 0 && (
           <View style={[styles.section, { borderTopColor: theme.border }]}>
-            <Text style={[styles.sectionTitle, { color: theme.textTertiary }]}>Attendees</Text>
+            <Text style={[styles.sectionTitle, { color: theme.textTertiary }]}>{t('event.attendees')}</Text>
             {event.attendees.map((att) => (
               <Text key={att.email} style={[styles.attendee, { color: theme.textSecondary }]}>
                 {att.displayName ? `${att.displayName} (${att.email})` : att.email}
@@ -241,7 +260,7 @@ export default function EventDetailScreen() {
           >
             {deleteMutation.isPending
               ? <ActivityIndicator color={theme.danger} />
-              : <Text style={[styles.deleteBtnText, { color: theme.danger }]}>Delete Event</Text>}
+              : <Text style={[styles.deleteBtnText, { color: theme.danger }]}>{t('event.deleteEvent')}</Text>}
           </TouchableOpacity>
         )}
       </View>

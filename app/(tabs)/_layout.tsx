@@ -1,12 +1,11 @@
 import { Tabs } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 
 export default function TabsLayout() {
-  // Read through useTheme so the tab bar recolors in the SAME deferred pass as
-  // the rest of the UI. Computing the theme inline here (urgent) made the tab bar
-  // flip first and the deferred useTheme consumers follow — the visible stagger.
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Tabs
@@ -25,8 +24,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="calendar/index"
         options={{
-          title: 'Calendar',
-          tabBarLabel: 'Calendar',
+          title: t('tabs.calendar'),
+          tabBarLabel: t('tabs.calendar'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'calendar' : 'calendar-outline'}
@@ -39,8 +38,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="settings/index"
         options={{
-          title: 'Settings',
-          tabBarLabel: 'Settings',
+          title: t('tabs.settings'),
+          tabBarLabel: t('tabs.settings'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'settings' : 'settings-outline'}

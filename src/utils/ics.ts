@@ -162,7 +162,6 @@ export function injectExdate(masterIcs: string, occurrenceDtstart: Date, timezon
   const stamp = `${g('year')}${g('month')}${g('day')}T${g('hour')}${g('minute')}${g('second')}`;
   const exdateLine = `EXDATE;TZID=${timezone}:${stamp}`;
 
-  // Insert before END:VEVENT
   return masterIcs.replace(/(END:VEVENT)/, `${exdateLine}\r\n$1`);
 }
 
@@ -171,9 +170,7 @@ export function injectExdate(masterIcs: string, occurrenceDtstart: Date, timezon
  * Removes the old UNTIL/COUNT clause and adds UNTIL=<newUntil>.
  */
 export function truncateRruleUntil(masterIcs: string, newUntil: Date): string {
-  // Remove existing UNTIL or COUNT from RRULE
   let result = masterIcs.replace(/(RRULE:[^\r\n]*);(UNTIL|COUNT)=[^\r\n;]*/g, '$1');
-  // Now append UNTIL
   const untilStr = utcStamp(newUntil);
   result = result.replace(/(RRULE:[^\r\n]*)/, `$1;UNTIL=${untilStr}`);
   return result;

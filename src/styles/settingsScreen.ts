@@ -6,6 +6,11 @@ export const styles = StyleSheet.create({
     fontSize: 13, fontWeight: '700', textTransform: 'uppercase',
     paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8,
   },
+  accordionHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8,
+  },
+  accordionTitle: { paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 },
   card: {
     marginHorizontal: 16, borderRadius: 12, borderWidth: 1,
     padding: 16, marginBottom: 4,

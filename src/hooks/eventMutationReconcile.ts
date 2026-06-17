@@ -7,7 +7,7 @@ export interface EventMutationMeta {
   eventMutation: true;
   type: EventMutationType;
   accountId: string;
-  errorTitle: string;
+  errorTitleKey: string;
   [key: string]: unknown;
 }
 

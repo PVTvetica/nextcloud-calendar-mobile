@@ -1,5 +1,6 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
@@ -9,6 +10,7 @@ import { styles } from '@/styles/calendarScreen';
 import { useAppStore } from '@/store/appStore';
 import { useTheme } from '@/hooks/useTheme';
 import { CalendarDrawer } from '@/components/CalendarDrawer';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { MonthDayView } from '@/components/MonthDayView';
 import { AgendaView } from '@/components/AgendaView';
 import { computeOverlapMap } from '@/utils/overlapMap';
@@ -30,32 +32,22 @@ dayjs.extend(isoWeek);
 export default function CalendarScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const weekStartsOn = useAppStore((s) => s.weekStartsOn);
+  const language = useAppStore((s) => s.language);
   const hiddenCalendarIds = useAppStore((s) => s.hiddenCalendarIds);
   const toggleCalendarVisibility = useAppStore((s) => s.toggleCalendarVisibility);
 
   const nav = useCalendarNavigation();
   const { viewMode, date, fetchDate, agendaVisibleDate, navigateMonth, goToday } = nav;
 
-  // Defer the values that drive the expensive react-native-big-calendar rebuild
-  // (beta.12's 5-page time-grid). The store/state writes behind a view switch,
-  // "Today", or a theme change stay urgent for the chrome (pills, top bar) so the
-  // tap feels instant, while the heavy grid rebuild runs at low priority on a
-  // separate, interruptible render pass instead of blocking the JS thread.
-  // useDeferredValue (not startTransition) because viewMode/theme come from a
-  // Zustand store via useSyncExternalStore, whose updates are always urgent and
-  // ignore transitions.
   const deferredViewMode = useDeferredValue(viewMode);
   const deferredCalDates = useDeferredValue(nav.calDates);
   const deferredDate = useDeferredValue(date);
   const deferredWeekStartsOn = useDeferredValue(weekStartsOn);
   const deferredIsCalendarMode = isCalMode(deferredViewMode);
-  // theme is already deferred inside useTheme(), so no extra deferral needed here.
 
-  // "Today" jump runs on the deferred pass (deferredDate/deferredCalDates) so it
-  // never blocks. Show a spinner in the Today button from tap until that pass
-  // commits — i.e. until the deferred values catch up to the live ones.
   const [todayPending, setTodayPending] = useState(false);
   const handleToday = useCallback(() => {
     setTodayPending(true);
@@ -75,8 +67,6 @@ export default function CalendarScreen() {
   const overlapMap = useMemo(() => computeOverlapMap(allEvents), [allEvents]);
   const calendarEvents = useMemo(() => toBigCalendarEvents(allEvents, overlapMap), [allEvents, overlapMap]);
 
-  // One shared guard: a rapid second tap on any event/cell is ignored so the
-  // same detail/new screen is never pushed twice.
   const navGuard = useRef(createNavigationGuard()).current;
 
   const handlePressEvent = useCallback(
@@ -92,9 +82,6 @@ export default function CalendarScreen() {
     [router, navGuard]
   );
 
-  // Capture only the function, not the whole nav object — nav contains agendaRef
-  // (a useRef) which Reanimated would serialize when it captures the closure,
-  // then warn when React later sets agendaRef.current on the JS thread.
   const monthSwipeGesture = useMemo(
     () =>
       Gesture.Pan()
@@ -146,15 +133,14 @@ export default function CalendarScreen() {
 
   const headerTitle = useMemo(() => {
     const d = dayjs(viewMode === 'schedule' ? agendaVisibleDate : date);
-    const monthYear = d.format('MMMM YYYY');
+    const monthYear = d.locale(language).format('MMMM YYYY');
     if (viewMode === 'week' || viewMode === '3days' || viewMode === 'day') {
-      return `${monthYear}  ·  W${d.isoWeek()}`;
+      return `${monthYear}  ·  ${t('calendar.weekAbbr')}${d.isoWeek()}`;
     }
     return monthYear;
-  }, [date, agendaVisibleDate, viewMode]);
+  }, [date, agendaVisibleDate, viewMode, language, t]);
 
-  // Key only on zoom commits — theme changes propagate via bigCalendarTheme prop,
-  // no remount needed.
+
   const calendarKeyFull = String(calendarKey);
 
   return (
@@ -168,6 +154,8 @@ export default function CalendarScreen() {
         onToday={handleToday}
         onSwitchMode={nav.switchMode}
       />
+
+      <OfflineBanner />
 
       <View style={styles.viewContainer} onLayout={onViewAreaLayout}>
         <View
@@ -230,7 +218,7 @@ export default function CalendarScreen() {
       {showFullOverlay && (
         <View style={[styles.loadingOverlay, { backgroundColor: theme.background }]}>
           <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading calendar…</Text>
+          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>{t('calendar.loadingCalendar')}</Text>
         </View>
       )}
       {showSmallLoader && (

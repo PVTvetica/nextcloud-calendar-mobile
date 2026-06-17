@@ -4,6 +4,7 @@ import type { CalendarHeaderProps, ICalendarEventBase, Mode } from 'react-native
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { useTheme } from '@/hooks/useTheme';
+import { useAppStore } from '@/store/appStore';
 
 dayjs.extend(isoWeek);
 
@@ -17,11 +18,8 @@ export function FixedCalendarHeader<T extends ICalendarEventBase>({
   headerContainerAccessibilityProps, headerCellAccessibilityProps,
 }: CalendarHeaderProps<T> & { mode: Mode }) {
   const theme = useTheme();
+  const language = useAppStore((s) => s.language);
 
-  // Compute the all-day events that fall on each column once per render. The old
-  // code filtered allDayEvents twice (height calc + render) with a fresh
-  // dayjs().startOf('day') per event per cell — O(days × events) dayjs objects on
-  // every calendar rebuild. Single pass, reused below.
   const { allDaySectionHeight, matchedByDate } = useMemo(() => {
     if (!showAllDayEventCell || allDayEvents.length === 0) {
       return { allDaySectionHeight: 0, matchedByDate: [] as T[][] };
@@ -61,7 +59,7 @@ export function FixedCalendarHeader<T extends ICalendarEventBase>({
           >
             <View style={{ height: 56, justifyContent: 'space-between' }}>
               <Text style={{ textAlign: 'center', fontSize: 12, color: isHighlight ? theme.primary : theme.textSecondary }}>
-                {date.format('ddd')}
+                {dayjs(date.toDate()).locale(language).format('ddd')}
               </Text>
               <View style={[
                 { alignSelf: 'center', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },

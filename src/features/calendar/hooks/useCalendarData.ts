@@ -4,11 +4,14 @@ import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-quer
 import { useAppStore } from '@/store/appStore';
 import { useCalendars } from '@/hooks/useCalendars';
 import { loadAccounts } from '@/api/auth';
-import { fetchEvents } from '@/api/caldav';
+import { fetchEventsForCalendars } from '@/api/caldav';
 import { normalizeEvents } from '@/utils/normalizeEvent';
 import { SUBSCRIBED_EVENTS_STALE } from '@/api/queryConfig';
 import type { CalendarEvent } from '@/types';
 import { monthRange, monthRangeAt } from '../utils/range';
+
+/** Exponential backoff, capped at 30s, for transient low-network event fetches. */
+const eventRetryDelay = (attempt: number) => Math.min(1000 * 2 ** attempt, 30000);
 
 export function useCalendarData(date: Date) {
   const activeAccountId = useAppStore((s) => s.activeAccountId);
@@ -50,30 +53,27 @@ export function useCalendarData(date: Date) {
 
   const { data: rawEvents = [], isLoading: eventsLoading, isFetching: eventsFetching } = useQuery<CalendarEvent[]>({
     queryKey: [activeAccountId, 'events', regularIds, start.toISOString(), end.toISOString()],
-    queryFn: async () => {
-      if (!activeAccount || regularCalendars.length === 0) return [];
-      const results = await Promise.allSettled(
-        regularCalendars.map((cal) => fetchEvents(activeAccount, cal, start, end))
-      );
-      return results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
-    },
+    queryFn: () =>
+      activeAccount
+        ? fetchEventsForCalendars(activeAccount, regularCalendars, start, end)
+        : Promise.resolve([]),
     enabled: activeAccount !== null && regularCalendars.length > 0,
     staleTime: Infinity,
     placeholderData: keepPreviousData,
+    retry: 3,
+    retryDelay: eventRetryDelay,
   });
 
   const { data: subscribedEvents = [] } = useQuery<CalendarEvent[]>({
     queryKey: [activeAccountId, 'subscribed-events', subscribedKeys],
-    queryFn: async () => {
-      if (!activeAccount || subscribedCalendars.length === 0) return [];
-      const results = await Promise.allSettled(
-        subscribedCalendars.map((cal) => fetchEvents(activeAccount, cal, start, end))
-      );
-      return results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
-    },
+    queryFn: () =>
+      activeAccount
+        ? fetchEventsForCalendars(activeAccount, subscribedCalendars, start, end)
+        : Promise.resolve([]),
     enabled: activeAccount !== null && subscribedCalendars.length > 0,
     staleTime: SUBSCRIBED_EVENTS_STALE,
-    retry: 2,
+    retry: 3,
+    retryDelay: eventRetryDelay,
     placeholderData: keepPreviousData,
   });
 
@@ -90,10 +90,10 @@ export function useCalendarData(date: Date) {
       const { start: adjStart, end: adjEnd } = monthRangeAt(date, monthOffset);
       queryClient.prefetchQuery({
         queryKey: [activeAccountId, 'events', regularIds, adjStart.toISOString(), adjEnd.toISOString()],
-        queryFn: () =>
-          Promise.allSettled(regularCalendars.map((cal) => fetchEvents(activeAccount, cal, adjStart, adjEnd)))
-            .then((results) => results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []))),
+        queryFn: () => fetchEventsForCalendars(activeAccount, regularCalendars, adjStart, adjEnd),
         staleTime: Infinity,
+        retry: 3,
+        retryDelay: eventRetryDelay,
       });
     };
     prefetchMonth(-1);

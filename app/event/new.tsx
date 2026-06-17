@@ -3,6 +3,7 @@ import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { loadAccounts } from '@/api/auth';
 import { useCalendars } from '@/hooks/useCalendars';
 import { useCreateEvent } from '@/hooks/useMutateEvent';
@@ -15,6 +16,7 @@ export default function NewEventScreen() {
   const { date } = useLocalSearchParams<{ date?: string }>();
   const router = useRouter();
   const theme = useTheme();
+  const { t } = useTranslation();
   const activeAccountId = useAppStore((s) => s.activeAccountId);
 
   const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: loadAccounts });
@@ -27,9 +29,6 @@ export default function NewEventScreen() {
 
   function handleSubmit(input: CreateEventInput) {
     if (!activeAccount) return;
-    // Optimistic: fire the mutation and leave immediately. The event appears in
-    // the calendar at once (onMutate patches the cache); a server failure rolls
-    // it back and surfaces an alert globally (see src/api/queryClient.ts).
     createMutation.mutate(input);
     if (router.canGoBack()) router.back();
     else router.replace('/(tabs)/calendar');
@@ -38,7 +37,7 @@ export default function NewEventScreen() {
   if (!activeAccount || calendars.length === 0) {
     return (
       <View style={[styles.center, { backgroundColor: theme.background }]}>
-        <Text style={{ color: theme.textSecondary }}>Loading calendars…</Text>
+        <Text style={{ color: theme.textSecondary }}>{t('event.loadingCalendars')}</Text>
       </View>
     );
   }
@@ -51,9 +50,9 @@ export default function NewEventScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={[styles.header, { borderBottomColor: theme.border, backgroundColor: theme.headerBackground }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={[styles.cancel, { color: theme.primary }]}>Cancel</Text>
+          <Text style={[styles.cancel, { color: theme.primary }]}>{t('common.cancel')}</Text>
         </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.text }]}>New Event</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t('event.newEvent')}</Text>
         <View style={styles.spacer} />
       </View>
       <EventForm
