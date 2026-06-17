@@ -5,8 +5,8 @@ export const LANGUAGES = [
   { code: 'fr', label: 'Français', region: 'FR' },
   { code: 'de', label: 'Deutsch', region: 'DE' },
   { code: 'es', label: 'Español', region: 'ES' },
-  { code: 'it', label: 'Italiano', region: 'IT' },
   { code: 'ru', label: 'Русский', region: 'RU' },
+  { code: 'it', label: 'Italiano', region: 'IT' },
 ] as const;
 
 export type AppLanguage = (typeof LANGUAGES)[number]['code'];
