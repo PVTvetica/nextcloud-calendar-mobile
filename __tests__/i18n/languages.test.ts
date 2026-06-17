@@ -7,7 +7,7 @@ jest.mock('expo-localization', () => ({
 
 describe('languages catalog', () => {
   it('exposes the six supported codes', () => {
-    expect(SUPPORTED).toEqual(['en', 'fr', 'de', 'es', 'it', 'ru']);
+    expect(SUPPORTED).toEqual(['en', 'fr', 'de', 'es','ru', 'it']);
     expect(LANGUAGES.map((l) => l.code)).toEqual(['en', 'fr', 'de', 'es', 'it', 'ru']);
   });
 
