@@ -4,10 +4,13 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 import { useAppStore } from '@/store/appStore';
 import type { CalendarEvent } from '@/types';
+
+dayjs.extend(localizedFormat);
 
 interface Props {
   date: Date;
@@ -18,18 +21,13 @@ interface Props {
   onPressCell: (d: Date) => void;
 }
 
-function buildMonthGrid(year: number, month: number, weekStartsOn: 0 | 1): (dayjs.Dayjs | null)[][] {
+export function buildMonthGrid(year: number, month: number, weekStartsOn: 0 | 1): (dayjs.Dayjs | null)[][] {
   const firstOfMonth = dayjs(new Date(year, month, 1));
-  let startCell = firstOfMonth.startOf('week');
-  if (weekStartsOn === 1) {
-    startCell = firstOfMonth.day() === 0
-      ? firstOfMonth.subtract(6, 'day')
-      : firstOfMonth.startOf('week').add(1, 'day');
-    if (startCell.isAfter(firstOfMonth)) startCell = startCell.subtract(7, 'day');
-  }
+
+  const offset = (firstOfMonth.day() - weekStartsOn + 7) % 7;
 
   const rows: (dayjs.Dayjs | null)[][] = [];
-  let cursor = startCell;
+  let cursor = firstOfMonth.subtract(offset, 'day');
   for (let row = 0; row < 6; row++) {
     const week: (dayjs.Dayjs | null)[] = [];
     for (let col = 0; col < 7; col++) {
@@ -154,7 +152,7 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
 
       <View style={styles.dayList}>
         <Text style={[styles.dayListHeader, { color: theme.textSecondary }]}>
-          {selected.locale(language).format('dddd, MMMM D')}
+          {selected.locale(language).format('dddd, LL')}
         </Text>
         {dayEvents.length === 0 ? (
           <Text style={[styles.emptyText, { color: theme.textTertiary }]}>{t('calendar.noEvents')}</Text>
@@ -175,7 +173,7 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
                   <Text style={[styles.eventTime, { color: theme.textSecondary }]}>
                     {item.allDay
                       ? t('calendar.allDay')
-                      : `${dayjs(item.dtstart).format('h:mm A')} – ${dayjs(item.dtend).format('h:mm A')}`}
+                      : `${dayjs(item.dtstart).locale(language).format('LT')} – ${dayjs(item.dtend).locale(language).format('LT')}`}
                   </Text>
                 </View>
               </TouchableOpacity>

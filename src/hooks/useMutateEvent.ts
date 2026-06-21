@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Crypto from 'expo-crypto';
-import { putEvent, updateEvent, deleteEvent, fetchEventIcs } from '@/api/caldav';
+import { putEvent, updateEvent, deleteEvent, moveEvent, fetchEventIcs } from '@/api/caldav';
 import { createTalkRoom } from '@/api/talk';
 import { buildIcs, buildAllDayIcs, buildExceptionIcs, injectExdate, truncateRruleUntil } from '@/utils/ics';
 import { parseIcsObjects } from '@/utils/caldav-parse';
@@ -203,6 +203,16 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
       if (!event.isRecurring || scope === 'all') {
         const ics = buildIcsForInput(event.uid, input, location, description, timezone);
         await updateEvent(account, event.href, ics);
+
+        // Calendar change moves the resource between WebDAV collections. Only
+        // non-recurring events may move; recurring events keep their calendar.
+        // Update content first, then move — if MOVE fails the event stays put
+        // with updated content (no data loss, no duplicate).
+        if (!event.isRecurring && input.calendarId !== event.calendarId) {
+          const targetCal = calendars.find((c) => c.id === input.calendarId);
+          if (!targetCal) throw new Error('Target calendar not found');
+          await moveEvent(account, event.href, targetCal, event.uid);
+        }
         return;
       }
 
@@ -252,6 +262,8 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
       const previous = snapshotEvents(queryClient, account.id);
 
       const { dtstart, dtend } = inputDates(input);
+      const calendarChanged = !event.isRecurring && input.calendarId !== event.calendarId;
+      const targetCal = calendarChanged ? calendars.find((c) => c.id === input.calendarId) : undefined;
       patchEvent(queryClient, account.id, event.uid, {
         summary: input.summary,
         dtstart,
@@ -260,6 +272,11 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
         description: input.description ?? event.description,
         location: input.location ?? event.location,
         attendees: input.attendees,
+        ...(targetCal && {
+          calendarId: targetCal.id,
+          color: targetCal.color,
+          href: `${targetCal.url}${event.uid}.ics`,
+        }),
       });
 
       void queryClient.cancelQueries({ queryKey: [account.id, 'events'] });
