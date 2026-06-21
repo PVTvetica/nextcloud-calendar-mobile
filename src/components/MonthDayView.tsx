@@ -23,9 +23,7 @@ interface Props {
 
 export function buildMonthGrid(year: number, month: number, weekStartsOn: 0 | 1): (dayjs.Dayjs | null)[][] {
   const firstOfMonth = dayjs(new Date(year, month, 1));
-  // dayjs.day() is always Sunday=0..Saturday=6, independent of the active locale.
-  // startOf('week') is NOT (it follows the locale's week start), so compute the
-  // back-offset to weekStartsOn manually to stay correct under any dayjs.locale().
+
   const offset = (firstOfMonth.day() - weekStartsOn + 7) % 7;
 
   const rows: (dayjs.Dayjs | null)[][] = [];
