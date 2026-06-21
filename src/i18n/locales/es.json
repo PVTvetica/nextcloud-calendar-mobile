@@ -65,6 +65,7 @@
     "titlePlaceholder": "Título del evento",
     "calendar": "Calendario",
     "noWritableCalendars": "No hay calendarios editables disponibles en esta cuenta.",
+    "calendarLockedRecurring": "No se puede cambiar el calendario de los eventos recurrentes.",
     "allDay": "Todo el día",
     "start": "Inicio",
     "end": "Fin",

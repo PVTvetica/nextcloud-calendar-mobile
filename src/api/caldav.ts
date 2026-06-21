@@ -22,18 +22,6 @@ const NAMED_XML_ENTITIES: Record<string, string> = {
   apos: "'",
 };
 
-/**
- * Decode XML entities (&amp; &lt; &gt; &quot; &apos; and numeric &#NN; / &#xNN;)
- * in a single left-to-right pass, so nothing cascade-decodes.
- *
- * Needed because we extract <cal:calendar-data> from the CalDAV REPORT response
- * with a regex instead of an XML parser. SabreDAV (Nextcloud) embeds the ICS as
- * XML-escaped text, so a raw `&` in a SUMMARY/DESCRIPTION/LOCATION arrives as
- * `&amp;`. ical.js does not touch XML entities, so without this the literal
- * `&amp;` would survive into the event and render verbatim in <Text>. Decoding
- * the whole blob is the exact inverse of SabreDAV's transport escaping and
- * restores the original on-disk ICS.
- */
 export function decodeXmlEntities(input: string): string {
   return input.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z]+);/g, (match, entity) => {
     if (entity[0] === '#') {
@@ -297,6 +285,24 @@ export async function updateEvent(
     const body = await res.text().catch(() => '');
     console.error('[updateEvent] error body:', body.slice(0, 300));
     throw new Error(`updateEvent HTTP ${res.status}`);
+  }
+}
+
+export async function moveEvent(
+  account: Account,
+  fromHref: string,
+  targetCalendar: CalendarMeta,
+  uid: string
+): Promise<void> {
+  const destination = `${targetCalendar.url}${uid}.ics`;
+  const res = await davFetch(fromHref, account, {
+    method: 'MOVE',
+    headers: { Destination: destination, Overwrite: 'T' },
+  });
+  if (!res.ok && res.status !== 201 && res.status !== 204) {
+    const body = await res.text().catch(() => '');
+    console.error('[moveEvent] error body:', body.slice(0, 300));
+    throw new Error(`moveEvent HTTP ${res.status}`);
   }
 }
 

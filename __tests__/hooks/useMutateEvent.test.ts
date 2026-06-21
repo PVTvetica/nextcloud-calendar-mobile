@@ -13,6 +13,7 @@ jest.mock('expo-crypto', () => ({ randomUUID: () => 'mock-uuid-123' }));
 const mockPutEvent = caldav.putEvent as jest.MockedFunction<typeof caldav.putEvent>;
 const mockUpdateEvent = caldav.updateEvent as jest.MockedFunction<typeof caldav.updateEvent>;
 const mockDeleteEvent = caldav.deleteEvent as jest.MockedFunction<typeof caldav.deleteEvent>;
+const mockMoveEvent = caldav.moveEvent as jest.MockedFunction<typeof caldav.moveEvent>;
 
 const account: Account = {
   id: 'acc-1', displayName: 'Work', baseUrl: 'https://cloud.example.com',
@@ -23,7 +24,12 @@ const calendar: CalendarMeta = {
   id: 'cal-url', accountId: 'acc-1', displayName: 'Personal', color: '#0082c9',
   ctag: '1', url: 'https://cloud.example.com/remote.php/dav/calendars/john/personal/', slug: 'personal',
 };
+const workCalendar: CalendarMeta = {
+  id: 'cal-work', accountId: 'acc-1', displayName: 'Work', color: '#ff0000',
+  ctag: '1', url: 'https://cloud.example.com/remote.php/dav/calendars/john/work/', slug: 'work',
+};
 const calendars = [calendar];
+const calendarsWithWork = [calendar, workCalendar];
 
 const WINDOW_KEY = ['acc-1', 'events', ['cal-url'], '2026-06-01T00:00:00.000Z', '2026-08-31T23:59:59.000Z'];
 
@@ -147,6 +153,55 @@ describe('useUpdateEvent', () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(eventsInCache(client)[0].summary).toBe('Original');
     expect(Alert.alert).toHaveBeenCalledWith('Failed to update event', expect.stringContaining('Permission denied'));
+  });
+
+  it('moves a non-recurring event to the chosen calendar and patches calendarId/color/href', async () => {
+    const { client, wrapper } = setup();
+    client.setQueryData(WINDOW_KEY, [existingEvent]);
+    mockUpdateEvent.mockResolvedValue();
+    mockMoveEvent.mockResolvedValue();
+
+    const { result } = renderHook(() => useUpdateEvent(account, calendarsWithWork), { wrapper });
+    const input: CreateEventInput = { ...createInput, summary: 'Original', calendarId: 'cal-work' };
+    act(() => { result.current.mutate({ event: existingEvent, input }); });
+
+    await waitFor(() => expect(eventsInCache(client)[0].calendarId).toBe('cal-work'));
+    const patched = eventsInCache(client)[0];
+    expect(patched.color).toBe('#ff0000');
+    expect(patched.href).toBe('https://cloud.example.com/remote.php/dav/calendars/john/work/uid-abc.ics');
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockUpdateEvent).toHaveBeenCalledTimes(1);
+    expect(mockMoveEvent).toHaveBeenCalledWith(account, existingEvent.href, workCalendar, 'uid-abc');
+  });
+
+  it('does not move when the calendar is unchanged', async () => {
+    const { client, wrapper } = setup();
+    client.setQueryData(WINDOW_KEY, [existingEvent]);
+    mockUpdateEvent.mockResolvedValue();
+
+    const { result } = renderHook(() => useUpdateEvent(account, calendarsWithWork), { wrapper });
+    const input: CreateEventInput = { ...createInput, summary: 'Edited', calendarId: 'cal-url' };
+    act(() => { result.current.mutate({ event: existingEvent, input }); });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockMoveEvent).not.toHaveBeenCalled();
+    expect(eventsInCache(client)[0].calendarId).toBe('cal-url');
+  });
+
+  it('never moves a recurring event even if a different calendar is chosen', async () => {
+    const { client, wrapper } = setup();
+    const recurringEvent: CalendarEvent = { ...existingEvent, isRecurring: true };
+    client.setQueryData(WINDOW_KEY, [recurringEvent]);
+    mockUpdateEvent.mockResolvedValue();
+
+    const { result } = renderHook(() => useUpdateEvent(account, calendarsWithWork), { wrapper });
+    const input: CreateEventInput = { ...createInput, summary: 'Original', calendarId: 'cal-work' };
+    act(() => { result.current.mutate({ event: recurringEvent, input, scope: 'all' }); });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockMoveEvent).not.toHaveBeenCalled();
+    expect(eventsInCache(client)[0].calendarId).toBe('cal-url');
   });
 });
 

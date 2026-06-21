@@ -65,6 +65,7 @@
     "titlePlaceholder": "Event title",
     "calendar": "Calendar",
     "noWritableCalendars": "No writable calendars available on this account.",
+    "calendarLockedRecurring": "Calendar can't be changed for recurring events.",
     "allDay": "All Day",
     "start": "Start",
     "end": "End",

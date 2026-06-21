@@ -132,7 +132,7 @@ export default function EditEventScreen() {
         loading={updateMutation.isPending}
         initialValues={initialValues}
         submitLabel={t('event.updateEvent')}
-        disableCalendarChange
+        disableCalendarChange={event.isRecurring}
       />
     </SafeAreaView>
   );

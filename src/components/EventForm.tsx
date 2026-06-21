@@ -224,6 +224,11 @@ export function EventForm({
           </TouchableOpacity>
         ))}
       </ScrollView>
+      {disableCalendarChange && (
+        <Text style={[styles.readOnlyNote, { color: theme.textTertiary, marginTop: 8 }]}>
+          {t('event.calendarLockedRecurring')}
+        </Text>
+      )}
 
       <View style={[styles.row, { borderBottomColor: theme.border }]}>
         <Text style={labelStyle}>{t('event.allDay')}</Text>
