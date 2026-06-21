@@ -13,6 +13,7 @@ import { useDeleteEvent } from '@/hooks/useMutateEvent';
 import { useAppStore } from '@/store/appStore';
 import { useTheme } from '@/hooks/useTheme';
 import { normalizeEvent, normalizeEvents } from '@/utils/normalizeEvent';
+import { sameDisplayedEvent } from '@/utils/sameDisplayedEvent';
 import { EVENTS_STALE } from '@/api/queryConfig';
 import type { CalendarEvent, RecurrenceEditScope } from '@/types';
 
@@ -89,8 +90,7 @@ export default function EventDetailScreen() {
       setCachedEvent((prev) => {
         const next = findInCacheRef.current();
         if (!next) return prev;
-        if (prev?.uid === next.uid && prev?.summary === next.summary &&
-            prev?.dtstart?.getTime?.() === next?.dtstart?.getTime?.()) return prev;
+        if (prev && sameDisplayedEvent(prev, next)) return prev;
         return next;
       });
     });

@@ -65,6 +65,7 @@
     "titlePlaceholder": "Titre de l'événement",
     "calendar": "Agenda",
     "noWritableCalendars": "Aucun agenda modifiable disponible sur ce compte.",
+    "calendarLockedRecurring": "L'agenda ne peut pas être modifié pour les événements récurrents.",
     "allDay": "Toute la journée",
     "start": "Début",
     "end": "Fin",

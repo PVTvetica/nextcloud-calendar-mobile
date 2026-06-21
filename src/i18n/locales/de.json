@@ -65,6 +65,7 @@
     "titlePlaceholder": "Ereignistitel",
     "calendar": "Kalender",
     "noWritableCalendars": "Keine beschreibbaren Kalender auf diesem Konto verfügbar.",
+    "calendarLockedRecurring": "Der Kalender kann für wiederkehrende Termine nicht geändert werden.",
     "allDay": "Ganztägig",
     "start": "Beginn",
     "end": "Ende",
