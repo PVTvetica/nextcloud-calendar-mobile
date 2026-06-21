@@ -5,11 +5,14 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 import { TalkToggle } from './TalkToggle';
 import { RecurrencePicker } from './RecurrencePicker';
 import type { CalendarMeta, Attendee, CreateEventInput, RecurrenceRule, TalkRoomType } from '@/types';
+
+dayjs.extend(localizedFormat);
 
 interface InitialValues {
   summary?: string;
@@ -235,7 +238,7 @@ export function EventForm({
       <Text style={labelStyle}>{t('event.start')}</Text>
       <TouchableOpacity style={inputStyle} onPress={openStartPicker}>
         <Text style={{ color: theme.text }}>
-          {allDay ? dayjs(dtstart).format('MMM D, YYYY') : dayjs(dtstart).format('MMM D, YYYY h:mm A')}
+          {allDay ? dayjs(dtstart).format('ll') : dayjs(dtstart).format('lll')}
         </Text>
       </TouchableOpacity>
 
@@ -252,7 +255,7 @@ export function EventForm({
         <>
           <Text style={labelStyle}>{t('event.end')}</Text>
           <TouchableOpacity style={inputStyle} onPress={openEndPicker}>
-            <Text style={{ color: theme.text }}>{dayjs(dtend).format('MMM D, YYYY h:mm A')}</Text>
+            <Text style={{ color: theme.text }}>{dayjs(dtend).format('lll')}</Text>
           </TouchableOpacity>
           {Platform.OS === 'ios' && showEndPicker && (
             <DateTimePicker
