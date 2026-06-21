@@ -3,10 +3,13 @@ import {
   View, Text, SectionList, TouchableOpacity, StyleSheet,
 } from 'react-native';
 import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 import type { Theme } from '@/theme';
 import type { CalendarEvent } from '@/types';
+
+dayjs.extend(localizedFormat);
 
 interface Props {
   events: CalendarEvent[];
@@ -22,7 +25,7 @@ type AgendaSection = { key: string; date: Date; data: CalendarEvent[] };
 
 function formatTime(d: Date, allDay: boolean, allDayLabel: string): string {
   if (allDay) return allDayLabel;
-  return dayjs(d).format('HH:mm');
+  return dayjs(d).format('LT');
 }
 
 interface DayHeaderProps {

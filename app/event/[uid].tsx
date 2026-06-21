@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
 import { loadAccounts } from '@/api/auth';
 import { fetchEvents } from '@/api/caldav';
@@ -14,6 +15,8 @@ import { useTheme } from '@/hooks/useTheme';
 import { normalizeEvent, normalizeEvents } from '@/utils/normalizeEvent';
 import { EVENTS_STALE } from '@/api/queryConfig';
 import type { CalendarEvent, RecurrenceEditScope } from '@/types';
+
+dayjs.extend(localizedFormat);
 
 async function openTalkRoom(talkUrl: string) {
   await Linking.openURL(talkUrl);
@@ -188,7 +191,7 @@ export default function EventDetailScreen() {
 
   const timeStr = event.allDay
     ? t('event.allDayTime')
-    : `${dayjs(event.dtstart).format('MMM D, YYYY h:mm A')} – ${dayjs(event.dtend).format('h:mm A')}`;
+    : `${dayjs(event.dtstart).format('lll')} – ${dayjs(event.dtend).format('LT')}`;
 
   return (
     <ScrollView
