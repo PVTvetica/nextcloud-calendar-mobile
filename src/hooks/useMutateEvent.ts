@@ -33,7 +33,8 @@ function buildIcsForInput(uid: string, input: CreateEventInput, location: string
         summary: input.summary,
         description,
         location,
-        date: input.dtstart,
+        dtstart: input.dtstart,
+        dtend: input.dtend,
         organizerEmail: input.organizerEmail,
         organizerName: input.organizerName,
         attendees: input.attendees,
@@ -74,7 +75,7 @@ function inputDates(input: CreateEventInput): { dtstart: Date; dtend: Date } {
   if (input.allDay) {
     return {
       dtstart: dayjs(input.dtstart).startOf('day').toDate(),
-      dtend: dayjs(input.dtstart).startOf('day').toDate(),
+      dtend: dayjs(input.dtend).startOf('day').toDate(),
     };
   }
   return { dtstart: input.dtstart, dtend: input.dtend };
