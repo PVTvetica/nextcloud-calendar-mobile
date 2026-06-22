@@ -157,7 +157,13 @@ export function EventForm({
   function handleSubmit() {
     if (!summary.trim()) { setError(t('event.errorTitleRequired')); return; }
     if (!calendarId) { setError(t('event.errorSelectCalendar')); return; }
-    if (!allDay && dtend <= dtstart) { setError(t('event.errorEndAfterStart')); return; }
+    if (allDay) {
+      if (dayjs(dtend).startOf('day').isBefore(dayjs(dtstart).startOf('day'))) {
+        setError(t('event.errorEndAfterStart')); return;
+      }
+    } else if (dtend <= dtstart) {
+      setError(t('event.errorEndAfterStart')); return;
+    }
     setError(null);
     onSubmit({
       summary: summary.trim(), calendarId, dtstart, dtend, allDay,
@@ -256,20 +262,18 @@ export function EventForm({
         />
       )}
 
-      {!allDay && (
-        <>
-          <Text style={labelStyle}>{t('event.end')}</Text>
-          <TouchableOpacity style={inputStyle} onPress={openEndPicker}>
-            <Text style={{ color: theme.text }}>{dayjs(dtend).format('lll')}</Text>
-          </TouchableOpacity>
-          {Platform.OS === 'ios' && showEndPicker && (
-            <DateTimePicker
-              value={dtend}
-              mode="datetime"
-              onChange={handleIosEndChange}
-            />
-          )}
-        </>
+      <Text style={labelStyle}>{t('event.end')}</Text>
+      <TouchableOpacity style={inputStyle} onPress={openEndPicker}>
+        <Text style={{ color: theme.text }}>
+          {allDay ? dayjs(dtend).format('ll') : dayjs(dtend).format('lll')}
+        </Text>
+      </TouchableOpacity>
+      {Platform.OS === 'ios' && showEndPicker && (
+        <DateTimePicker
+          value={dtend}
+          mode={allDay ? 'date' : 'datetime'}
+          onChange={handleIosEndChange}
+        />
       )}
 
 
