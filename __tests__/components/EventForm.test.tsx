@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import { EventForm } from '../../src/components/EventForm';
 import i18n from '../../src/i18n';
 import type { CalendarMeta } from '../../src/types';
@@ -37,5 +37,62 @@ describe('EventForm calendar picker', () => {
   it('does not show the locked caption when calendar change is allowed', () => {
     const { queryByText } = render(<EventForm {...baseProps} />);
     expect(queryByText(LOCKED_CAPTION)).toBeNull();
+  });
+});
+
+describe('EventForm all-day end date', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('en');
+  });
+
+  it('shows the End field when the event is all-day', () => {
+    const { getByText } = render(
+      <EventForm {...baseProps} initialValues={{ allDay: true }} />
+    );
+    expect(getByText('End')).toBeTruthy();
+  });
+
+  it('shows the End field for timed events too', () => {
+    const { getByText } = render(
+      <EventForm {...baseProps} initialValues={{ allDay: false }} />
+    );
+    expect(getByText('End')).toBeTruthy();
+  });
+
+  it('allows submit when the all-day end equals the start (single-day event)', () => {
+    const onSubmit = jest.fn();
+    const { getByText } = render(
+      <EventForm
+        {...baseProps}
+        onSubmit={onSubmit}
+        initialValues={{
+          summary: 'Day trip',
+          allDay: true,
+          dtstart: new Date(2026, 5, 20),
+          dtend: new Date(2026, 5, 20),
+        }}
+      />
+    );
+    fireEvent.press(getByText('Save Event'));
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('blocks submit when the all-day end is before the start', () => {
+    const onSubmit = jest.fn();
+    const { getByText } = render(
+      <EventForm
+        {...baseProps}
+        onSubmit={onSubmit}
+        initialValues={{
+          summary: 'Trip',
+          allDay: true,
+          dtstart: new Date(2026, 5, 20),
+          dtend: new Date(2026, 5, 18),
+        }}
+      />
+    );
+    fireEvent.press(getByText('Save Event'));
+    expect(getByText('End time must be after start time.')).toBeTruthy();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

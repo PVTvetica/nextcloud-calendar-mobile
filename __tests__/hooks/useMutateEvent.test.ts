@@ -110,6 +110,28 @@ describe('useCreateEvent', () => {
     expect(ev.dtend.getMinutes()).toBe(0);
   });
 
+  it('spans an optimistic all-day event across multiple days (inclusive end)', async () => {
+    const { client, wrapper } = setup();
+    client.setQueryData(WINDOW_KEY, []);
+    mockPutEvent.mockResolvedValue();
+
+    const multiDayInput: CreateEventInput = {
+      ...createInput,
+      allDay: true,
+      dtstart: new Date('2026-06-20T10:00:00Z'),
+      dtend: new Date('2026-06-22T11:00:00Z'),
+    };
+
+    const { result } = renderHook(() => useCreateEvent(account, calendars), { wrapper });
+    act(() => { result.current.mutate(multiDayInput); });
+
+    await waitFor(() => expect(eventsInCache(client)).toHaveLength(1));
+    const ev = eventsInCache(client)[0];
+    expect(ev.allDay).toBe(true);
+    expect(ev.dtend.getHours()).toBe(0);
+    expect(ev.dtend.getDate()).toBe(22);
+  });
+
   it('rolls back and alerts when create fails', async () => {
     const { client, wrapper } = setup();
     client.setQueryData(WINDOW_KEY, []);

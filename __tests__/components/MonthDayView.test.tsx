@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
-import { MonthDayView, buildMonthGrid } from '../../src/components/MonthDayView';
+import { MonthDayView, buildMonthGrid, eventDayKeys } from '../../src/components/MonthDayView';
 import type { CalendarEvent } from '../../src/types';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -37,8 +37,6 @@ describe('buildMonthGrid', () => {
     dayjs.locale('en');
   });
 
-  // Every non-null cell must sit in the column whose weekday it actually is.
-  // Column c represents weekday (weekStartsOn + c) % 7 (0 = Sunday).
   function expectColumnsMatchWeekdays(weekStartsOn: 0 | 1) {
     const grid = buildMonthGrid(2026, 5, weekStartsOn); // June 2026
     for (const week of grid) {
@@ -57,8 +55,6 @@ describe('buildMonthGrid', () => {
     expectColumnsMatchWeekdays(1);
   });
 
-  // Regression: a Monday-start global dayjs locale (fr/de/es/it/ru) used to shift
-  // every cell one column left because startOf('week') returned Monday.
   it('stays aligned under a Monday-start locale (fr)', () => {
     dayjs.locale('fr');
     expectColumnsMatchWeekdays(0);
@@ -77,6 +73,35 @@ describe('buildMonthGrid', () => {
   });
 });
 
+describe('eventDayKeys', () => {
+  const make = (over: Partial<CalendarEvent>): CalendarEvent => ({
+    uid: 'x', href: '/x.ics', calendarId: 'c1', accountId: 'a1', summary: 'x',
+    dtstart: new Date(2026, 5, 15), dtend: new Date(2026, 5, 15),
+    allDay: true, color: '#000', attendees: [], isRecurring: false, ...over,
+  });
+
+  it('returns one key for a single-day all-day event', () => {
+    expect(eventDayKeys(make({ dtstart: new Date(2026, 5, 15), dtend: new Date(2026, 5, 15) })))
+      .toEqual(['2026-06-15']);
+  });
+
+  it('returns every day across a multi-day all-day span (inclusive end)', () => {
+    expect(eventDayKeys(make({ dtstart: new Date(2026, 5, 15), dtend: new Date(2026, 5, 17) })))
+      .toEqual(['2026-06-15', '2026-06-16', '2026-06-17']);
+  });
+
+  it('spans across a month boundary', () => {
+    expect(eventDayKeys(make({ dtstart: new Date(2026, 5, 30), dtend: new Date(2026, 6, 2) })))
+      .toEqual(['2026-06-30', '2026-07-01', '2026-07-02']);
+  });
+
+  it('returns only the start day for a timed event', () => {
+    expect(eventDayKeys(make({
+      allDay: false, dtstart: new Date(2026, 5, 15, 9, 0), dtend: new Date(2026, 5, 15, 10, 0),
+    }))).toEqual(['2026-06-15']);
+  });
+});
+
 describe('MonthDayView', () => {
   it('derives the selected day from the date prop and follows prop changes', () => {
     const { getByText, queryByText, rerender } = render(view(june10));
@@ -88,5 +113,49 @@ describe('MonthDayView', () => {
 
     expect(getByText(dayjs(june15).format('dddd, LL'))).toBeTruthy();
     expect(queryByText('Birthday Party')).toBeTruthy();
+  });
+});
+
+describe('MonthDayView multi-day all-day events', () => {
+  // June 15 → 17 inclusive. The parser stores all-day dtend as the inclusive
+  // last day at local midnight (exclusive iCal DTEND minus one day).
+  const conference: CalendarEvent = {
+    uid: 'e2', href: '/e2.ics', calendarId: 'c1', accountId: 'a1',
+    summary: 'Conference',
+    dtstart: new Date(2026, 5, 15), dtend: new Date(2026, 5, 17),
+    allDay: true, color: '#e74c3c', attendees: [], isRecurring: false,
+  };
+
+  function allDayView(date: Date) {
+    return (
+      <MonthDayView
+        date={date}
+        events={[conference]}
+        weekStartsOn={0}
+        onSelectDate={jest.fn()}
+        onPressEvent={jest.fn()}
+        onPressCell={jest.fn()}
+      />
+    );
+  }
+
+  it('lists the event on its start day', () => {
+    expect(render(allDayView(new Date(2026, 5, 15))).queryByText('Conference')).toBeTruthy();
+  });
+
+  it('lists the event on a middle day it spans', () => {
+    expect(render(allDayView(new Date(2026, 5, 16))).queryByText('Conference')).toBeTruthy();
+  });
+
+  it('lists the event on its inclusive last day', () => {
+    expect(render(allDayView(new Date(2026, 5, 17))).queryByText('Conference')).toBeTruthy();
+  });
+
+  it('does not list the event the day before it starts', () => {
+    expect(render(allDayView(new Date(2026, 5, 14))).queryByText('Conference')).toBeNull();
+  });
+
+  it('does not list the event the day after it ends', () => {
+    expect(render(allDayView(new Date(2026, 5, 18))).queryByText('Conference')).toBeNull();
   });
 });

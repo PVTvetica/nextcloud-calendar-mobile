@@ -190,7 +190,9 @@ export default function EventDetailScreen() {
   }
 
   const timeStr = event.allDay
-    ? t('event.allDayTime')
+    ? (dayjs(event.dtstart).isSame(event.dtend, 'day')
+        ? t('event.allDayTime')
+        : `${dayjs(event.dtstart).format('ll')} – ${dayjs(event.dtend).format('ll')}`)
     : `${dayjs(event.dtstart).format('lll')} – ${dayjs(event.dtend).format('LT')}`;
 
   return (
