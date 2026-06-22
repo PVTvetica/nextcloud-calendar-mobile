@@ -42,6 +42,27 @@ export function buildMonthGrid(year: number, month: number, weekStartsOn: 0 | 1)
   return rows;
 }
 
+export function eventDayKeys(e: CalendarEvent): string[] {
+  const start = dayjs(e.dtstart);
+  const startKey = start.format('YYYY-MM-DD');
+  if (!e.allDay) return [startKey];
+  const endDay = dayjs(e.dtend).startOf('day');
+  const keys: string[] = [];
+  let cur = start.startOf('day');
+  while (!cur.isAfter(endDay, 'day') && keys.length <= 366) {
+    keys.push(cur.format('YYYY-MM-DD'));
+    cur = cur.add(1, 'day');
+  }
+  return keys.length ? keys : [startKey];
+}
+
+export function eventCoversDay(e: CalendarEvent, dayKey: string): boolean {
+  const startKey = dayjs(e.dtstart).format('YYYY-MM-DD');
+  if (!e.allDay) return startKey === dayKey;
+  const endKey = dayjs(e.dtend).format('YYYY-MM-DD');
+  return dayKey >= startKey && dayKey <= (endKey < startKey ? startKey : endKey);
+}
+
 function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEvent, onPressCell }: Props) {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -57,18 +78,21 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
 
   const dotMap = useMemo(() => {
     const map = new Map<string, Set<string>>();
+    const add = (key: string, color: string) => {
+      let set = map.get(key);
+      if (!set) { set = new Set(); map.set(key, set); }
+      set.add(color);
+    };
+
+    // Timed events first so their colors take priority in the 3-dot slice.
     for (const ev of events) {
       if (ev.allDay) continue;
-      const key = dayjs(ev.dtstart).format('YYYY-MM-DD');
-      if (!map.has(key)) map.set(key, new Set());
-      map.get(key)!.add(ev.color);
+      add(dayjs(ev.dtstart).format('YYYY-MM-DD'), ev.color);
     }
-
+    // All-day events mark every day they span, not only their start day.
     for (const ev of events) {
       if (!ev.allDay) continue;
-      const key = dayjs(ev.dtstart).format('YYYY-MM-DD');
-      if (!map.has(key)) map.set(key, new Set());
-      map.get(key)!.add(ev.color);
+      for (const key of eventDayKeys(ev)) add(key, ev.color);
     }
     return map;
   }, [events]);
@@ -76,7 +100,7 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
   const dayEvents = useMemo(() => {
     const sel = selected.format('YYYY-MM-DD');
     return events
-      .filter((e) => dayjs(e.dtstart).format('YYYY-MM-DD') === sel)
+      .filter((e) => eventCoversDay(e, sel))
       .sort((a, b) => a.dtstart.getTime() - b.dtstart.getTime());
   }, [events, selected]);
 
