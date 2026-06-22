@@ -1,4 +1,5 @@
 import { parseIcsObjects, parseIcsObjectsAsync } from '../../src/utils/caldav-parse';
+import { buildAllDayIcs } from '../../src/utils/ics';
 
 const sampleIcs = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -21,6 +22,16 @@ UID:allday-123
 SUMMARY:Holiday
 DTSTART;VALUE=DATE:20260615
 DTEND;VALUE=DATE:20260616
+END:VEVENT
+END:VCALENDAR`;
+
+const multiDayAllDayIcs = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:multiday-1
+SUMMARY:Trip
+DTSTART;VALUE=DATE:20260615
+DTEND;VALUE=DATE:20260618
 END:VEVENT
 END:VCALENDAR`;
 
@@ -78,6 +89,28 @@ describe('parseIcsObjects', () => {
   it('marks all-day events correctly', () => {
     const [event] = parseIcsObjects([{ ics: allDayIcs, href: '/cal/allday.ics' }], calMeta);
     expect(event.allDay).toBe(true);
+  });
+
+  it('parses a multi-day all-day event with an inclusive end', () => {
+    const [event] = parseIcsObjects([{ ics: multiDayAllDayIcs, href: '/cal/m.ics' }], calMeta);
+    expect(event.allDay).toBe(true);
+    expect(event.dtstart.getFullYear()).toBe(2026);
+    expect(event.dtstart.getMonth()).toBe(5);
+    expect(event.dtstart.getDate()).toBe(15);
+    // iCal DTEND 18 is exclusive -> inclusive last day is 17
+    expect(event.dtend.getDate()).toBe(17);
+  });
+
+  it('round-trips buildAllDayIcs -> parse preserving inclusive start and end', () => {
+    const ics = buildAllDayIcs({
+      uid: 'rt-1', summary: 'Trip', description: '', location: '',
+      dtstart: new Date(2026, 5, 15),
+      dtend: new Date(2026, 5, 17),
+      organizerEmail: 'j@e.com', organizerName: 'J', attendees: [],
+    });
+    const [event] = parseIcsObjects([{ ics, href: '/cal/rt.ics' }], calMeta);
+    expect(event.dtstart.getDate()).toBe(15);
+    expect(event.dtend.getDate()).toBe(17);
   });
 
   it('marks recurring events correctly', () => {
