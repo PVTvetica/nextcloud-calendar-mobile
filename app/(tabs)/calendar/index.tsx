@@ -8,7 +8,7 @@ import { GestureDetector, Gesture, Pressable as GHPressable } from 'react-native
 import { useSharedValue, runOnJS } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from "expo-router/react-navigation";
 import { Calendar } from 'react-native-big-calendar';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
@@ -47,9 +47,12 @@ export default function CalendarScreen() {
   useEffect(() => { setPendingMode(viewMode); }, [viewMode]);
   const hiddenCalendarIds = useAppStore((s) => s.hiddenCalendarIds);
   const toggleCalendarVisibility = useAppStore((s) => s.toggleCalendarVisibility);
+  const notifiableCalendarIds = useAppStore((s) => s.notifiableCalendarIds);
+  const toggleCalendarNotification = useAppStore((s) => s.toggleCalendarNotification);
   const hourRowHeight = useAppStore((s) => s.hourRowHeight);
   const setHourRowHeight = useAppStore((s) => s.setHourRowHeight);
   const weekStartsOn = useAppStore((s) => s.weekStartsOn);
+  const [date, setDate] = useState(new Date());
   const [calendarKey, setCalendarKey] = useState(0);
   const [committedHeight, setCommittedHeight] = useState(hourRowHeight);
   const [agendaVisibleDate, setAgendaVisibleDate] = useState(date);
@@ -105,7 +108,6 @@ export default function CalendarScreen() {
     [navigateMonth]
   );
 
-  const [date, setDate] = useState(new Date());
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const overlayAnim = useRef(new Animated.Value(0)).current;
@@ -474,7 +476,9 @@ export default function CalendarScreen() {
         activeAccount={activeAccount}
         calendars={calendars}
         hiddenCalendarIds={hiddenCalendarIds}
+        notifiableCalendarIds={notifiableCalendarIds}
         toggleCalendarVisibility={toggleCalendarVisibility}
+        toggleCalendarNotification={toggleCalendarNotification}
         onClose={closeDrawer}
         onNavigateSettings={() => { closeDrawer(); router.push('/(tabs)/settings'); }}
       />

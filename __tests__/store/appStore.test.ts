@@ -11,6 +11,7 @@ describe('appStore', () => {
       viewMode: 'week',
       selectedDate: null,
       hiddenCalendarIds: [],
+      notifiableCalendarIds: [],
       weekStartsOn: 0,
     });
   });
@@ -40,6 +41,42 @@ describe('appStore', () => {
     useAppStore.setState({ hiddenCalendarIds: ['cal-1'] });
     useAppStore.getState().toggleCalendarVisibility('cal-1');
     expect(useAppStore.getState().hiddenCalendarIds).not.toContain('cal-1');
+  });
+
+  it('toggles calendar notification selection on', () => {
+    useAppStore.getState().toggleCalendarNotification('cal-1');
+    expect(useAppStore.getState().notifiableCalendarIds).toContain('cal-1');
+  });
+
+  it('toggles calendar notification selection back off', () => {
+    useAppStore.setState({ notifiableCalendarIds: ['cal-1'] });
+    useAppStore.getState().toggleCalendarNotification('cal-1');
+    expect(useAppStore.getState().notifiableCalendarIds).not.toContain('cal-1');
+  });
+
+  it('hiding a selected calendar clears notification selection', () => {
+    useAppStore.setState({ notifiableCalendarIds: ['cal-1'] });
+    useAppStore.getState().toggleCalendarVisibility('cal-1');
+    expect(useAppStore.getState().hiddenCalendarIds).toContain('cal-1');
+    expect(useAppStore.getState().notifiableCalendarIds).not.toContain('cal-1');
+  });
+
+  it('showing a hidden calendar does not restore notification selection', () => {
+    useAppStore.setState({
+      hiddenCalendarIds: ['cal-1'],
+      notifiableCalendarIds: [],
+    });
+
+    useAppStore.getState().toggleCalendarVisibility('cal-1');
+
+    expect(useAppStore.getState().hiddenCalendarIds).not.toContain('cal-1');
+    expect(useAppStore.getState().notifiableCalendarIds).not.toContain('cal-1');
+  });
+
+  it('does not select notifications for a hidden calendar', () => {
+    useAppStore.setState({ hiddenCalendarIds: ['cal-1'] });
+    useAppStore.getState().toggleCalendarNotification('cal-1');
+    expect(useAppStore.getState().notifiableCalendarIds).not.toContain('cal-1');
   });
 
   it('defaults weekStartsOn to 0 (Sunday)', () => {

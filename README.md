@@ -90,15 +90,6 @@ Optionally attach a Nextcloud Talk room to any event at creation time, the Talk 
 - Light, dark, and system-auto theme modes
 - Adjustable zoom level (hour row height: 45–120 px)
 - Configurable week start day (Sunday or Monday)
----
-
-## 🗺️ Roadmap
-
-Planned improvements for upcoming releases:
-
-- [ ] **Push Notifications** : Event reminders delivered natively on iOS and Android
-- [ ] **UX/UI Polish** : Improved loading states, transitions, and overall visual experience
-- [ ] **Gesture Improvements** : More fluid and intuitive swipe navigation across calendar views
 
 ---
 

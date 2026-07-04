@@ -10,6 +10,7 @@ interface AppState {
   viewMode: ViewMode;
   selectedDate: Date | null;
   hiddenCalendarIds: string[];
+  notifiableCalendarIds: string[];
   themePreference: ThemePreference;
   hourRowHeight: number;
   weekStartsOn: 0 | 1;
@@ -18,6 +19,7 @@ interface AppState {
   setViewMode: (mode: ViewMode) => void;
   setSelectedDate: (date: Date | null) => void;
   toggleCalendarVisibility: (calendarId: string) => void;
+  toggleCalendarNotification: (calendarId: string) => void;
   setThemePreference: (pref: ThemePreference) => void;
   setHourRowHeight: (h: number) => void;
   setWeekStartsOn: (v: 0 | 1) => void;
@@ -31,6 +33,7 @@ export const useAppStore = create<AppState>()(
       viewMode: 'week',
       selectedDate: null,
       hiddenCalendarIds: [],
+      notifiableCalendarIds: [],
       themePreference: 'system',
       hourRowHeight: 60,
       weekStartsOn: 0,
@@ -39,12 +42,24 @@ export const useAppStore = create<AppState>()(
       setViewMode: (mode) => set({ viewMode: mode }),
       setSelectedDate: (date) => set({ selectedDate: date }),
       toggleCalendarVisibility: (calendarId) => {
-        const { hiddenCalendarIds } = get();
+        const { hiddenCalendarIds, notifiableCalendarIds } = get();
         if (hiddenCalendarIds.includes(calendarId)) {
           set({ hiddenCalendarIds: hiddenCalendarIds.filter((id) => id !== calendarId) });
         } else {
-          set({ hiddenCalendarIds: [...hiddenCalendarIds, calendarId] });
+          set({
+            hiddenCalendarIds: [...hiddenCalendarIds, calendarId],
+            notifiableCalendarIds: notifiableCalendarIds.filter((id) => id !== calendarId),
+          });
         }
+      },
+      toggleCalendarNotification: (calendarId) => {
+        const { hiddenCalendarIds, notifiableCalendarIds } = get();
+        if (hiddenCalendarIds.includes(calendarId)) return;
+        set({
+          notifiableCalendarIds: notifiableCalendarIds.includes(calendarId)
+            ? notifiableCalendarIds.filter((id) => id !== calendarId)
+            : [...notifiableCalendarIds, calendarId],
+        });
       },
       setThemePreference: (pref) => set({ themePreference: pref }),
       setHourRowHeight: (h) => set({ hourRowHeight: h }),
@@ -58,6 +73,7 @@ export const useAppStore = create<AppState>()(
         activeAccountId: state.activeAccountId,
         viewMode: state.viewMode,
         hiddenCalendarIds: state.hiddenCalendarIds,
+        notifiableCalendarIds: state.notifiableCalendarIds,
         themePreference: state.themePreference,
         hourRowHeight: state.hourRowHeight,
         weekStartsOn: state.weekStartsOn,

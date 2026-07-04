@@ -11,11 +11,6 @@
       "android"
     ],
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#109be6"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -58,7 +53,17 @@
         {
           "cameraPermission": "Allow Calendar to access the camera to scan a Nextcloud login QR code."
         }
-      ]
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#109be6"
+        }
+      ],
+      "expo-font",
+      "expo-status-bar"
     ]
   }
 }

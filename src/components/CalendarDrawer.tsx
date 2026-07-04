@@ -10,6 +10,7 @@ import {
 
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { AvatarImage } from '@/components/AvatarImage';
 import { useTheme } from '@/hooks/useTheme';
 import type { Account, CalendarMeta } from '@/types';
@@ -24,7 +25,9 @@ interface CalendarDrawerProps {
   activeAccount: Account | null;
   calendars: CalendarMeta[];
   hiddenCalendarIds: string[];
+  notifiableCalendarIds: string[];
   toggleCalendarVisibility: (id: string) => void;
+  toggleCalendarNotification: (id: string) => void;
   onClose: () => void;
   onNavigateSettings: () => void;
 }
@@ -37,7 +40,9 @@ export function CalendarDrawer({
   activeAccount,
   calendars,
   hiddenCalendarIds,
+  notifiableCalendarIds,
   toggleCalendarVisibility,
+  toggleCalendarNotification,
   onClose,
   onNavigateSettings,
 }: CalendarDrawerProps) {
@@ -92,12 +97,39 @@ export function CalendarDrawer({
         >
           {calendars.map((cal) => {
             const visible = !hiddenCalendarIds.includes(cal.id);
+            const selected = visible && notifiableCalendarIds.includes(cal.id);
+            const buttonBackgroundColor = selected
+              ? cal.color
+              : visible
+                ? theme.surfaceRaised
+                : theme.chip;
+            const buttonBorderColor = selected ? cal.color : theme.border;
+            const iconColor = selected ? '#ffffff' : visible ? theme.textSecondary : theme.textTertiary;
             return (
               <View key={cal.id} style={styles.drawerCalRow}>
                 <View style={[styles.calDot, { backgroundColor: cal.color }]} />
-                <Text style={[styles.drawerCalName, { color: theme.text }]} numberOfLines={1}>
-                  {cal.displayName}
-                </Text>
+                {/*<Text style={[styles.drawerCalName, { color: theme.text }]} numberOfLines={1}>*/}
+                {/*  {cal.displayName}*/}
+                {/*</Text>*/}
+                <TouchableOpacity
+                  testID={`calendar-notification-${cal.id}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${cal.displayName} notifications and widget`}
+                  accessibilityState={{ disabled: !visible, selected }}
+                  disabled={!visible}
+                  onPress={() => toggleCalendarNotification(cal.id)}
+                  style={[
+                    styles.notificationBtn,
+                    { backgroundColor: buttonBackgroundColor, borderColor: buttonBorderColor },
+                    !visible && styles.notificationBtnDisabled,
+                  ]}
+                >
+                  <Ionicons
+                    name={selected ? 'notifications' : 'notifications-outline'}
+                    size={20}
+                    color={iconColor}
+                  />
+                </TouchableOpacity>
                 <Switch
                   value={visible}
                   onValueChange={() => toggleCalendarVisibility(cal.id)}
@@ -132,6 +164,15 @@ const styles = StyleSheet.create({
   drawerCalRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 10 },
   calDot: { width: 12, height: 12, borderRadius: 6, flexShrink: 0 },
   drawerCalName: { flex: 1, fontSize: 14 },
+  notificationBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  notificationBtnDisabled: { opacity: 0.35 },
   drawerAccountRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 },
   drawerAccountText: { flex: 1 },
 });
