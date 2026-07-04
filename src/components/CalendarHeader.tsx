@@ -4,6 +4,7 @@ import type { CalendarHeaderProps, ICalendarEventBase, Mode } from 'react-native
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { useTheme } from '@/hooks/useTheme';
+import { useAppStore } from '@/store/appStore';
 
 dayjs.extend(isoWeek);
 
@@ -17,17 +18,22 @@ export function FixedCalendarHeader<T extends ICalendarEventBase>({
   headerContainerAccessibilityProps, headerCellAccessibilityProps,
 }: CalendarHeaderProps<T> & { mode: Mode }) {
   const theme = useTheme();
+  const language = useAppStore((s) => s.language);
 
-  const allDaySectionHeight = useMemo(() => {
-    if (!showAllDayEventCell || allDayEvents.length === 0) return 0;
-    const maxPerDay = Math.max(...dateRange.map((date) =>
-      allDayEvents.filter((event) => {
+  const { allDaySectionHeight, matchedByDate } = useMemo(() => {
+    if (!showAllDayEventCell || allDayEvents.length === 0) {
+      return { allDaySectionHeight: 0, matchedByDate: [] as T[][] };
+    }
+    const matched = dateRange.map((date) => {
+      const day = date.startOf('day');
+      return allDayEvents.filter((event) => {
         const s = dayjs(event.start).startOf('day');
         const e = dayjs(event.end).startOf('day');
-        return !date.startOf('day').isBefore(s) && !date.startOf('day').isAfter(e);
-      }).length
-    ));
-    return maxPerDay * ALL_DAY_EVENT_ROW_HEIGHT + 4;
+        return !day.isBefore(s) && !day.isAfter(e);
+      });
+    });
+    const maxPerDay = Math.max(...matched.map((m) => m.length));
+    return { allDaySectionHeight: maxPerDay * ALL_DAY_EVENT_ROW_HEIGHT + 4, matchedByDate: matched };
   }, [allDayEvents, dateRange, showAllDayEventCell]);
 
   return (
@@ -40,8 +46,9 @@ export function FixedCalendarHeader<T extends ICalendarEventBase>({
       {...headerContainerAccessibilityProps}
     >
       {!hideHours && <View style={{ zIndex: 10, width: 50 }} />}
-      {dateRange.map((date) => {
+      {dateRange.map((date, dateIndex) => {
         const isHighlight = activeDate ? dayjs(activeDate).isSame(date, 'date') : dayjs().isSame(date, 'day');
+        const dayAllDayEvents = matchedByDate[dateIndex] ?? [];
         return (
           <TouchableOpacity
             key={date.toString()}
@@ -52,7 +59,7 @@ export function FixedCalendarHeader<T extends ICalendarEventBase>({
           >
             <View style={{ height: 56, justifyContent: 'space-between' }}>
               <Text style={{ textAlign: 'center', fontSize: 12, color: isHighlight ? theme.primary : theme.textSecondary }}>
-                {date.format('ddd')}
+                {dayjs(date.toDate()).locale(language).format('ddd')}
               </Text>
               <View style={[
                 { alignSelf: 'center', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
@@ -63,14 +70,9 @@ export function FixedCalendarHeader<T extends ICalendarEventBase>({
                 </Text>
               </View>
             </View>
-            {showAllDayEventCell && allDayEvents.length > 0 && (
+            {showAllDayEventCell && dayAllDayEvents.length > 0 && (
               <View style={{ borderLeftWidth: 1, borderLeftColor: theme.border, height: allDaySectionHeight }}>
-                {allDayEvents
-                  .filter((event) => {
-                    const s = dayjs(event.start).startOf('day');
-                    const e = dayjs(event.end).startOf('day');
-                    return !date.startOf('day').isBefore(s) && !date.startOf('day').isAfter(e);
-                  })
+                {dayAllDayEvents
                   .map((event, index) => {
                     const evStyle = typeof allDayEventCellStyle === 'function' ? allDayEventCellStyle(event) : (allDayEventCellStyle ?? {});
                     return (

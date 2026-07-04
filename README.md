@@ -51,6 +51,10 @@ Use in production at your own discretion, and pin to a specific commit or tag if
   <a href="https://play.google.com/store/apps/details?id=com.soluce.nextcloudcalendar">
     <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" height="40" />
   </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://github.com/SoluceTechnologies/nextcloud-calendar-mobile/releases/latest/download/app-release.apk">
+    <img src="https://img.shields.io/github/v/release/SoluceTechnologies/nextcloud-calendar-mobile?label=Download%20APK&logo=android&color=3DDC84&style=for-the-badge" alt="Download latest APK" height="40" />
+  </a>
 </p>
 
 <p >
@@ -59,16 +63,15 @@ Use in production at your own discretion, and pin to a specific commit or tag if
 
 ---
 
-
 ## ✨ Features
 
 ### Multiple Calendar Views
 Switch seamlessly between five view modes:
-- **Month** — full month overview
-- **Week** — 7-day scrollable view
-- **3-Day** — compact multi-day view
-- **Day** — single-day detail view
-- **Schedule/Agenda** — chronological event list
+- **Month**, full month overview
+- **Week**, 7-day scrollable view
+- **3-Day**, compact multi-day view
+- **Day**, single-day detail view
+- **Schedule/Agenda**, chronological event list
 
 ### CalDAV Sync
 Full two-way sync with any Nextcloud instance using the CalDAV protocol. Events are fetched, parsed (iCalendar/ICS), and kept up to date via TanStack Query's caching layer.
@@ -90,7 +93,6 @@ Optionally attach a Nextcloud Talk room to any event at creation time, the Talk 
 - Light, dark, and system-auto theme modes
 - Adjustable zoom level (hour row height: 45–120 px)
 - Configurable week start day (Sunday or Monday)
-
 ---
 
 ## 🤝 Open to Collaboration

@@ -6,6 +6,11 @@ export const styles = StyleSheet.create({
     fontSize: 13, fontWeight: '700', textTransform: 'uppercase',
     paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8,
   },
+  accordionHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8,
+  },
+  accordionTitle: { paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 },
   card: {
     marginHorizontal: 16, borderRadius: 12, borderWidth: 1,
     padding: 16, marginBottom: 4,
@@ -16,7 +21,8 @@ export const styles = StyleSheet.create({
     flex: 1, paddingVertical: 8, borderRadius: 8, borderWidth: 1.5,
     alignItems: 'center',
   },
-  themeChipText: { fontSize: 14 },
+  themeChipText: { fontSize: 14, lineHeight: 18 },
+  themeChipSpinner: { height: 18 },
   zoomHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   resetText: { fontSize: 14, fontWeight: '500' },
   zoomRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },

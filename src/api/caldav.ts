@@ -1,5 +1,6 @@
 import type { Account, CalendarMeta, CalendarEvent } from '@/types';
-import { parseIcsObjects } from '@/utils/caldav-parse';
+import { parseIcsObjectsAsync } from '@/utils/caldav-parse';
+import { settleAllOrThrow } from '@/utils/settle';
 
 function basicAuth(account: Pick<Account, 'username' | 'appPassword'>): string {
   return 'Basic ' + btoa(`${account.username}:${account.appPassword}`);
@@ -11,6 +12,27 @@ function calUrl(account: Account, path = ''): string {
 
 function extractSlug(url: string): string {
   return url.replace(/\/$/, '').split('/').pop() ?? '';
+}
+
+const NAMED_XML_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+};
+
+export function decodeXmlEntities(input: string): string {
+  return input.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z]+);/g, (match, entity) => {
+    if (entity[0] === '#') {
+      const code =
+        entity[1] === 'x' || entity[1] === 'X'
+          ? parseInt(entity.slice(2), 16)
+          : parseInt(entity.slice(1), 10);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : match;
+    }
+    return NAMED_XML_ENTITIES[entity] ?? match;
+  });
 }
 
 function splitResponses(xml: string): string[] {
@@ -113,9 +135,6 @@ export async function fetchCalendars(account: Account): Promise<CalendarMeta[]> 
     const sourceMatch = chunk.match(/<cs:source[^>]*>[\s\S]*?<d:href>([^<]+)<\/d:href>[\s\S]*?<\/cs:source>/);
     const sourceUrl = sourceMatch?.[1]?.trim();
 
-    // A calendar is writable if the privilege set includes <d:write> or <d:bind>.
-    // Subscribed/external calendars and shared read-only calendars won't have these.
-    // If the privilege set is absent (older server), assume writable.
     const hasPrivilegeSet = chunk.includes('current-user-privilege-set');
     const hasAll = chunk.includes('<d:all');
     const hasWrite = chunk.includes('<d:write') || chunk.includes('<d:write/>');
@@ -173,7 +192,7 @@ export async function fetchEvents(
       clearTimeout(timer);
       throw e;
     }
-    const parsed = parseIcsObjects(
+    const parsed = await parseIcsObjectsAsync(
       [{ ics: icsText, href: calendar.sourceUrl }],
       { calendarId: calendar.id, accountId: account.id, color: calendar.color },
       start, end,
@@ -195,15 +214,32 @@ export async function fetchEvents(
     const dataMatch = chunk.match(/<cal:calendar-data[^>]*>([\s\S]*?)<\/cal:calendar-data>/);
     if (dataMatch?.[1] && hrefMatch?.[1]) {
       const href = `${account.baseUrl}${hrefMatch[1]}`;
-      items.push({ ics: dataMatch[1].trim(), href });
+      items.push({ ics: decodeXmlEntities(dataMatch[1].trim()), href });
     }
   }
 
-  return parseIcsObjects(items, {
+  return parseIcsObjectsAsync(items, {
     calendarId: calendar.id,
     accountId: account.id,
     color: calendar.color,
   }, start, end);
+}
+
+/**
+ * Fetch events across several calendars for a window. Throws if ANY calendar
+ * fails, so a low-network blip can't replace good cached events with a partial
+ * (or empty) result. The caller's query keeps its last good data via
+ * keepPreviousData and heals on retry / reconnect. See {@link settleAllOrThrow}.
+ */
+export function fetchEventsForCalendars(
+  account: Account,
+  calendars: CalendarMeta[],
+  start: Date,
+  end: Date,
+): Promise<CalendarEvent[]> {
+  return settleAllOrThrow(
+    calendars.map((cal) => () => fetchEvents(account, cal, start, end)),
+  );
 }
 
 /** Fetch the raw ICS text of a single event resource. */
@@ -249,6 +285,24 @@ export async function updateEvent(
     const body = await res.text().catch(() => '');
     console.error('[updateEvent] error body:', body.slice(0, 300));
     throw new Error(`updateEvent HTTP ${res.status}`);
+  }
+}
+
+export async function moveEvent(
+  account: Account,
+  fromHref: string,
+  targetCalendar: CalendarMeta,
+  uid: string
+): Promise<void> {
+  const destination = `${targetCalendar.url}${uid}.ics`;
+  const res = await davFetch(fromHref, account, {
+    method: 'MOVE',
+    headers: { Destination: destination, Overwrite: 'T' },
+  });
+  if (!res.ok && res.status !== 201 && res.status !== 204) {
+    const body = await res.text().catch(() => '');
+    console.error('[moveEvent] error body:', body.slice(0, 300));
+    throw new Error(`moveEvent HTTP ${res.status}`);
   }
 }
 

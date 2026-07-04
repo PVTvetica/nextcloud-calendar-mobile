@@ -1,22 +1,16 @@
-/**
- * iOS-style month view: grid on top, day event list on bottom.
- *
- * Top half: 7-column month grid. Each cell shows the day number and
- * color dots (one per calendar with events that day, up to 3).
- * Bottom half: scrollable list of events for the selected day.
- */
-
-import { useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, FlatList, StyleSheet,
   useWindowDimensions,
 } from 'react-native';
 import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
-import { normalizeEvents } from '@/utils/normalizeEvent';
+import { useAppStore } from '@/store/appStore';
 import type { CalendarEvent } from '@/types';
 
-const DAYS_OF_WEEK = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+dayjs.extend(localizedFormat);
 
 interface Props {
   date: Date;
@@ -27,18 +21,13 @@ interface Props {
   onPressCell: (d: Date) => void;
 }
 
-function buildMonthGrid(year: number, month: number, weekStartsOn: 0 | 1): (dayjs.Dayjs | null)[][] {
+export function buildMonthGrid(year: number, month: number, weekStartsOn: 0 | 1): (dayjs.Dayjs | null)[][] {
   const firstOfMonth = dayjs(new Date(year, month, 1));
-  let startCell = firstOfMonth.startOf('week');
-  if (weekStartsOn === 1) {
-    startCell = firstOfMonth.day() === 0
-      ? firstOfMonth.subtract(6, 'day')
-      : firstOfMonth.startOf('week').add(1, 'day');
-    if (startCell.isAfter(firstOfMonth)) startCell = startCell.subtract(7, 'day');
-  }
+
+  const offset = (firstOfMonth.day() - weekStartsOn + 7) % 7;
 
   const rows: (dayjs.Dayjs | null)[][] = [];
-  let cursor = startCell;
+  let cursor = firstOfMonth.subtract(offset, 'day');
   for (let row = 0; row < 6; row++) {
     const week: (dayjs.Dayjs | null)[] = [];
     for (let col = 0; col < 7; col++) {
@@ -53,11 +42,34 @@ function buildMonthGrid(year: number, month: number, weekStartsOn: 0 | 1): (dayj
   return rows;
 }
 
-export function MonthDayView({ date, events: rawEvents, weekStartsOn, onSelectDate, onPressEvent, onPressCell }: Props) {
+export function eventDayKeys(e: CalendarEvent): string[] {
+  const start = dayjs(e.dtstart);
+  const startKey = start.format('YYYY-MM-DD');
+  if (!e.allDay) return [startKey];
+  const endDay = dayjs(e.dtend).startOf('day');
+  const keys: string[] = [];
+  let cur = start.startOf('day');
+  while (!cur.isAfter(endDay, 'day') && keys.length <= 366) {
+    keys.push(cur.format('YYYY-MM-DD'));
+    cur = cur.add(1, 'day');
+  }
+  return keys.length ? keys : [startKey];
+}
+
+export function eventCoversDay(e: CalendarEvent, dayKey: string): boolean {
+  const startKey = dayjs(e.dtstart).format('YYYY-MM-DD');
+  if (!e.allDay) return startKey === dayKey;
+  const endKey = dayjs(e.dtend).format('YYYY-MM-DD');
+  return dayKey >= startKey && dayKey <= (endKey < startKey ? startKey : endKey);
+}
+
+function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEvent, onPressCell }: Props) {
   const theme = useTheme();
+  const { t } = useTranslation();
+  const language = useAppStore((s) => s.language);
   const { height } = useWindowDimensions();
-  const [selectedDay, setSelectedDay] = useState<dayjs.Dayjs>(dayjs(date));
-  const events = normalizeEvents(rawEvents);
+
+  const selected = useMemo(() => dayjs(date), [date]);
 
   const year = dayjs(date).year();
   const month = dayjs(date).month();
@@ -66,43 +78,46 @@ export function MonthDayView({ date, events: rawEvents, weekStartsOn, onSelectDa
 
   const dotMap = useMemo(() => {
     const map = new Map<string, Set<string>>();
+    const add = (key: string, color: string) => {
+      let set = map.get(key);
+      if (!set) { set = new Set(); map.set(key, set); }
+      set.add(color);
+    };
+
+    // Timed events first so their colors take priority in the 3-dot slice.
     for (const ev of events) {
       if (ev.allDay) continue;
-      const key = dayjs(ev.dtstart).format('YYYY-MM-DD');
-      if (!map.has(key)) map.set(key, new Set());
-      map.get(key)!.add(ev.color);
+      add(dayjs(ev.dtstart).format('YYYY-MM-DD'), ev.color);
     }
-    // Also add all-day events
+    // All-day events mark every day they span, not only their start day.
     for (const ev of events) {
       if (!ev.allDay) continue;
-      const key = dayjs(ev.dtstart).format('YYYY-MM-DD');
-      if (!map.has(key)) map.set(key, new Set());
-      map.get(key)!.add(ev.color);
+      for (const key of eventDayKeys(ev)) add(key, ev.color);
     }
     return map;
   }, [events]);
 
   const dayEvents = useMemo(() => {
-    const sel = selectedDay.format('YYYY-MM-DD');
+    const sel = selected.format('YYYY-MM-DD');
     return events
-      .filter((e) => dayjs(e.dtstart).format('YYYY-MM-DD') === sel)
+      .filter((e) => eventCoversDay(e, sel))
       .sort((a, b) => a.dtstart.getTime() - b.dtstart.getTime());
-  }, [events, selectedDay]);
+  }, [events, selected]);
 
   const today = dayjs();
 
   const handleDayPress = useCallback((d: dayjs.Dayjs) => {
-    setSelectedDay(d);
     onSelectDate(d.toDate());
   }, [onSelectDate]);
 
   const dayHeaders = useMemo(() => {
     const headers: string[] = [];
     for (let i = 0; i < 7; i++) {
-      headers.push(DAYS_OF_WEEK[(weekStartsOn + i) % 7]);
+      const dow = (weekStartsOn + i) % 7; // 0 = Sunday
+      headers.push(dayjs().day(dow).locale(language).format('dd'));
     }
     return headers;
-  }, [weekStartsOn]);
+  }, [weekStartsOn, language]);
 
   const gridHeight = height * 0.44;
 
@@ -110,8 +125,8 @@ export function MonthDayView({ date, events: rawEvents, weekStartsOn, onSelectDa
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={[styles.grid, { height: gridHeight, borderBottomColor: theme.border }]}>
         <View style={styles.dowRow}>
-          {dayHeaders.map((d) => (
-            <Text key={d} style={[styles.dowLabel, { color: theme.textTertiary }]}>{d}</Text>
+          {dayHeaders.map((d, i) => (
+            <Text key={i} style={[styles.dowLabel, { color: theme.textTertiary }]}>{d}</Text>
           ))}
         </View>
 
@@ -123,7 +138,7 @@ export function MonthDayView({ date, events: rawEvents, weekStartsOn, onSelectDa
               }
               const key = d.format('YYYY-MM-DD');
               const isToday = d.isSame(today, 'day');
-              const isSelected = d.isSame(selectedDay, 'day');
+              const isSelected = d.isSame(selected, 'day');
               const dots = Array.from(dotMap.get(key) ?? []).slice(0, 3);
 
               return (
@@ -161,10 +176,10 @@ export function MonthDayView({ date, events: rawEvents, weekStartsOn, onSelectDa
 
       <View style={styles.dayList}>
         <Text style={[styles.dayListHeader, { color: theme.textSecondary }]}>
-          {selectedDay.format('dddd, MMMM D')}
+          {selected.locale(language).format('dddd, LL')}
         </Text>
         {dayEvents.length === 0 ? (
-          <Text style={[styles.emptyText, { color: theme.textTertiary }]}>No events</Text>
+          <Text style={[styles.emptyText, { color: theme.textTertiary }]}>{t('calendar.noEvents')}</Text>
         ) : (
           <FlatList
             data={dayEvents}
@@ -181,8 +196,8 @@ export function MonthDayView({ date, events: rawEvents, weekStartsOn, onSelectDa
                   </Text>
                   <Text style={[styles.eventTime, { color: theme.textSecondary }]}>
                     {item.allDay
-                      ? 'All day'
-                      : `${dayjs(item.dtstart).format('h:mm A')} – ${dayjs(item.dtend).format('h:mm A')}`}
+                      ? t('calendar.allDay')
+                      : `${dayjs(item.dtstart).locale(language).format('LT')} – ${dayjs(item.dtend).locale(language).format('LT')}`}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -194,6 +209,8 @@ export function MonthDayView({ date, events: rawEvents, weekStartsOn, onSelectDa
     </View>
   );
 }
+
+export const MonthDayView = memo(MonthDayViewImpl);
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

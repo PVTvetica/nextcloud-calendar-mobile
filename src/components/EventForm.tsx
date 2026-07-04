@@ -5,10 +5,14 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 import { TalkToggle } from './TalkToggle';
 import { RecurrencePicker } from './RecurrencePicker';
 import type { CalendarMeta, Attendee, CreateEventInput, RecurrenceRule, TalkRoomType } from '@/types';
+
+dayjs.extend(localizedFormat);
 
 interface InitialValues {
   summary?: string;
@@ -34,22 +38,18 @@ interface Props {
   disableCalendarChange?: boolean;
 }
 
-/**
- * Android: @react-native-community/datetimepicker does not support mode="datetime".
- * We use a two-step flow: first pick the date, then pick the time.
- */
+
+
 type AndroidPickerStep = null | { target: 'start' | 'end'; step: 'date' | 'time'; partial?: Date };
 
 export function EventForm({
   calendars, defaultDate, organizerEmail, organizerName, onSubmit, loading,
-  initialValues, submitLabel = 'Save Event', disableCalendarChange = false,
+  initialValues, submitLabel, disableCalendarChange = false,
 }: Props) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const [summary, setSummary] = useState(initialValues?.summary ?? '');
-  // Only offer writable calendars for new events; read-only calendars
-  // (external subscriptions, manager-controlled shared calendars) cannot
-  // receive new VEVENTs via PUT.
   const writableCalendars = calendars.filter((c) => !c.isReadOnly && !c.isSubscribed);
 
   const defaultCalendarId =
@@ -71,11 +71,9 @@ export function EventForm({
   const [rrule, setRrule] = useState<RecurrenceRule | undefined>(initialValues?.rrule);
   const [error, setError] = useState<string | null>(null);
 
-  // iOS: simple show/hide booleans
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
 
-  // Android: two-step date→time picker state
   const [androidStep, setAndroidStep] = useState<AndroidPickerStep>(null);
 
   const scrollRef = useRef<ScrollView>(null);
@@ -110,7 +108,6 @@ export function EventForm({
   }
 
   function handleIosStartChange(_: any, d?: Date) {
-    // Keep picker open — onChange fires while scrolling; user taps button again to dismiss
     if (d) setDtstart(d);
   }
 
@@ -158,9 +155,15 @@ export function EventForm({
   }
 
   function handleSubmit() {
-    if (!summary.trim()) { setError('Title is required.'); return; }
-    if (!calendarId) { setError('Select a calendar.'); return; }
-    if (!allDay && dtend <= dtstart) { setError('End time must be after start time.'); return; }
+    if (!summary.trim()) { setError(t('event.errorTitleRequired')); return; }
+    if (!calendarId) { setError(t('event.errorSelectCalendar')); return; }
+    if (allDay) {
+      if (dayjs(dtend).startOf('day').isBefore(dayjs(dtstart).startOf('day'))) {
+        setError(t('event.errorEndAfterStart')); return;
+      }
+    } else if (dtend <= dtstart) {
+      setError(t('event.errorEndAfterStart')); return;
+    }
     setError(null);
     onSubmit({
       summary: summary.trim(), calendarId, dtstart, dtend, allDay,
@@ -187,21 +190,21 @@ export function EventForm({
       keyboardDismissMode="none"
     >
       <View onLayout={(e) => onFieldLayout('title', e)}>
-        <Text style={labelStyle}>Title *</Text>
+        <Text style={labelStyle}>{t('event.titleLabel')}</Text>
         <TextInput
           style={inputStyle}
           value={summary}
           onChangeText={setSummary}
-          placeholder="Event title"
+          placeholder={t('event.titlePlaceholder')}
           placeholderTextColor={theme.textTertiary}
           onFocus={() => scrollToField('title')}
         />
       </View>
 
-      <Text style={labelStyle}>Calendar</Text>
+      <Text style={labelStyle}>{t('event.calendar')}</Text>
       {writableCalendars.length === 0 && (
         <Text style={[styles.readOnlyNote, { color: theme.warning }]}>
-          No writable calendars available on this account.
+          {t('event.noWritableCalendars')}
         </Text>
       )}
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -227,9 +230,14 @@ export function EventForm({
           </TouchableOpacity>
         ))}
       </ScrollView>
+      {disableCalendarChange && (
+        <Text style={[styles.readOnlyNote, { color: theme.textTertiary, marginTop: 8 }]}>
+          {t('event.calendarLockedRecurring')}
+        </Text>
+      )}
 
       <View style={[styles.row, { borderBottomColor: theme.border }]}>
-        <Text style={labelStyle}>All Day</Text>
+        <Text style={labelStyle}>{t('event.allDay')}</Text>
         <Switch
           value={allDay}
           onValueChange={setAllDay}
@@ -238,10 +246,10 @@ export function EventForm({
         />
       </View>
 
-      <Text style={labelStyle}>Start</Text>
+      <Text style={labelStyle}>{t('event.start')}</Text>
       <TouchableOpacity style={inputStyle} onPress={openStartPicker}>
         <Text style={{ color: theme.text }}>
-          {allDay ? dayjs(dtstart).format('MMM D, YYYY') : dayjs(dtstart).format('MMM D, YYYY h:mm A')}
+          {allDay ? dayjs(dtstart).format('ll') : dayjs(dtstart).format('lll')}
         </Text>
       </TouchableOpacity>
 
@@ -254,20 +262,18 @@ export function EventForm({
         />
       )}
 
-      {!allDay && (
-        <>
-          <Text style={labelStyle}>End</Text>
-          <TouchableOpacity style={inputStyle} onPress={openEndPicker}>
-            <Text style={{ color: theme.text }}>{dayjs(dtend).format('MMM D, YYYY h:mm A')}</Text>
-          </TouchableOpacity>
-          {Platform.OS === 'ios' && showEndPicker && (
-            <DateTimePicker
-              value={dtend}
-              mode="datetime"
-              onChange={handleIosEndChange}
-            />
-          )}
-        </>
+      <Text style={labelStyle}>{t('event.end')}</Text>
+      <TouchableOpacity style={inputStyle} onPress={openEndPicker}>
+        <Text style={{ color: theme.text }}>
+          {allDay ? dayjs(dtend).format('ll') : dayjs(dtend).format('lll')}
+        </Text>
+      </TouchableOpacity>
+      {Platform.OS === 'ios' && showEndPicker && (
+        <DateTimePicker
+          value={dtend}
+          mode={allDay ? 'date' : 'datetime'}
+          onChange={handleIosEndChange}
+        />
       )}
 
 
@@ -283,24 +289,24 @@ export function EventForm({
       <RecurrencePicker value={rrule} onChange={setRrule} />
 
       <View onLayout={(e) => onFieldLayout('location', e)}>
-        <Text style={[labelStyle, { marginTop: 16 }]}>Location</Text>
+        <Text style={[labelStyle, { marginTop: 16 }]}>{t('event.location')}</Text>
         <TextInput
           style={inputStyle}
           value={location}
           onChangeText={setLocation}
-          placeholder="Room or address"
+          placeholder={t('event.locationPlaceholder')}
           placeholderTextColor={theme.textTertiary}
           onFocus={() => scrollToField('location')}
         />
       </View>
 
       <View onLayout={(e) => onFieldLayout('description', e)}>
-        <Text style={labelStyle}>Description</Text>
+        <Text style={labelStyle}>{t('event.description')}</Text>
         <TextInput
           style={[inputStyle, styles.multiline]}
           value={description}
           onChangeText={setDescription}
-          placeholder="Details..."
+          placeholder={t('event.descriptionPlaceholder')}
           placeholderTextColor={theme.textTertiary}
           multiline
           numberOfLines={3}
@@ -308,13 +314,13 @@ export function EventForm({
         />
       </View>
 
-      <Text style={labelStyle}>Attendees</Text>
+      <Text style={labelStyle}>{t('event.attendees')}</Text>
       <View onLayout={(e) => onFieldLayout('attendee', e)} style={styles.attendeeRow}>
         <TextInput
           style={[inputStyle, styles.attendeeInput]}
           value={attendeeInput}
           onChangeText={setAttendeeInput}
-          placeholder="email@example.com"
+          placeholder={t('event.attendeePlaceholder')}
           placeholderTextColor={theme.textTertiary}
           autoCapitalize="none"
           keyboardType="email-address"
@@ -323,7 +329,7 @@ export function EventForm({
           onBlur={() => { attendeeFocused.current = false; }}
         />
         <TouchableOpacity style={[styles.addBtn, { backgroundColor: theme.primary }]} onPress={addAttendee}>
-          <Text style={styles.addBtnText}>Add</Text>
+          <Text style={styles.addBtnText}>{t('event.add')}</Text>
         </TouchableOpacity>
       </View>
       {attendees.map((att) => (
@@ -349,7 +355,7 @@ export function EventForm({
         onPress={handleSubmit}
         disabled={loading}
       >
-        <Text style={styles.saveBtnText}>{loading ? 'Saving…' : submitLabel}</Text>
+        <Text style={styles.saveBtnText}>{loading ? t('event.saving') : (submitLabel ?? t('event.saveEvent'))}</Text>
       </TouchableOpacity>
     </ScrollView>
     </KeyboardAvoidingView>

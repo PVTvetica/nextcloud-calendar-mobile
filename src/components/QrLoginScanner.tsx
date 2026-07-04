@@ -1,17 +1,9 @@
-/**
- * Full-screen QR scanner for Nextcloud login codes.
- *
- * Nextcloud Dashboard → "Log in via QR code" produces a URL like:
- *   nc://login/user:john&password:DoTDr-xBooB-Pt9Xz&server:https://cloud.example.com
- *
- * On a valid scan the modal closes and calls onScanned with the parsed fields.
- * The camera is released immediately once a code is found.
- */
 import { useEffect, useRef, useState } from 'react';
 import {
   Modal, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 
 export interface NcLoginData {
@@ -46,6 +38,7 @@ interface Props {
 
 export function QrLoginScanner({ visible, onClose, onScanned }: Props) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -66,7 +59,7 @@ export function QrLoginScanner({ visible, onClose, onScanned }: Props) {
 
     const parsed = parseNcLoginUrl(data);
     if (!parsed) {
-      setParseError('Not a valid Nextcloud login QR code. Try scanning again.');
+      setParseError(t('setup.qrInvalidCode'));
       scannedRef.current = false;
       setScanned(false);
       return;
@@ -91,16 +84,16 @@ export function QrLoginScanner({ visible, onClose, onScanned }: Props) {
       <Modal visible animationType="slide" onRequestClose={onClose}>
         <View style={[styles.center, { backgroundColor: theme.background }]}>
           <Text style={[styles.permText, { color: theme.text }]}>
-            Camera access is required to scan the QR code.
+            {t('setup.qrCameraRequired')}
           </Text>
           <TouchableOpacity
             style={[styles.btn, { backgroundColor: theme.primary }]}
             onPress={requestPermission}
           >
-            <Text style={styles.btnText}>Allow Camera</Text>
+            <Text style={styles.btnText}>{t('setup.qrAllowCamera')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelLink} onPress={onClose}>
-            <Text style={{ color: theme.textSecondary }}>Cancel</Text>
+            <Text style={{ color: theme.textSecondary }}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -131,7 +124,7 @@ export function QrLoginScanner({ visible, onClose, onScanned }: Props) {
           <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
             <Text style={styles.closeBtnText}>✕</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Scan Nextcloud QR</Text>
+          <Text style={styles.headerTitle}>{t('setup.qrHeaderTitle')}</Text>
           <View style={{ width: 44 }} />
         </View>
 
@@ -143,12 +136,12 @@ export function QrLoginScanner({ visible, onClose, onScanned }: Props) {
                 style={[styles.btn, { backgroundColor: theme.primary, marginTop: 12 }]}
                 onPress={() => { scannedRef.current = false; setScanned(false); setParseError(null); }}
               >
-                <Text style={styles.btnText}>Try Again</Text>
+                <Text style={styles.btnText}>{t('setup.qrTryAgain')}</Text>
               </TouchableOpacity>
             </>
           ) : (
             <Text style={styles.hintText}>
-              Open your Nextcloud dashboard → tap your avatar → "Log in via QR code"
+              {t('setup.qrHint')}
             </Text>
           )}
         </View>

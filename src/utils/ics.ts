@@ -26,6 +26,13 @@ function utcStamp(date: Date): string {
   return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
 }
 
+function dateStamp(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}${m}${d}`;
+}
+
 function localStamp(date: Date, timezone: string): string {
   const fmt = new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone,
@@ -102,7 +109,8 @@ export interface BuildAllDayIcsParams {
   summary: string;
   description: string;
   location: string;
-  date: Date;
+  dtstart: Date;
+  dtend: Date;
   organizerEmail: string;
   organizerName: string;
   attendees: Attendee[];
@@ -110,11 +118,10 @@ export interface BuildAllDayIcsParams {
 }
 
 export function buildAllDayIcs(params: BuildAllDayIcsParams): string {
-  const { uid, summary, description, location, date, organizerEmail, organizerName, attendees, rrule } = params;
-  const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
-  const nextDay = new Date(date);
-  nextDay.setUTCDate(nextDay.getUTCDate() + 1);
-  const nextDateStr = nextDay.toISOString().slice(0, 10).replace(/-/g, '');
+  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, rrule } = params;
+  const dateStr = dateStamp(dtstart);
+  const endExclusive = new Date(dtend.getFullYear(), dtend.getMonth(), dtend.getDate() + 1);
+  const nextDateStr = dateStamp(endExclusive);
   const dtstamp = utcStamp(new Date());
 
   const lines = [
@@ -162,7 +169,6 @@ export function injectExdate(masterIcs: string, occurrenceDtstart: Date, timezon
   const stamp = `${g('year')}${g('month')}${g('day')}T${g('hour')}${g('minute')}${g('second')}`;
   const exdateLine = `EXDATE;TZID=${timezone}:${stamp}`;
 
-  // Insert before END:VEVENT
   return masterIcs.replace(/(END:VEVENT)/, `${exdateLine}\r\n$1`);
 }
 
@@ -171,9 +177,7 @@ export function injectExdate(masterIcs: string, occurrenceDtstart: Date, timezon
  * Removes the old UNTIL/COUNT clause and adds UNTIL=<newUntil>.
  */
 export function truncateRruleUntil(masterIcs: string, newUntil: Date): string {
-  // Remove existing UNTIL or COUNT from RRULE
   let result = masterIcs.replace(/(RRULE:[^\r\n]*);(UNTIL|COUNT)=[^\r\n;]*/g, '$1');
-  // Now append UNTIL
   const untilStr = utcStamp(newUntil);
   result = result.replace(/(RRULE:[^\r\n]*)/, `$1;UNTIL=${untilStr}`);
   return result;

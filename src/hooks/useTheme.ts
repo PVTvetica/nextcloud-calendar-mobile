@@ -1,3 +1,4 @@
+import { useDeferredValue } from 'react';
 import { useColorScheme } from 'react-native';
 import { useAppStore } from '@/store/appStore';
 import { lightTheme, darkTheme, type Theme } from '@/theme';
@@ -11,5 +12,8 @@ export function useTheme(): Theme {
       ? (systemScheme ?? 'light')
       : themePreference;
 
-  return resolved === 'dark' ? darkTheme : lightTheme;
+  const theme = resolved === 'dark' ? darkTheme : lightTheme;
+
+
+  return useDeferredValue(theme);
 }

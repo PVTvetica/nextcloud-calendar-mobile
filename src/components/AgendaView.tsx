@@ -3,9 +3,13 @@ import {
   View, Text, SectionList, TouchableOpacity, StyleSheet,
 } from 'react-native';
 import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 import type { Theme } from '@/theme';
 import type { CalendarEvent } from '@/types';
+
+dayjs.extend(localizedFormat);
 
 interface Props {
   events: CalendarEvent[];
@@ -17,12 +21,12 @@ interface Props {
 
 const DAYS_AHEAD = 120;
 
-function formatTime(d: Date, allDay: boolean): string {
-  if (allDay) return 'All day';
-  return dayjs(d).format('HH:mm');
-}
+type AgendaSection = { key: string; date: Date; data: CalendarEvent[] };
 
-// ─── memoized row components ────────────────────────────────────────────────
+function formatTime(d: Date, allDay: boolean, allDayLabel: string): string {
+  if (allDay) return allDayLabel;
+  return dayjs(d).format('LT');
+}
 
 interface DayHeaderProps {
   sectionDate: Date;
@@ -32,6 +36,7 @@ interface DayHeaderProps {
 }
 
 const DayHeader = memo(({ sectionDate, hasEvents, theme, onPress }: DayHeaderProps) => {
+  const { t } = useTranslation();
   const d = dayjs(sectionDate);
   const isToday = d.isSame(dayjs(), 'day');
   return (
@@ -49,10 +54,10 @@ const DayHeader = memo(({ sectionDate, hasEvents, theme, onPress }: DayHeaderPro
         <Text style={[styles.dayName, { color: isToday ? theme.primary : theme.textSecondary }]}>
           {d.format('ddd').toUpperCase()}
         </Text>
-        {isToday && <Text style={[styles.todayLabel, { color: theme.primary }]}>Today</Text>}
+        {isToday && <Text style={[styles.todayLabel, { color: theme.primary }]}>{t('calendar.today')}</Text>}
       </View>
       {!hasEvents && (
-        <Text style={[styles.noEvents, { color: theme.textTertiary }]}>No events</Text>
+        <Text style={[styles.noEvents, { color: theme.textTertiary }]}>{t('calendar.noEvents')}</Text>
       )}
     </TouchableOpacity>
   );
@@ -65,6 +70,7 @@ interface EventRowProps {
 }
 
 const EventRow = memo(({ event, theme, onPress }: EventRowProps) => {
+  const { t } = useTranslation();
   const duration = event.allDay
     ? null
     : (() => {
@@ -75,6 +81,8 @@ const EventRow = memo(({ event, theme, onPress }: EventRowProps) => {
         return m ? `${h}h ${m}m` : `${h}h`;
       })();
 
+  const allDayLabel = t('calendar.allDay');
+
   return (
     <TouchableOpacity
       style={[styles.eventRow, { backgroundColor: theme.surface }]}
@@ -84,12 +92,12 @@ const EventRow = memo(({ event, theme, onPress }: EventRowProps) => {
       <View style={[styles.colorBar, { backgroundColor: event.color }]} />
       <View style={styles.eventContent}>
         <Text style={[styles.eventTitle, { color: theme.text }]} numberOfLines={2}>
-          {event.summary || '(No title)'}
+          {event.summary || t('calendar.noTitle')}
         </Text>
         <View style={styles.eventMeta}>
           <Text style={[styles.eventTime, { color: theme.textSecondary }]}>
-            {formatTime(event.dtstart, event.allDay)}
-            {!event.allDay && ` – ${formatTime(event.dtend, false)}`}
+            {formatTime(event.dtstart, event.allDay, allDayLabel)}
+            {!event.allDay && ` – ${formatTime(event.dtend, false, allDayLabel)}`}
           </Text>
           {duration && (
             <Text style={[styles.eventDuration, { color: theme.textTertiary }]}>{duration}</Text>
@@ -109,13 +117,12 @@ export interface AgendaViewHandle {
   scrollToToday: () => void;
 }
 
-// ─── main component ──────────────────────────────────────────────────────────
 
-export const AgendaView = forwardRef<AgendaViewHandle, Props>(function AgendaView(
+const AgendaViewImpl = forwardRef<AgendaViewHandle, Props>(function AgendaView(
   { events, date, onPressEvent, onPressCell, onVisibleDateChange }, ref
 ) {
   const theme = useTheme();
-  const listRef = useRef<SectionList>(null);
+  const listRef = useRef<SectionList<CalendarEvent, AgendaSection>>(null);
 
   const sections = useMemo(() => {
     const today = dayjs();
@@ -138,7 +145,7 @@ export const AgendaView = forwardRef<AgendaViewHandle, Props>(function AgendaVie
       }
     }
 
-    const result = [];
+    const result: AgendaSection[] = [];
     let cur = start.clone();
     while (cur.isBefore(end)) {
       const key = cur.format('YYYY-MM-DD');
@@ -185,15 +192,15 @@ export const AgendaView = forwardRef<AgendaViewHandle, Props>(function AgendaVie
   const keyExtractor = useCallback((item: CalendarEvent, index: number) => `${item.uid}-${index}`, []);
 
   return (
-    <SectionList
+    <SectionList<CalendarEvent, AgendaSection>
       ref={listRef}
       sections={sections}
       keyExtractor={keyExtractor}
       renderItem={renderItem}
       renderSectionHeader={renderSectionHeader}
       stickySectionHeadersEnabled
-      initialNumToRender={20}
-      maxToRenderPerBatch={15}
+      initialNumToRender={8}
+      maxToRenderPerBatch={8}
       updateCellsBatchingPeriod={50}
       windowSize={7}
       removeClippedSubviews
@@ -205,6 +212,8 @@ export const AgendaView = forwardRef<AgendaViewHandle, Props>(function AgendaVie
     />
   );
 });
+
+export const AgendaView = memo(AgendaViewImpl);
 
 const EVENT_ROW_HEIGHT = 72;
 

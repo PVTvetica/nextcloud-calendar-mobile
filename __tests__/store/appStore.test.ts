@@ -13,6 +13,7 @@ describe('appStore', () => {
       hiddenCalendarIds: [],
       notifiableCalendarIds: [],
       weekStartsOn: 0,
+      language: 'en',
     });
   });
 
@@ -92,5 +93,15 @@ describe('appStore', () => {
     useAppStore.getState().setWeekStartsOn(1);
     useAppStore.getState().setWeekStartsOn(0);
     expect(useAppStore.getState().weekStartsOn).toBe(0);
+  });
+
+  it('defaults language to a supported code', () => {
+    const lang = useAppStore.getState().language;
+    expect(['en', 'fr', 'de', 'es']).toContain(lang);
+  });
+
+  it('setLanguage updates the language', () => {
+    useAppStore.getState().setLanguage('de');
+    expect(useAppStore.getState().language).toBe('de');
   });
 });

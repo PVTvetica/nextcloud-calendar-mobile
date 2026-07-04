@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { loadAccounts } from '@/api/auth';
 import { fetchEvents } from '@/api/caldav';
 import { useCalendars } from '@/hooks/useCalendars';
@@ -12,12 +13,14 @@ import { useAppStore } from '@/store/appStore';
 import { useTheme } from '@/hooks/useTheme';
 import { EventForm } from '@/components/EventForm';
 import { normalizeEvent, normalizeEvents } from '@/utils/normalizeEvent';
+import { EVENTS_STALE } from '@/api/queryConfig';
 import type { CalendarEvent, CreateEventInput, RecurrenceEditScope } from '@/types';
 
 export default function EditEventScreen() {
   const { uid, scope: scopeParam } = useLocalSearchParams<{ uid: string; scope?: string }>();
   const router = useRouter();
   const theme = useTheme();
+  const { t } = useTranslation();
   const activeAccountId = useAppStore((s) => s.activeAccountId);
   const queryClient = useQueryClient();
 
@@ -37,8 +40,8 @@ export default function EditEventScreen() {
     return undefined;
   }, [queryClient, activeAccountId, uid]);
 
-  const start = useMemo(() => dayjs().subtract(6, 'months').toDate(), []);
-  const end = useMemo(() => dayjs().add(6, 'months').toDate(), []);
+  const start = useMemo(() => dayjs().subtract(3, 'months').toDate(), []);
+  const end = useMemo(() => dayjs().add(3, 'months').toDate(), []);
 
   const { data: fetchedEvents = [], isLoading: eventsLoading } = useQuery<CalendarEvent[]>({
     queryKey: [activeAccountId, 'events-detail', start.toISOString(), end.toISOString()],
@@ -50,7 +53,7 @@ export default function EditEventScreen() {
       return results.flat();
     },
     enabled: activeAccount !== null && calendars.length > 0 && cachedEvent === undefined,
-    staleTime: 2 * 60 * 1000,
+    staleTime: EVENTS_STALE,
   });
 
   const event: CalendarEvent | undefined = cachedEvent ?? normalizeEvents(fetchedEvents).find((e) => e.uid === uid);
@@ -62,19 +65,11 @@ export default function EditEventScreen() {
 
   const updateMutation = useUpdateEvent(activeAccount!, calendars);
 
-  async function handleSubmit(input: CreateEventInput) {
+  function handleSubmit(input: CreateEventInput) {
     if (!activeAccount || !event) return;
-    try {
-      await updateMutation.mutateAsync({ event, input, scope });
-      if (router.canGoBack()) router.back();
-      else router.replace('/(tabs)/calendar');
-    } catch (e: any) {
-      const msg = e?.message ?? '';
-      Alert.alert(
-        'Failed to update event',
-        msg.includes('403') ? 'Permission denied. This calendar is read-only or shared without write access.' : (msg || 'Unknown error.')
-      );
-    }
+    updateMutation.mutate({ event, input, scope });
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)/calendar');
   }
 
   const isLoading = eventsLoading && cachedEvent === undefined;
@@ -90,9 +85,9 @@ export default function EditEventScreen() {
   if (!event) {
     return (
       <View style={[styles.center, { backgroundColor: theme.background }]}>
-        <Text style={{ color: theme.textSecondary }}>Event not found.</Text>
+        <Text style={{ color: theme.textSecondary }}>{t('event.eventNotFound')}</Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
-          <Text style={{ color: theme.primary }}>← Back</Text>
+          <Text style={{ color: theme.primary }}>{t('event.back')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -114,18 +109,18 @@ export default function EditEventScreen() {
   };
 
   const scopeLabel =
-    scope === 'this' ? ' (This Occurrence)'
-    : scope === 'thisAndFollowing' ? ' (This & Following)'
+    scope === 'this' ? ` (${t('event.scopeThisOccurrence')})`
+    : scope === 'thisAndFollowing' ? ` (${t('event.scopeThisAndFollowing')})`
     : '';
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={[styles.header, { borderBottomColor: theme.border, backgroundColor: theme.headerBackground }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={[styles.cancel, { color: theme.primary }]}>Cancel</Text>
+          <Text style={[styles.cancel, { color: theme.primary }]}>{t('common.cancel')}</Text>
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
-          Edit Event{scopeLabel}
+          {t('event.editEvent')}{scopeLabel}
         </Text>
         <View style={styles.spacer} />
       </View>
@@ -136,8 +131,8 @@ export default function EditEventScreen() {
         onSubmit={handleSubmit}
         loading={updateMutation.isPending}
         initialValues={initialValues}
-        submitLabel="Update Event"
-        disableCalendarChange
+        submitLabel={t('event.updateEvent')}
+        disableCalendarChange={event.isRecurring}
       />
     </SafeAreaView>
   );

@@ -3,13 +3,10 @@ import { render, screen } from '@testing-library/react-native';
 import { AvatarImage } from '../../src/components/AvatarImage';
 import type { Account } from '../../src/types';
 
-// Mock the useAvatar hook
 jest.mock('../../src/hooks/useAvatar');
-// Mock useTheme to avoid store/async-storage dependencies
 jest.mock('../../src/hooks/useTheme', () => ({
   useTheme: () => ({ primary: '#0082c9' }),
 }));
-// Mock async storage used by appStore inside useTheme
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
@@ -37,8 +34,6 @@ describe('AvatarImage', () => {
 
     render(<AvatarImage account={account} size={40} />);
 
-    // React Native Image does not have an accessible 'image' role in testing-library;
-    // check by querying the Image component via testID or querying all elements.
     const allImages = screen.UNSAFE_getAllByType(require('react-native').Image);
     expect(allImages).toHaveLength(1);
     expect(allImages[0].props.source).toEqual({ uri: dataUri });

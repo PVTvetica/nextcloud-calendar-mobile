@@ -3,7 +3,7 @@
     "name": "Nextcloud Calendar",
     "slug": "nextcloud-calendar",
     "scheme": "nextcloud-calendar",
-    "version": "1.1.2",
+    "version": "1.2.2",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "platforms": [
@@ -57,11 +57,16 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash.png",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#109be6"
+          "backgroundColor": "#109be6",
+          "dark": {
+            "backgroundColor": "#109be6"
+          }
         }
       ],
+      "expo-localization",
       "expo-font",
       "expo-status-bar"
     ]

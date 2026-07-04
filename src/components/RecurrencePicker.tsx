@@ -1,24 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 import type { RecurrenceFreq, RecurrenceRule } from '@/types';
-
-const FREQS: { label: string; value: RecurrenceFreq | null }[] = [
-  { label: 'None', value: null },
-  { label: 'Daily', value: 'DAILY' },
-  { label: 'Weekly', value: 'WEEKLY' },
-  { label: 'Monthly', value: 'MONTHLY' },
-  { label: 'Yearly', value: 'YEARLY' },
-];
-
-const WEEKDAYS = [
-  { label: 'Su', value: 'SU' },
-  { label: 'Mo', value: 'MO' },
-  { label: 'Tu', value: 'TU' },
-  { label: 'We', value: 'WE' },
-  { label: 'Th', value: 'TH' },
-  { label: 'Fr', value: 'FR' },
-  { label: 'Sa', value: 'SA' },
-];
 
 interface Props {
   value: RecurrenceRule | undefined;
@@ -27,6 +10,25 @@ interface Props {
 
 export function RecurrencePicker({ value, onChange }: Props) {
   const theme = useTheme();
+  const { t } = useTranslation();
+
+  const FREQS: { label: string; value: RecurrenceFreq | null }[] = [
+    { label: t('event.freqNone'), value: null },
+    { label: t('event.freqDaily'), value: 'DAILY' },
+    { label: t('event.freqWeekly'), value: 'WEEKLY' },
+    { label: t('event.freqMonthly'), value: 'MONTHLY' },
+    { label: t('event.freqYearly'), value: 'YEARLY' },
+  ];
+
+  const WEEKDAYS = [
+    { label: t('event.daySu'), value: 'SU' },
+    { label: t('event.dayMo'), value: 'MO' },
+    { label: t('event.dayTu'), value: 'TU' },
+    { label: t('event.dayWe'), value: 'WE' },
+    { label: t('event.dayTh'), value: 'TH' },
+    { label: t('event.dayFr'), value: 'FR' },
+    { label: t('event.daySa'), value: 'SA' },
+  ];
 
   const selectedFreq = value?.freq ?? null;
 
@@ -47,7 +49,7 @@ export function RecurrencePicker({ value, onChange }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>Repeat</Text>
+      <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>{t('event.repeat')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
         {FREQS.map(({ label, value: freq }) => {
           const active = selectedFreq === freq;
@@ -70,7 +72,7 @@ export function RecurrencePicker({ value, onChange }: Props) {
 
       {value?.freq === 'WEEKLY' && (
         <View>
-          <Text style={[styles.subLabel, { color: theme.textTertiary }]}>On days</Text>
+          <Text style={[styles.subLabel, { color: theme.textTertiary }]}>{t('event.onDays')}</Text>
           <View style={styles.dayRow}>
             {WEEKDAYS.map(({ label, value: day }) => {
               const active = value.byDay?.includes(day) ?? false;

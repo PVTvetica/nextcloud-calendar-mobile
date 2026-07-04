@@ -1,15 +1,11 @@
 import { Tabs } from 'expo-router';
-import { useColorScheme } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useAppStore } from '@/store/appStore';
-import { lightTheme, darkTheme } from '@/theme';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function TabsLayout() {
-  const systemScheme = useColorScheme();
-  const themePreference = useAppStore((s) => s.themePreference);
-  const resolved =
-    themePreference === 'system' ? (systemScheme ?? 'light') : themePreference;
-  const theme = resolved === 'dark' ? darkTheme : lightTheme;
+  const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Tabs
@@ -28,8 +24,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="calendar/index"
         options={{
-          title: 'Calendar',
-          tabBarLabel: 'Calendar',
+          title: t('tabs.calendar'),
+          tabBarLabel: t('tabs.calendar'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'calendar' : 'calendar-outline'}
@@ -42,8 +38,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="settings/index"
         options={{
-          title: 'Settings',
-          tabBarLabel: 'Settings',
+          title: t('tabs.settings'),
+          tabBarLabel: t('tabs.settings'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'settings' : 'settings-outline'}

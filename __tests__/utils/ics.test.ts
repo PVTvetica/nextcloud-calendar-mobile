@@ -1,4 +1,3 @@
-// __tests__/utils/ics.test.ts
 import { buildIcs, buildAllDayIcs } from '../../src/utils/ics';
 import type { Attendee } from '../../src/types';
 
@@ -86,16 +85,33 @@ describe('buildAllDayIcs', () => {
     summary: 'Holiday',
     description: '',
     location: '',
-    date: new Date('2026-06-15T00:00:00Z'),
+    dtstart: new Date(2026, 5, 15),
+    dtend: new Date(2026, 5, 15),
     organizerEmail: 'john@example.com',
     organizerName: 'John Doe',
     attendees: [] as Attendee[],
   };
 
-  it('uses DATE value type for DTSTART and DTEND', () => {
+  it('uses DATE value type for DTSTART and exclusive DTEND (single day)', () => {
     const ics = buildAllDayIcs(allDayBase);
     expect(ics).toContain('DTSTART;VALUE=DATE:20260615\r\n');
     expect(ics).toContain('DTEND;VALUE=DATE:20260616\r\n');
+  });
+
+  it('writes exclusive DTEND one day after the inclusive end (multi-day)', () => {
+    const ics = buildAllDayIcs({ ...allDayBase, dtend: new Date(2026, 5, 17) });
+    expect(ics).toContain('DTSTART;VALUE=DATE:20260615\r\n');
+    expect(ics).toContain('DTEND;VALUE=DATE:20260618\r\n');
+  });
+
+  it('rolls the exclusive DTEND across a year boundary (Dec 31 -> Jan 1)', () => {
+    const ics = buildAllDayIcs({
+      ...allDayBase,
+      dtstart: new Date(2026, 11, 31),
+      dtend: new Date(2026, 11, 31),
+    });
+    expect(ics).toContain('DTSTART;VALUE=DATE:20261231\r\n');
+    expect(ics).toContain('DTEND;VALUE=DATE:20270101\r\n');
   });
 
   it('does not contain a TZID in DTSTART', () => {

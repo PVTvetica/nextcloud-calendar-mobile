@@ -1,28 +1,21 @@
-import { QueryClient } from '@tanstack/react-query';
+import { focusManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import { useDeferredValue, useEffect } from 'react';
+import { AppState, type AppStateStatus, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { loadAccounts, getActiveAccountId, setActiveAccountId } from '@/api/auth';
 import { fetchCapabilities } from '@/api/nextcloud';
 import { useAppStore } from '@/store/appStore';
+import { queryClient } from '@/api/queryClient';
+import { setupOnlineManager } from '@/api/network';
+import '@/i18n';
+import { useLanguageSync } from '@/hooks/useLanguageSync';
 SplashScreen.preventAutoHideAsync();
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,
-      gcTime: 7 * 24 * 60 * 60 * 1000,
-      networkMode: 'offlineFirst',
-      retry: 1,
-    },
-  },
-});
 
 const asyncStoragePersister = createAsyncStoragePersister({
   storage: AsyncStorage,
@@ -35,13 +28,26 @@ function ThemedStatusBar() {
   const themePreference = useAppStore((s) => s.themePreference);
   const resolved =
     themePreference === 'system' ? (systemScheme ?? 'light') : themePreference;
-  return <StatusBar style={resolved === 'dark' ? 'light' : 'dark'} />;
+  const deferredResolved = useDeferredValue(resolved);
+  return <StatusBar style={deferredResolved === 'dark' ? 'light' : 'dark'} />;
 }
 
 export default function RootLayout() {
   const router = useRouter();
   const setStoreAccountId = useAppStore((s) => s.setActiveAccountId);
   const setCapabilities = useAppStore((s) => s.setCapabilities);
+  useLanguageSync();
+
+  useEffect(() => {
+    const teardownOnline = setupOnlineManager();
+    const sub = AppState.addEventListener('change', (status: AppStateStatus) => {
+      focusManager.setFocused(status === 'active');
+    });
+    return () => {
+      sub.remove();
+      teardownOnline();
+    };
+  }, []);
 
   useEffect(() => {
     (async () => {
