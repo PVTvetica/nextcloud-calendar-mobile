@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from 'expo-router';
 import { Gesture } from 'react-native-gesture-handler';
 import { useSharedValue, runOnJS } from 'react-native-reanimated';
 import { useAppStore } from '@/store/appStore';

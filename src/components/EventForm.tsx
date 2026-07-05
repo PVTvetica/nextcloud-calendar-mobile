@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, Switch,
   StyleSheet, ScrollView, Platform, KeyboardAvoidingView,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
@@ -258,7 +258,7 @@ export function EventForm({
         <DateTimePicker
           value={dtstart}
           mode={allDay ? 'date' : 'datetime'}
-          onChange={handleIosStartChange}
+          onValueChange={handleIosStartChange}
         />
       )}
 
@@ -272,7 +272,7 @@ export function EventForm({
         <DateTimePicker
           value={dtend}
           mode={allDay ? 'date' : 'datetime'}
-          onChange={handleIosEndChange}
+          onValueChange={handleIosEndChange}
         />
       )}
 
@@ -282,7 +282,7 @@ export function EventForm({
           key={`android-picker-${androidStep.target}-${androidStep.step}`}
           value={androidPickerValue ?? new Date()}
           mode={androidPickerMode}
-          onChange={handleAndroidChange}
+          onValueChange={handleAndroidChange}
         />
       )}
 
