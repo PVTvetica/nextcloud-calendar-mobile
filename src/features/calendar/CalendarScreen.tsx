@@ -2,8 +2,9 @@ import {useCallback, useDeferredValue, useEffect, useMemo, useRef, useState} fro
 import {View, Text, TouchableOpacity, ActivityIndicator} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import {GestureDetector, Gesture} from 'react-native-gesture-handler';
-import {runOnJS} from 'react-native-reanimated';
+import {scheduleOnRN} from 'react-native-worklets';
 import {useRouter} from 'expo-router';
+import {useBottomTabBarHeight} from 'expo-router/js-tabs';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import {styles} from '@/styles/calendarScreen';
@@ -24,7 +25,7 @@ import {useZoom} from './hooks/useZoom';
 import {CalendarTopBar} from './components/CalendarTopBar';
 import {TimeGridView} from './components/TimeGridView';
 import {TimeGridEvent} from './components/TimeGridEvent';
-import {toBigCalendarEvents} from './utils/toCalendarEvents';
+import {buildEnrichedEventsByDate, toBigCalendarEvents} from './utils/toCalendarEvents';
 import {isCalMode} from './constants';
 
 dayjs.extend(isoWeek);
@@ -33,6 +34,7 @@ export default function CalendarScreen() {
     const router = useRouter();
     const theme = useTheme();
     const {t} = useTranslation();
+    const tabBarHeight = useBottomTabBarHeight();
 
     const weekStartsOn = useAppStore((s) => s.weekStartsOn);
     const language = useAppStore((s) => s.language);
@@ -67,33 +69,31 @@ export default function CalendarScreen() {
         insets,
         onViewAreaLayout,
         heightFor,
-        scrollOffset
+        scrollOffset,
+        viewAreaHeight,
     } = useCalendarLayout(allEvents, deferredWeekStartsOn, hourRowHeight);
     const drawer = useCalendarDrawer();
 
     const overlapMap = useMemo(() => computeOverlapMap(allEvents), [allEvents]);
     const calendarEvents = useMemo(() => toBigCalendarEvents(allEvents, overlapMap), [allEvents, overlapMap]);
+    const enrichedEventsByDate = useMemo(() => buildEnrichedEventsByDate(calendarEvents), [calendarEvents]);
 
     const navGuard = useRef(createNavigationGuard()).current;
 
     const handlePressEvent = useCallback(
         (event: any) => {
             navGuard(() => router.push(`/event/${event._event.uid}`));
-        },
-        [router, navGuard]
-    );
+        }, [router, navGuard]);
+
     const handlePressEventFromMonth = useCallback(
         (event: CalendarEvent) => {
             navGuard(() => router.push(`/event/${event.uid}`));
-        },
-        [router, navGuard]
-    );
+        }, [router, navGuard]);
+
     const handlePressCell = useCallback(
         (d: Date) => {
             navGuard(() => router.push({pathname: '/event/new', params: {date: d.toISOString()}}));
-        },
-        [router, navGuard]
-    );
+        }, [router, navGuard]);
 
     const monthSwipeGesture = useMemo(
         () =>
@@ -101,8 +101,8 @@ export default function CalendarScreen() {
                 .activeOffsetX([-30, 30])
                 .failOffsetY([-15, 15])
                 .onEnd((e) => {
-                    if (e.translationX < -50) runOnJS(navigateMonth)(1);
-                    else if (e.translationX > 50) runOnJS(navigateMonth)(-1);
+                    if (e.translationX < -50) scheduleOnRN(navigateMonth, 1);
+                    else if (e.translationX > 50) scheduleOnRN(navigateMonth, -1);
                 }),
         [navigateMonth]
     );
@@ -181,6 +181,7 @@ export default function CalendarScreen() {
                                 date={deferredDate}
                                 events={allEvents}
                                 weekStartsOn={deferredWeekStartsOn}
+                                availableHeight={viewAreaHeight}
                                 onSelectDate={nav.setDate}
                                 onPressEvent={handlePressEventFromMonth}
                                 onPressCell={handlePressCell}
@@ -224,23 +225,34 @@ export default function CalendarScreen() {
                         renderEvent={renderEvent}
                         eventCellStyle={eventCellStyle}
                         bigCalendarTheme={bigCalendarTheme}
+                        enrichedEventsByDate={enrichedEventsByDate}
                     />
                 </View>
             </View>
 
             {showFullOverlay && (
-                <View style={[styles.loadingOverlay, {backgroundColor: theme.background}]}>
+                <View
+                    pointerEvents="none"
+                    style={[styles.loadingOverlay, {
+                        backgroundColor: theme.background,
+                        bottom: tabBarHeight,
+                    }]}
+                >
                     <ActivityIndicator size="large" color={theme.primary}/>
                     <Text
                         style={[styles.loadingText, {color: theme.textSecondary}]}>{t('calendar.loadingCalendar')}</Text>
                 </View>
             )}
             {showSmallLoader && (
-                <ActivityIndicator size="small" color={theme.textSecondary} style={styles.smallLoader}/>
+                <ActivityIndicator
+                    size="small"
+                    color={theme.textSecondary}
+                    style={[styles.smallLoader, {bottom: tabBarHeight + 24}]}
+                />
             )}
 
             <TouchableOpacity
-                style={[styles.fab, {backgroundColor: theme.primary, bottom: 16}]}
+                style={[styles.fab, {backgroundColor: theme.primary, bottom: tabBarHeight - 48}]}
                 onPress={() => navGuard(() => router.push('/event/new'))}
             >
                 <Text style={styles.fabIcon}>+</Text>

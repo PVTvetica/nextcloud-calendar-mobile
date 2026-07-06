@@ -10,6 +10,7 @@ import type { BigCalendarEvent } from '../utils/toCalendarEvents';
 
 interface LiveProps {
   events: BigCalendarEvent[];
+  enrichedEventsByDate: Record<string, BigCalendarEvent[]>;
   date: Date;
   height: number;
   hourRowHeight: number;
@@ -61,6 +62,9 @@ function CalendarInstanceImpl({ mode, calendarKey, visible, ...live }: Props) {
           renderEvent={props.renderEvent}
           eventCellStyle={props.eventCellStyle}
           allDayEventCellStyle={props.eventCellStyle}
+          enableEnrichedEvents
+          eventsAreSorted
+          enrichedEventsByDate={props.enrichedEventsByDate}
           theme={props.bigCalendarTheme}
         />
       </View>

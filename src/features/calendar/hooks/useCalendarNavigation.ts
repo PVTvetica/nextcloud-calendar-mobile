@@ -4,7 +4,7 @@ import { useAppStore } from '@/store/appStore';
 import { trailingDebounce } from '@/utils/debounce';
 import type { AgendaViewHandle } from '@/components/AgendaView';
 import type { ViewMode } from '@/types';
-import { CAL_MODES, isCalMode, type CalMode } from '../constants';
+import { isCalMode, type CalMode } from '../constants';
 
 const FETCH_DATE_DEBOUNCE_MS = 300;
 
@@ -43,17 +43,6 @@ export function useCalendarNavigation() {
   const agendaVisibleDateRef = useRef(agendaVisibleDate); agendaVisibleDateRef.current = agendaVisibleDate;
 
   useEffect(() => { if (viewMode === 'schedule') setAgendaVisibleDate(date); }, [date, viewMode]);
-
-  useEffect(() => {
-    const handle = requestIdleCallback(() => {
-      setMountedCalModes((prev) =>
-        prev.has('week') && prev.has('3days') && prev.has('day')
-          ? prev
-          : new Set<CalMode>(CAL_MODES)
-      );
-    }, { timeout: 800 });
-    return () => cancelIdleCallback(handle);
-  }, []);
 
   const switchMode = useCallback((target: ViewMode) => {
     const f = viewModeRef.current === 'schedule' ? agendaVisibleDateRef.current : dateRef.current;

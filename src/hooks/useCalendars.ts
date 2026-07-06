@@ -13,6 +13,6 @@ export function useCalendars(account: Account | null) {
     staleTime: CALENDARS_STALE,
     refetchInterval: CALENDARS_LIVE_POLL,
     refetchIntervalInBackground: false,
-    refetchOnWindowFocus: 'always',
+    refetchOnWindowFocus: false,
   });
 }

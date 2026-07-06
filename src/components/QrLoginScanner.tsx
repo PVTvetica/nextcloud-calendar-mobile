@@ -155,7 +155,7 @@ const BOX = 240;
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  overlay: { ...StyleSheet.absoluteFillObject },
+  overlay: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   dimTop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)' },
   middle: { flexDirection: 'row', height: BOX },
   dimSide: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)' },

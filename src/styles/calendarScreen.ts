@@ -4,7 +4,7 @@ export const styles = StyleSheet.create({
   root: { flex: 1 },
   calendarWrapper: { flex: 1, overflow: 'hidden' },
   viewContainer: { flex: 1 },
-  viewLayer: { ...StyleSheet.absoluteFillObject },
+  viewLayer: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   layerActive: { opacity: 1, zIndex: 1 },
   layerHidden: { opacity: 0, zIndex: 0 },
   headerWrap: { borderBottomWidth: StyleSheet.hairlineWidth },
@@ -26,7 +26,7 @@ export const styles = StyleSheet.create({
   },
   fabIcon: { fontSize: 28, color: '#fff', lineHeight: 32 },
   loadingOverlay: {
-    ...StyleSheet.absoluteFillObject, zIndex: 5,
+    position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, zIndex: 5,
     alignItems: 'center', justifyContent: 'center',
   },
   loadingText: { marginTop: 12, fontSize: 14 },

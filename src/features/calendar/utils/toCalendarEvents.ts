@@ -1,3 +1,4 @@
+import { enrichEvents } from 'react-native-big-calendar';
 import type { CalendarEvent } from '@/types';
 import type { computeOverlapMap } from '@/utils/overlapMap';
 
@@ -17,17 +18,27 @@ export interface BigCalendarEvent {
 const DEFAULT_OVERLAP = { leftPct: 0, rightPx: 3, zIndex: 100 };
 
 export function toBigCalendarEvents(events: CalendarEvent[], overlapMap: OverlapMap): BigCalendarEvent[] {
-  return events.map((e) => {
-    const overlap = overlapMap.get(e.uid) ?? DEFAULT_OVERLAP;
-    return {
-      title: e.summary,
-      start: e.dtstart,
-      end: e.dtend,
-      color: e.color,
-      _event: e,
-      _leftPct: overlap.leftPct,
-      _rightPx: overlap.rightPx,
-      _zIndex: overlap.zIndex,
-    };
-  });
+  return events
+    .map((e) => {
+      const overlap = overlapMap.get(e.uid) ?? DEFAULT_OVERLAP;
+      return {
+        title: e.summary,
+        start: e.dtstart,
+        end: e.dtend,
+        color: e.color,
+        _event: e,
+        _leftPct: overlap.leftPct,
+        _rightPx: overlap.rightPx,
+        _zIndex: overlap.zIndex,
+      };
+    })
+    .sort((a, b) =>
+      a.start.getTime() - b.start.getTime() ||
+      a.end.getTime() - b.end.getTime() ||
+      a._event.uid.localeCompare(b._event.uid)
+    );
+}
+
+export function buildEnrichedEventsByDate(events: BigCalendarEvent[]) {
+  return enrichEvents(events, true);
 }

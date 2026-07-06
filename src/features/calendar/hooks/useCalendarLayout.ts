@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useWindowDimensions, type LayoutChangeEvent } from 'react-native';
+import { useBottomTabBarHeight } from 'expo-router/js-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { CalendarEvent } from '@/types';
 import type { CalMode } from '../constants';
@@ -12,6 +13,7 @@ export function useCalendarLayout(
 ) {
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
 
   const [availH, setAvailH] = useState(0);
   const onViewAreaLayout = useCallback((e: LayoutChangeEvent) => {
@@ -22,7 +24,7 @@ export function useCalendarLayout(
   const allDayEvents = useMemo(() => allEvents.filter((e) => e.allDay), [allEvents]);
 
   const headerHeight = 44 + 40 + insets.top;
-  const calHeight = windowHeight - headerHeight - insets.bottom - 49;
+  const calHeight = windowHeight - headerHeight - insets.bottom - tabBarHeight;
   const calArea = availH > 0 ? availH : calHeight;
 
   const scrollOffset = useMemo(() => nowScrollOffset(hourRowHeight), [hourRowHeight]);
@@ -33,5 +35,5 @@ export function useCalendarLayout(
     [calArea, allDayEvents, weekStartsOn, hourRowHeight]
   );
 
-  return { insets, onViewAreaLayout, heightFor, scrollOffset };
+  return { insets, onViewAreaLayout, heightFor, scrollOffset, viewAreaHeight: calArea };
 }

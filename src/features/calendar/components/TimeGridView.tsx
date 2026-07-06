@@ -23,12 +23,13 @@ interface Props {
   renderEvent: (event: any, touchableOpacityProps: any) => ReactElement;
   eventCellStyle: (event: any) => any;
   bigCalendarTheme: any;
+  enrichedEventsByDate: Record<string, BigCalendarEvent[]>;
 }
 
 function TimeGridViewImpl({
   pinchGesture, mountedCalModes, viewMode, calendarKey, events, calDates, heightFor,
   hourRowHeight, weekStartsOn, scrollOffset, onPressEvent, onPressCell,
-  onSwipeEndHandlers, renderEvent, eventCellStyle, bigCalendarTheme,
+  onSwipeEndHandlers, renderEvent, eventCellStyle, bigCalendarTheme, enrichedEventsByDate,
 }: Props) {
   return (
     <GestureDetector gesture={pinchGesture}>
@@ -52,6 +53,7 @@ function TimeGridViewImpl({
               renderEvent={renderEvent}
               eventCellStyle={eventCellStyle}
               bigCalendarTheme={bigCalendarTheme}
+              enrichedEventsByDate={enrichedEventsByDate}
             />
           ) : null
         )}

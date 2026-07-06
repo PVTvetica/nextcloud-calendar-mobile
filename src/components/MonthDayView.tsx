@@ -16,6 +16,7 @@ interface Props {
   date: Date;
   events: CalendarEvent[];
   weekStartsOn: 0 | 1;
+  availableHeight?: number;
   onSelectDate: (d: Date) => void;
   onPressEvent: (e: CalendarEvent) => void;
   onPressCell: (d: Date) => void;
@@ -63,7 +64,15 @@ export function eventCoversDay(e: CalendarEvent, dayKey: string): boolean {
   return dayKey >= startKey && dayKey <= (endKey < startKey ? startKey : endKey);
 }
 
-function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEvent, onPressCell }: Props) {
+function MonthDayViewImpl({
+  date,
+  events,
+  weekStartsOn,
+  availableHeight,
+  onSelectDate,
+  onPressEvent,
+  onPressCell,
+}: Props) {
   const theme = useTheme();
   const { t } = useTranslation();
   const language = useAppStore((s) => s.language);
@@ -119,7 +128,8 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
     return headers;
   }, [weekStartsOn, language]);
 
-  const gridHeight = height * 0.44;
+  const layoutHeight = availableHeight && availableHeight > 0 ? availableHeight : height;
+  const gridHeight = Math.max(220, Math.min(layoutHeight * 0.44, 420));
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>

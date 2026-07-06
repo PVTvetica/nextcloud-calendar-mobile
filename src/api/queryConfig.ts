@@ -16,9 +16,11 @@ export const CALENDARS_LIVE_POLL = 30 * 1000;
 
 /** Event queries. Kept fresh-ish; explicitly invalidated on mutation. */
 export const EVENTS_STALE = 2 * MIN;
+export const EVENTS_GC = 10 * MIN;
 
 /** Subscribed (external ICS) calendars — remote, slow-changing. */
 export const SUBSCRIBED_EVENTS_STALE = 30 * MIN;
+export const SUBSCRIBED_EVENTS_GC = 15 * MIN;
 
 /** Avatar images, rarely change. */
 export const AVATAR_STALE = 30 * MIN;

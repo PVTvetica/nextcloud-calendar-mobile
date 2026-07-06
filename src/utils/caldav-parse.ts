@@ -1,6 +1,5 @@
 import ICAL from 'ical.js';
 import type { CalendarEvent, Attendee } from '@/types';
-import { yieldToUI } from '@/utils/scheduling';
 
 interface ParseCalMeta {
   calendarId: string;
@@ -11,6 +10,11 @@ interface ParseCalMeta {
 const TALK_URL_PATTERN = /\/call\//;
 
 const MAX_OCCURRENCES = 1000;
+
+const waitForIdle = (timeout = 250) =>
+  new Promise<void>((resolve) => {
+    requestIdleCallback(() => resolve(), { timeout });
+  });
 
 
 function icalTimeToDate(t: ICAL.Time, isEnd = false): Date {
@@ -154,7 +158,7 @@ export function parseIcsObjects(
  * Chunked, cooperative parse of many ICS resources.
  *
  * Identical output to `parseIcsObjects`, but time-sliced: after each
- * `frameBudgetMs` of synchronous work it `await`s `yieldToUI()` so the JS
+ * `frameBudgetMs` of synchronous work it waits for an idle slot so the JS
  * thread can service touches, gesture callbacks and renders before resuming.
  * This is what the event queries use, so a large background fetch never freezes
  * scrolling/swiping/zooming.
@@ -174,7 +178,7 @@ export async function parseIcsObjectsAsync(
     if (parsed.length) events.push(...parsed);
 
     if (Date.now() - sliceStart >= frameBudgetMs) {
-      await yieldToUI();
+      await waitForIdle();
       sliceStart = Date.now();
     }
   }
