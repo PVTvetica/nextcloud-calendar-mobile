@@ -247,7 +247,7 @@ export default function CalendarScreen() {
                 <ActivityIndicator
                     size="small"
                     color={theme.textSecondary}
-                    style={[styles.smallLoader, {bottom: tabBarHeight + 24}]}
+                    style={[styles.smallLoader, {bottom: tabBarHeight - 48}]}
                 />
             )}
 

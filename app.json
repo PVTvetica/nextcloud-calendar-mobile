@@ -67,7 +67,34 @@
       ],
       "expo-localization",
       "expo-font",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "CalendarSmallWidget",
+              "label": "Nextcloud Calendar",
+              "description": "Shows the next upcoming calendar event",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "updatePeriodMillis": 0
+            },
+            {
+              "name": "CalendarMediumWidget",
+              "label": "Nextcloud Calendar",
+              "description": "Shows up to three upcoming events from one day",
+              "minWidth": "320dp",
+              "minHeight": "120dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "updatePeriodMillis": 0
+            }
+          ]
+        }
+      ]
     ]
   }
 }

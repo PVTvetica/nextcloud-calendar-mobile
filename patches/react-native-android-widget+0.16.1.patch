@@ -1,0 +1,184 @@
+diff --git a/node_modules/react-native-android-widget/android/src/main/java/com/reactnativeandroidwidget/builder/widget/BaseWidget.java b/node_modules/react-native-android-widget/android/src/main/java/com/reactnativeandroidwidget/builder/widget/BaseWidget.java
+index 3abbdca..56f2f8f 100644
+--- a/node_modules/react-native-android-widget/android/src/main/java/com/reactnativeandroidwidget/builder/widget/BaseWidget.java
++++ b/node_modules/react-native-android-widget/android/src/main/java/com/reactnativeandroidwidget/builder/widget/BaseWidget.java
+@@ -10,11 +10,6 @@ import android.widget.LinearLayout;
+ import com.facebook.react.bridge.ReactApplicationContext;
+ import com.facebook.react.bridge.ReadableMap;
+ import com.facebook.react.common.annotations.UnstableReactNativeAPI;
+-import com.facebook.react.uimanager.LengthPercentage;
+-import com.facebook.react.uimanager.LengthPercentageType;
+-import com.facebook.react.uimanager.Spacing;
+-import com.facebook.react.uimanager.drawable.CSSBackgroundDrawable;
+-import com.facebook.react.uimanager.style.BorderRadiusProp;
+ 
+ import java.util.Collections;
+ import java.util.HashMap;
+@@ -29,7 +24,7 @@ public abstract class BaseWidget<T extends View> {
+ 
+     protected T view;
+ 
+-    private CSSBackgroundDrawable mReactViewBackground;
++    private GradientDrawable mBackgroundDrawable;
+ 
+     public BaseWidget(ReactApplicationContext context, ReadableMap props, List<View> children) {
+         this.appContext = context;
+@@ -94,14 +89,16 @@ public abstract class BaseWidget<T extends View> {
+ 
+     private void setBackground() {
+         if (props.hasKey("backgroundColor")) {
+-            getReactViewBackground().setColor(Color.parseColor(props.getString("backgroundColor")));
++            getBackgroundDrawable().setColor(Color.parseColor(props.getString("backgroundColor")));
+         }
+ 
+-        // This will overwrite border
+         if (props.hasKey("backgroundGradient")) {
+             ReadableMap backgroundGradient = props.getMap("backgroundGradient");
+-            GradientDrawable gradientDrawable = new GradientDrawable(
+-                GradientDrawable.Orientation.valueOf(backgroundGradient.getString("orientation")),
++            GradientDrawable gradientDrawable = getBackgroundDrawable();
++            gradientDrawable.setOrientation(
++                GradientDrawable.Orientation.valueOf(backgroundGradient.getString("orientation"))
++            );
++            gradientDrawable.setColors(
+                 new int[]{
+                     Color.parseColor(backgroundGradient.getString("from")),
+                     Color.parseColor(backgroundGradient.getString("to"))
+@@ -109,64 +106,29 @@ public abstract class BaseWidget<T extends View> {
+             );
+ 
+             if (props.hasKey("borderRadius")) {
+-                ReadableMap borderRadius = props.getMap("borderRadius");
+-
+-                gradientDrawable.setCornerRadii(
+-                    new float[]{
+-                        dpToPx(borderRadius.getDouble("topLeft")),
+-                        dpToPx(borderRadius.getDouble("topLeft")),
+-                        dpToPx(borderRadius.getDouble("topRight")),
+-                        dpToPx(borderRadius.getDouble("topRight")),
+-                        dpToPx(borderRadius.getDouble("bottomRight")),
+-                        dpToPx(borderRadius.getDouble("bottomRight")),
+-                        dpToPx(borderRadius.getDouble("bottomLeft")),
+-                        dpToPx(borderRadius.getDouble("bottomLeft")),
+-                    }
+-                );
++                applyBorderRadius(gradientDrawable, props.getMap("borderRadius"));
+             }
+-            view.setBackground(gradientDrawable);
+         }
+     }
+ 
+     private void setBorder() {
+         if (props.hasKey("borderColor")) {
+             ReadableMap borderColor = props.getMap("borderColor");
+-            getReactViewBackground().setBorderColor(
+-                Spacing.LEFT,
+-                Color.parseColor(borderColor.getString("left"))
+-            );
+-            getReactViewBackground().setBorderColor(
+-                Spacing.RIGHT,
+-                Color.parseColor(borderColor.getString("right"))
+-            );
+-            getReactViewBackground().setBorderColor(
+-                Spacing.TOP,
+-                Color.parseColor(borderColor.getString("top"))
+-            );
+-            getReactViewBackground().setBorderColor(
+-                Spacing.BOTTOM,
+-                Color.parseColor(borderColor.getString("bottom"))
+-            );
++            Integer uniformBorderColor = getUniformBorderColor(borderColor);
++            if (uniformBorderColor != null) {
++                getBackgroundDrawable().setStroke(getUniformBorderWidth(), uniformBorderColor);
++            }
+         }
+ 
+         if (props.hasKey("borderWidth")) {
+-            ReadableMap borderWidth = props.getMap("borderWidth");
+-            getReactViewBackground().setBorderWidth(Spacing.LEFT, dpToPx(borderWidth.getDouble("left")));
+-            getReactViewBackground().setBorderWidth(Spacing.RIGHT, dpToPx(borderWidth.getDouble("right")));
+-            getReactViewBackground().setBorderWidth(Spacing.TOP, dpToPx(borderWidth.getDouble("top")));
+-            getReactViewBackground().setBorderWidth(Spacing.BOTTOM, dpToPx(borderWidth.getDouble("bottom")));
++            Integer uniformBorderColor = props.hasKey("borderColor")
++                ? getUniformBorderColor(props.getMap("borderColor"))
++                : Color.TRANSPARENT;
++            getBackgroundDrawable().setStroke(getUniformBorderWidth(), uniformBorderColor);
+         }
+ 
+         if (props.hasKey("borderRadius")) {
+-            ReadableMap borderRadius = props.getMap("borderRadius");
+-            getReactViewBackground().setBorderRadius(BorderRadiusProp.BORDER_TOP_RIGHT_RADIUS, new LengthPercentage((float) borderRadius.getDouble("topRight"), LengthPercentageType.POINT));
+-            getReactViewBackground().setBorderRadius(BorderRadiusProp.BORDER_BOTTOM_RIGHT_RADIUS, new LengthPercentage((float) borderRadius.getDouble("bottomRight"), LengthPercentageType.POINT));
+-            getReactViewBackground().setBorderRadius(BorderRadiusProp.BORDER_BOTTOM_LEFT_RADIUS, new LengthPercentage((float) borderRadius.getDouble("bottomLeft"), LengthPercentageType.POINT));
+-            getReactViewBackground().setBorderRadius(BorderRadiusProp.BORDER_TOP_LEFT_RADIUS, new LengthPercentage((float) borderRadius.getDouble("topLeft"), LengthPercentageType.POINT));
+-        }
+-
+-        if (props.hasKey("borderStyle")) {
+-            getReactViewBackground().setBorderStyle(props.getString("borderStyle").toUpperCase());
++            applyBorderRadius(getBackgroundDrawable(), props.getMap("borderRadius"));
+         }
+     }
+ 
+@@ -208,13 +170,57 @@ public abstract class BaseWidget<T extends View> {
+         }
+     }
+ 
+-    private CSSBackgroundDrawable getReactViewBackground() {
+-        if (mReactViewBackground == null) {
+-            mReactViewBackground = new CSSBackgroundDrawable(view.getContext());
++    private GradientDrawable getBackgroundDrawable() {
++        if (mBackgroundDrawable == null) {
++            mBackgroundDrawable = new GradientDrawable();
+             view.setBackground(null);
+-            view.setBackground(mReactViewBackground);
++            view.setBackground(mBackgroundDrawable);
++        }
++        return mBackgroundDrawable;
++    }
++
++    private void applyBorderRadius(GradientDrawable drawable, ReadableMap borderRadius) {
++        drawable.setCornerRadii(
++            new float[]{
++                dpToPx(borderRadius.getDouble("topLeft")),
++                dpToPx(borderRadius.getDouble("topLeft")),
++                dpToPx(borderRadius.getDouble("topRight")),
++                dpToPx(borderRadius.getDouble("topRight")),
++                dpToPx(borderRadius.getDouble("bottomRight")),
++                dpToPx(borderRadius.getDouble("bottomRight")),
++                dpToPx(borderRadius.getDouble("bottomLeft")),
++                dpToPx(borderRadius.getDouble("bottomLeft")),
++            }
++        );
++    }
++
++    private int getUniformBorderWidth() {
++        if (!props.hasKey("borderWidth")) {
++            return 0;
++        }
++        ReadableMap borderWidth = props.getMap("borderWidth");
++        double left = borderWidth.getDouble("left");
++        double right = borderWidth.getDouble("right");
++        double top = borderWidth.getDouble("top");
++        double bottom = borderWidth.getDouble("bottom");
++        if (left == right && right == top && top == bottom) {
++            return dpToPx(left);
++        }
++        return dpToPx(left);
++    }
++
++    private Integer getUniformBorderColor(ReadableMap borderColor) {
++        if (borderColor == null) {
++            return null;
++        }
++        String left = borderColor.getString("left");
++        String right = borderColor.getString("right");
++        String top = borderColor.getString("top");
++        String bottom = borderColor.getString("bottom");
++        if (left == null || !left.equals(right) || !left.equals(top) || !left.equals(bottom)) {
++            return null;
+         }
+-        return mReactViewBackground;
++        return Color.parseColor(left);
+     }
+ 
+     private Map<String, Object> getObjectOrEmptyMap(ReadableMap propMap) {
