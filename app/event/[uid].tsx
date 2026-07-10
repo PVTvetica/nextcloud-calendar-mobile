@@ -50,7 +50,11 @@ function askRecurrenceScope(
       onPress: () => onSelect('all'),
     },
     { text: strings.cancel, style: 'cancel' },
-  ]);
+  ],
+    {
+      cancelable: true,
+    },
+ );
 }
 
 export default function EventDetailScreen() {
