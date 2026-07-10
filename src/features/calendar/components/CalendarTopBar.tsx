@@ -65,6 +65,8 @@ function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOp
             onPress={() => onSwitchMode(mode)}
           >
             <Text
+              numberOfLines={1}
+              allowFontScaling={false}
               style={[
                 styles.modeBtnText,
                 { color: theme.textSecondary },
