@@ -153,12 +153,15 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
                     isSelected && { backgroundColor: theme.primary },
                     isToday && !isSelected && { borderWidth: 1.5, borderColor: theme.primary },
                   ]}>
-                    <Text style={[
-                      styles.dayNumber,
-                      { color: theme.text },
-                      isSelected && { color: '#fff' },
-                      isToday && !isSelected && { color: theme.primary, fontWeight: '700' },
-                    ]}>
+                    <Text
+                      numberOfLines={1}
+                      allowFontScaling={false}
+                      style={[
+                        styles.dayNumber,
+                        { color: theme.text },
+                        isSelected && { color: '#fff' },
+                        isToday && !isSelected && { color: theme.primary, fontWeight: '700' },
+                      ]}>
                       {d.date()}
                     </Text>
                   </View>
@@ -219,8 +222,8 @@ const styles = StyleSheet.create({
   dowLabel: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '600', textTransform: 'uppercase' },
   weekRow: { flex: 1, flexDirection: 'row' },
   dayCell: { flex: 1, alignItems: 'center', paddingTop: 2 },
-  dayCircle: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  dayNumber: { fontSize: 14 },
+  dayCircle: { minWidth: 28, height: 28, borderRadius: 14, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center' },
+  dayNumber: { fontSize: 14, textAlign: 'center' },
   dotsRow: { flexDirection: 'row', gap: 2, marginTop: 2 },
   dot: { width: 5, height: 5, borderRadius: 3 },
   dayList: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },
