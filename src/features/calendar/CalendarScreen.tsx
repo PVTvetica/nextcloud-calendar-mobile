@@ -2,13 +2,13 @@ import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } f
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import { useRouter } from 'expo-router';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { styles } from '@/styles/calendarScreen';
-import { useAppStore } from '@/store/appStore';
-import { useTheme } from '@/hooks/useTheme';
+import { useAppStore } from '@/stores/appStore';
+import { useTheme } from '@react-navigation/native';
 import { CalendarDrawer } from '@/components/CalendarDrawer';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { MonthDayView } from '@/components/MonthDayView';
@@ -88,8 +88,8 @@ export default function CalendarScreen() {
         .activeOffsetX([-30, 30])
         .failOffsetY([-15, 15])
         .onEnd((e) => {
-          if (e.translationX < -50) runOnJS(navigateMonth)(1);
-          else if (e.translationX > 50) runOnJS(navigateMonth)(-1);
+          if (e.translationX < -50) scheduleOnRN(navigateMonth, 1);
+          else if (e.translationX > 50) scheduleOnRN(navigateMonth, -1);
         }),
     [navigateMonth]
   );
@@ -102,29 +102,29 @@ export default function CalendarScreen() {
         event={event}
         touchableProps={touchableProps}
         hourRowHeight={hourRowHeight}
-        primaryColor={theme.primary}
+        primaryColor={theme.colors.primary}
       />
     );
-  }, [hourRowHeight, theme.primary]);
+  }, [hourRowHeight, theme.colors.primary]);
 
   const eventCellStyle = useCallback(
-    (event: any) => ({ backgroundColor: (event.color as string) || theme.primary }),
-    [theme.primary]
+    (event: any) => ({ backgroundColor: (event.color as string) || theme.colors.primary }),
+    [theme.colors.primary]
   );
 
   const bigCalendarTheme = useMemo(
     () => ({
       palette: {
-        primary: { main: theme.primary },
+        primary: { main: theme.colors.primary },
         gray: {
-          '100': theme.borderSubtle,
-          '200': theme.border,
-          '500': theme.textSecondary,
-          '800': theme.text,
+          '100': theme.colors.borderSubtle,
+          '200': theme.colors.border,
+          '500': theme.colors.textSecondary,
+          '800': theme.colors.text,
         },
       },
     }),
-    [theme.primary, theme.borderSubtle, theme.border, theme.textSecondary, theme.text]
+    [theme.colors.primary, theme.colors.borderSubtle, theme.colors.border, theme.colors.textSecondary, theme.colors.text]
   );
 
   const isToday = viewMode === 'schedule'
@@ -144,7 +144,7 @@ export default function CalendarScreen() {
   const calendarKeyFull = String(calendarKey);
 
   return (
-    <View style={[styles.root, { backgroundColor: theme.background }]}>
+    <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
       <CalendarTopBar
         headerTitle={headerTitle}
         isToday={isToday}
@@ -216,17 +216,17 @@ export default function CalendarScreen() {
       </View>
 
       {showFullOverlay && (
-        <View style={[styles.loadingOverlay, { backgroundColor: theme.background }]}>
-          <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>{t('calendar.loadingCalendar')}</Text>
+        <View style={[styles.loadingOverlay, { backgroundColor: theme.colors.background }]}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>{t('calendar.loadingCalendar')}</Text>
         </View>
       )}
       {showSmallLoader && (
-        <ActivityIndicator size="small" color={theme.textSecondary} style={styles.smallLoader} />
+        <ActivityIndicator size="small" color={theme.colors.textSecondary} style={styles.smallLoader} />
       )}
 
       <TouchableOpacity
-        style={[styles.fab, { backgroundColor: theme.primary, bottom: 16 }]}
+        style={[styles.fab, { backgroundColor: theme.colors.primary, bottom: 16 }]}
         onPress={() => navGuard(() => router.push('/event/new'))}
       >
         <Text style={styles.fabIcon}>+</Text>

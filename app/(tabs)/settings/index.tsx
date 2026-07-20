@@ -5,9 +5,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { loadAccounts, deleteAccount, setActiveAccountId, clearActiveAccountId } from '@/api/auth';
-import { useAppStore, type ThemePreference } from '@/store/appStore';
-import { useTheme } from '@/hooks/useTheme';
+import { loadAccounts, deleteAccount, setActiveAccountId, clearActiveAccountId } from '@/services/nextcloud/auth';
+import { useAppStore, type ThemePreference } from '@/stores/appStore';
+import { useTheme } from '@react-navigation/native';
 import { AccountCard } from '@/components/AccountCard';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
@@ -108,39 +108,39 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={[styles.pageHeader]}>
-        <Text style={[styles.pageTitle, { color: theme.text }]}>{t('settings.title')}</Text>
+        <Text style={[styles.pageTitle, { color: theme.colors.text }]}>{t('settings.title')}</Text>
         <TouchableOpacity onPress={() => setAboutVisible(true)} hitSlop={8}>
-          <Ionicons name="help-circle-outline" size={26} color={theme.textSecondary} />
+          <Ionicons name="help-circle-outline" size={26} color={theme.colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
       <Modal visible={aboutVisible} transparent animationType="fade" onRequestClose={() => setAboutVisible(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setAboutVisible(false)}>
-          <Pressable style={[styles.modalCard, { backgroundColor: theme.surface, borderColor: theme.border }]} onPress={() => {}}>
+          <Pressable style={[styles.modalCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]} onPress={() => {}}>
             <Image source={require('../../../assets/icon.png')} style={styles.appIcon} />
-            <Text style={[styles.modalAppName, { color: theme.text }]}>{t('settings.about.name')}</Text>
-            <Text style={[styles.modalVersion, { color: theme.textSecondary }]}>{t('settings.version', { version: appVersion })}</Text>
-            <Text style={[styles.modalDescription, { color: theme.textSecondary }]}>
+            <Text style={[styles.modalAppName, { color: theme.colors.text }]}>{t('settings.about.name')}</Text>
+            <Text style={[styles.modalVersion, { color: theme.colors.textSecondary }]}>{t('settings.version', { version: appVersion })}</Text>
+            <Text style={[styles.modalDescription, { color: theme.colors.textSecondary }]}>
               {t('settings.about.description')}
             </Text>
             <TouchableOpacity
-              style={[styles.modalBtn, { backgroundColor: theme.chipActive, borderColor: theme.primary }]}
+              style={[styles.modalBtn, { backgroundColor: theme.colors.chipActive, borderColor: theme.colors.primary }]}
               onPress={() => Linking.openURL(GITHUB_URL)}
             >
-              <Ionicons name="logo-github" size={18} color={theme.primaryText} />
-              <Text style={[styles.modalBtnText, { color: theme.primaryText }]}>{t('settings.about.github')}</Text>
+              <Ionicons name="logo-github" size={18} color={theme.colors.primaryText} />
+              <Text style={[styles.modalBtnText, { color: theme.colors.primaryText }]}>{t('settings.about.github')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.modalBtn, { backgroundColor: theme.chip, borderColor: theme.border }]}
+              style={[styles.modalBtn, { backgroundColor: theme.colors.chip, borderColor: theme.colors.border }]}
               onPress={() => Linking.openURL(ISSUES_URL)}
             >
-              <Ionicons name="bug-outline" size={18} color={theme.text} />
-              <Text style={[styles.modalBtnText, { color: theme.text }]}>{t('settings.about.reportBug')}</Text>
+              <Ionicons name="bug-outline" size={18} color={theme.colors.text} />
+              <Text style={[styles.modalBtnText, { color: theme.colors.text }]}>{t('settings.about.reportBug')}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setAboutVisible(false)} style={styles.modalClose}>
-              <Text style={[styles.modalCloseText, { color: theme.textTertiary }]}>{t('common.close')}</Text>
+              <Text style={[styles.modalCloseText, { color: theme.colors.textTertiary }]}>{t('common.close')}</Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>
@@ -153,23 +153,23 @@ export default function SettingsScreen() {
           accessibilityRole="button"
           accessibilityState={{ expanded: appearanceOpen }}
         >
-          <Text style={[styles.sectionHeader, styles.accordionTitle, { color: theme.textTertiary }]}>{t('settings.appearance')}</Text>
-          <Ionicons name={appearanceOpen ? 'chevron-up' : 'chevron-down'} size={18} color={theme.textTertiary} />
+          <Text style={[styles.sectionHeader, styles.accordionTitle, { color: theme.colors.textTertiary }]}>{t('settings.appearance')}</Text>
+          <Ionicons name={appearanceOpen ? 'chevron-up' : 'chevron-down'} size={18} color={theme.colors.textTertiary} />
         </TouchableOpacity>
         {appearanceOpen && (
           <>
-        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[styles.cardLabel, { color: theme.text }]}>{t('settings.theme')}</Text>
+        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+          <Text style={[styles.cardLabel, { color: theme.colors.text }]}>{t('settings.theme')}</Text>
           <View style={styles.themeRow}>
             {THEME_VALUES.map((value) => (
               <TouchableOpacity
                 key={value}
                 style={[
                   styles.themeChip,
-                  { backgroundColor: theme.chip, borderColor: theme.border },
+                  { backgroundColor: theme.colors.chip, borderColor: theme.colors.border },
                   pendingTheme === value && {
-                    backgroundColor: theme.chipActive,
-                    borderColor: theme.primary,
+                    backgroundColor: theme.colors.chipActive,
+                    borderColor: theme.colors.primary,
                   },
                 ]}
                 onPress={() => {
@@ -178,13 +178,13 @@ export default function SettingsScreen() {
                 }}
               >
                 {themeSwitching && pendingTheme === value ? (
-                  <ActivityIndicator size="small" color={theme.primaryText} style={styles.themeChipSpinner} />
+                  <ActivityIndicator size="small" color={theme.colors.primaryText} style={styles.themeChipSpinner} />
                 ) : (
                   <Text
                     style={[
                       styles.themeChipText,
-                      { color: theme.textSecondary },
-                      pendingTheme === value && { color: theme.primaryText, fontWeight: '600' },
+                      { color: theme.colors.textSecondary },
+                      pendingTheme === value && { color: theme.colors.primaryText, fontWeight: '600' },
                     ]}
                   >
                     {t(THEME_LABEL_KEY[value])}
@@ -195,13 +195,13 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[styles.cardLabel, { color: theme.text }]}>{t('common.language')}</Text>
+        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+          <Text style={[styles.cardLabel, { color: theme.colors.text }]}>{t('common.language')}</Text>
           <LanguageSheet />
         </View>
 
-        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[styles.cardLabel, { color: theme.text }]}>{t('settings.weekStart')}</Text>
+        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+          <Text style={[styles.cardLabel, { color: theme.colors.text }]}>{t('settings.weekStart')}</Text>
           <View style={styles.themeRow}>
             {([
               { labelKey: 'settings.sunday', value: 0 },
@@ -211,10 +211,10 @@ export default function SettingsScreen() {
                 key={String(opt.value)}
                 style={[
                   styles.themeChip,
-                  { backgroundColor: theme.chip, borderColor: theme.border },
+                  { backgroundColor: theme.colors.chip, borderColor: theme.colors.border },
                   pendingWeek === opt.value && {
-                    backgroundColor: theme.chipActive,
-                    borderColor: theme.primary,
+                    backgroundColor: theme.colors.chipActive,
+                    borderColor: theme.colors.primary,
                   },
                 ]}
                 onPress={() => {
@@ -225,8 +225,8 @@ export default function SettingsScreen() {
                 <Text
                   style={[
                     styles.themeChipText,
-                    { color: theme.textSecondary },
-                    pendingWeek === opt.value && { color: theme.primaryText, fontWeight: '600' },
+                    { color: theme.colors.textSecondary },
+                    pendingWeek === opt.value && { color: theme.colors.primaryText, fontWeight: '600' },
                   ]}
                 >
                   {t(opt.labelKey)}
@@ -236,28 +236,28 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
           <View style={styles.zoomHeader}>
-            <Text style={[styles.cardLabel, { color: theme.text, marginBottom: 0 }]}>{t('settings.calendarZoom')}</Text>
+            <Text style={[styles.cardLabel, { color: theme.colors.text, marginBottom: 0 }]}>{t('settings.calendarZoom')}</Text>
             <TouchableOpacity onPress={() => setHourRowHeight(DEFAULT_ZOOM)} disabled={hourRowHeight === DEFAULT_ZOOM}>
-              <Text style={[styles.resetText, { color: hourRowHeight === DEFAULT_ZOOM ? theme.textTertiary : theme.primary }]}>{t('settings.reset')}</Text>
+              <Text style={[styles.resetText, { color: hourRowHeight === DEFAULT_ZOOM ? theme.colors.textTertiary : theme.colors.primary }]}>{t('settings.reset')}</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.zoomRow}>
             <TouchableOpacity
-              style={[styles.zoomBtn, { backgroundColor: theme.chip, borderColor: theme.border }]}
+              style={[styles.zoomBtn, { backgroundColor: theme.colors.chip, borderColor: theme.colors.border }]}
               onPress={() => setHourRowHeight(Math.max(hourRowHeight - 15, 30))}
               disabled={hourRowHeight <= 30}
             >
-              <Text style={[styles.zoomBtnText, { color: hourRowHeight <= 30 ? theme.textTertiary : theme.text }]}>−</Text>
+              <Text style={[styles.zoomBtnText, { color: hourRowHeight <= 30 ? theme.colors.textTertiary : theme.colors.text }]}>−</Text>
             </TouchableOpacity>
-            <Text style={[styles.zoomLabel, { color: theme.textSecondary }]}>{zoomLabel}</Text>
+            <Text style={[styles.zoomLabel, { color: theme.colors.textSecondary }]}>{zoomLabel}</Text>
             <TouchableOpacity
-              style={[styles.zoomBtn, { backgroundColor: theme.chip, borderColor: theme.border }]}
+              style={[styles.zoomBtn, { backgroundColor: theme.colors.chip, borderColor: theme.colors.border }]}
               onPress={() => setHourRowHeight(Math.min(hourRowHeight + 15, 200))}
               disabled={hourRowHeight >= 200}
             >
-              <Text style={[styles.zoomBtnText, { color: hourRowHeight >= 200 ? theme.textTertiary : theme.text }]}>+</Text>
+              <Text style={[styles.zoomBtnText, { color: hourRowHeight >= 200 ? theme.colors.textTertiary : theme.colors.text }]}>+</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -270,8 +270,8 @@ export default function SettingsScreen() {
           accessibilityRole="button"
           accessibilityState={{ expanded: accountsOpen }}
         >
-          <Text style={[styles.sectionHeader, styles.accordionTitle, { color: theme.textTertiary }]}>{t('settings.accounts')}</Text>
-          <Ionicons name={accountsOpen ? 'chevron-up' : 'chevron-down'} size={18} color={theme.textTertiary} />
+          <Text style={[styles.sectionHeader, styles.accordionTitle, { color: theme.colors.textTertiary }]}>{t('settings.accounts')}</Text>
+          <Ionicons name={accountsOpen ? 'chevron-up' : 'chevron-down'} size={18} color={theme.colors.textTertiary} />
         </TouchableOpacity>
         {accountsOpen && (
           <>
@@ -285,10 +285,10 @@ export default function SettingsScreen() {
           />
         ))}
         <TouchableOpacity
-          style={[styles.addBtn, { borderColor: theme.primary }]}
+          style={[styles.addBtn, { borderColor: theme.colors.primary }]}
           onPress={() => router.push('/(auth)/setup')}
         >
-          <Text style={[styles.addBtnText, { color: theme.primary }]}>{t('settings.addAccount')}</Text>
+          <Text style={[styles.addBtnText, { color: theme.colors.primary }]}>{t('settings.addAccount')}</Text>
         </TouchableOpacity>
           </>
         )}

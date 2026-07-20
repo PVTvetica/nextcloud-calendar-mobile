@@ -43,6 +43,8 @@
     "react-native-country-flag": "^2.0.2",
     "react-native-gesture-handler": "~2.30.0",
     "react-native-infinite-pager": "^0.3.18",
+    "react-native-mmkv": "^4.3.2",
+    "react-native-nitro-modules": "^0.36.1",
     "react-native-reanimated": "4.2.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.23.0",
@@ -69,6 +71,10 @@
     "preset": "jest-expo",
     "setupFilesAfterEnv": [
       "@testing-library/jest-native/extend-expect"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/__tests__/helpers/"
     ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"

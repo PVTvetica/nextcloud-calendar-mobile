@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { asyncStorage as AsyncStorage } from '@/storage';
 import type { Account } from '@/types';
 
 const ACCOUNT_IDS_KEY = 'account_ids';

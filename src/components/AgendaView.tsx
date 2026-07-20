@@ -5,7 +5,7 @@ import {
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@react-navigation/native';
 import type { Theme } from '@/theme';
 import type { CalendarEvent } from '@/types';
 
@@ -42,22 +42,22 @@ const DayHeader = memo(({ sectionDate, hasEvents, theme, onPress }: DayHeaderPro
   return (
     <TouchableOpacity
       onPress={() => onPress(sectionDate)}
-      style={[styles.dayHeader, { backgroundColor: theme.background, borderBottomColor: theme.borderSubtle }]}
+      style={[styles.dayHeader, { backgroundColor: theme.colors.background, borderBottomColor: theme.colors.borderSubtle }]}
       activeOpacity={0.7}
     >
-      <View style={[styles.dayBadge, isToday && { backgroundColor: theme.primary }]}>
-        <Text style={[styles.dayNum, { color: isToday ? theme.primaryText : theme.text }]}>
+      <View style={[styles.dayBadge, isToday && { backgroundColor: theme.colors.primary }]}>
+        <Text style={[styles.dayNum, { color: isToday ? theme.colors.primaryText : theme.colors.text }]}>
           {d.format('D')}
         </Text>
       </View>
       <View>
-        <Text style={[styles.dayName, { color: isToday ? theme.primary : theme.textSecondary }]}>
+        <Text style={[styles.dayName, { color: isToday ? theme.colors.primary : theme.colors.textSecondary }]}>
           {d.format('ddd').toUpperCase()}
         </Text>
-        {isToday && <Text style={[styles.todayLabel, { color: theme.primary }]}>{t('calendar.today')}</Text>}
+        {isToday && <Text style={[styles.todayLabel, { color: theme.colors.primary }]}>{t('calendar.today')}</Text>}
       </View>
       {!hasEvents && (
-        <Text style={[styles.noEvents, { color: theme.textTertiary }]}>{t('calendar.noEvents')}</Text>
+        <Text style={[styles.noEvents, { color: theme.colors.textTertiary }]}>{t('calendar.noEvents')}</Text>
       )}
     </TouchableOpacity>
   );
@@ -85,25 +85,25 @@ const EventRow = memo(({ event, theme, onPress }: EventRowProps) => {
 
   return (
     <TouchableOpacity
-      style={[styles.eventRow, { backgroundColor: theme.surface }]}
+      style={[styles.eventRow, { backgroundColor: theme.colors.surface }]}
       onPress={() => onPress(event)}
       activeOpacity={0.75}
     >
       <View style={[styles.colorBar, { backgroundColor: event.color }]} />
       <View style={styles.eventContent}>
-        <Text style={[styles.eventTitle, { color: theme.text }]} numberOfLines={2}>
+        <Text style={[styles.eventTitle, { color: theme.colors.text }]} numberOfLines={2}>
           {event.summary || t('calendar.noTitle')}
         </Text>
         <View style={styles.eventMeta}>
-          <Text style={[styles.eventTime, { color: theme.textSecondary }]}>
+          <Text style={[styles.eventTime, { color: theme.colors.textSecondary }]}>
             {formatTime(event.dtstart, event.allDay, allDayLabel)}
             {!event.allDay && ` – ${formatTime(event.dtend, false, allDayLabel)}`}
           </Text>
           {duration && (
-            <Text style={[styles.eventDuration, { color: theme.textTertiary }]}>{duration}</Text>
+            <Text style={[styles.eventDuration, { color: theme.colors.textTertiary }]}>{duration}</Text>
           )}
           {event.location ? (
-            <Text style={[styles.eventLocation, { color: theme.textTertiary }]} numberOfLines={1}>
+            <Text style={[styles.eventLocation, { color: theme.colors.textTertiary }]} numberOfLines={1}>
               · {event.location}
             </Text>
           ) : null}
@@ -204,7 +204,7 @@ const AgendaViewImpl = forwardRef<AgendaViewHandle, Props>(function AgendaView(
       updateCellsBatchingPeriod={50}
       windowSize={7}
       removeClippedSubviews
-      style={{ flex: 1, backgroundColor: theme.background }}
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
       contentContainerStyle={{ paddingBottom: 80 }}
       onScrollToIndexFailed={() => {}}
       onViewableItemsChanged={onViewableItemsChanged}

@@ -6,15 +6,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
-import { loadAccounts } from '@/api/auth';
-import { fetchEvents } from '@/api/caldav';
+import { loadAccounts } from '@/services/nextcloud/auth';
+import { fetchEvents } from '@/services/nextcloud/caldav';
 import { useCalendars } from '@/hooks/useCalendars';
 import { useDeleteEvent } from '@/hooks/useMutateEvent';
-import { useAppStore } from '@/store/appStore';
-import { useTheme } from '@/hooks/useTheme';
+import { useAppStore } from '@/stores/appStore';
+import { useTheme } from '@react-navigation/native';
 import { normalizeEvent, normalizeEvents } from '@/utils/normalizeEvent';
 import { sameDisplayedEvent } from '@/utils/sameDisplayedEvent';
-import { EVENTS_STALE } from '@/api/queryConfig';
+import { EVENTS_STALE } from '@/services/shared/queryConfig';
 import type { CalendarEvent, RecurrenceEditScope } from '@/types';
 
 dayjs.extend(localizedFormat);
@@ -176,18 +176,18 @@ export default function EventDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.primary} />
+      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
   if (!event) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.background }]}>
-        <Text style={{ color: theme.textSecondary }}>{t('event.eventNotFound')}</Text>
+      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
+        <Text style={{ color: theme.colors.textSecondary }}>{t('event.eventNotFound')}</Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
-          <Text style={{ color: theme.primary }}>{t('event.back')}</Text>
+          <Text style={{ color: theme.colors.primary }}>{t('event.back')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -201,40 +201,40 @@ export default function EventDetailScreen() {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: theme.background }]}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 16 }}
     >
       <View style={[styles.colorBar, { backgroundColor: event.color, marginTop: insets.top }]} />
       <View style={[styles.content, styles.contentFlex]}>
         <View style={styles.topRow}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Text style={[styles.backText, { color: theme.primary }]}>{t('event.back')}</Text>
+            <Text style={[styles.backText, { color: theme.colors.primary }]}>{t('event.back')}</Text>
           </TouchableOpacity>
           {canEdit && (
             <TouchableOpacity onPress={handleEdit}>
-              <Text style={[styles.editText, { color: theme.primary }]}>{t('event.edit')}</Text>
+              <Text style={[styles.editText, { color: theme.colors.primary }]}>{t('event.edit')}</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        <Text style={[styles.summary, { color: theme.text }]}>{event.summary}</Text>
-        <Text style={[styles.meta, { color: theme.textSecondary }]}>{timeStr}</Text>
+        <Text style={[styles.summary, { color: theme.colors.text }]}>{event.summary}</Text>
+        <Text style={[styles.meta, { color: theme.colors.textSecondary }]}>{timeStr}</Text>
         {event.isRecurring && (
-          <Text style={[styles.recurringBadge, { color: theme.primary }]}>↻ {t('event.recurring')}</Text>
+          <Text style={[styles.recurringBadge, { color: theme.colors.primary }]}>↻ {t('event.recurring')}</Text>
         )}
         {calendar && (
-          <Text style={[styles.calendarName, { color: theme.textTertiary }]}>
+          <Text style={[styles.calendarName, { color: theme.colors.textTertiary }]}>
             📅 {calendar.displayName}
           </Text>
         )}
 
         {event.location && !event.talkUrl && (
-          <Text style={[styles.field, { color: theme.textSecondary }]}>📍 {event.location}</Text>
+          <Text style={[styles.field, { color: theme.colors.textSecondary }]}>📍 {event.location}</Text>
         )}
 
         {event.talkUrl && (
           <TouchableOpacity
-            style={[styles.talkBtn, { backgroundColor: theme.talk }]}
+            style={[styles.talkBtn, { backgroundColor: theme.colors.talk }]}
             onPress={() => openTalkRoom(event.talkUrl!)}
           >
             <Text style={styles.talkBtnText}>💬 {t('event.joinTalkRoom')}</Text>
@@ -242,17 +242,17 @@ export default function EventDetailScreen() {
         )}
 
         {event.description && (
-          <View style={[styles.section, { borderTopColor: theme.border }]}>
-            <Text style={[styles.sectionTitle, { color: theme.textTertiary }]}>{t('event.description')}</Text>
-            <Text style={[styles.sectionBody, { color: theme.textSecondary }]}>{event.description}</Text>
+          <View style={[styles.section, { borderTopColor: theme.colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.textTertiary }]}>{t('event.description')}</Text>
+            <Text style={[styles.sectionBody, { color: theme.colors.textSecondary }]}>{event.description}</Text>
           </View>
         )}
 
         {event.attendees.length > 0 && (
-          <View style={[styles.section, { borderTopColor: theme.border }]}>
-            <Text style={[styles.sectionTitle, { color: theme.textTertiary }]}>{t('event.attendees')}</Text>
+          <View style={[styles.section, { borderTopColor: theme.colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.textTertiary }]}>{t('event.attendees')}</Text>
             {event.attendees.map((att) => (
-              <Text key={att.email} style={[styles.attendee, { color: theme.textSecondary }]}>
+              <Text key={att.email} style={[styles.attendee, { color: theme.colors.textSecondary }]}>
                 {att.displayName ? `${att.displayName} (${att.email})` : att.email}
               </Text>
             ))}
@@ -263,13 +263,13 @@ export default function EventDetailScreen() {
 
         {canEdit && (
           <TouchableOpacity
-            style={[styles.deleteBtn, { borderColor: theme.danger }]}
+            style={[styles.deleteBtn, { borderColor: theme.colors.danger }]}
             onPress={handleDelete}
             disabled={deleteMutation.isPending}
           >
             {deleteMutation.isPending
-              ? <ActivityIndicator color={theme.danger} />
-              : <Text style={[styles.deleteBtnText, { color: theme.danger }]}>{t('event.deleteEvent')}</Text>}
+              ? <ActivityIndicator color={theme.colors.danger} />
+              : <Text style={[styles.deleteBtnText, { color: theme.colors.danger }]}>{t('event.deleteEvent')}</Text>}
           </TouchableOpacity>
         )}
       </View>

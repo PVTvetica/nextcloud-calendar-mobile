@@ -1,6 +1,6 @@
 import { onlineManager } from '@tanstack/react-query';
 import * as Network from 'expo-network';
-import { setupOnlineManager } from '../../src/api/network';
+import { setupOnlineManager } from '../../src/services/shared/network';
 
 jest.mock('expo-network', () => ({
   __esModule: true,

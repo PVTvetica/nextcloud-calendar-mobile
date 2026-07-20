@@ -6,7 +6,12 @@
     "close": "Schließen",
     "errorPermission": "Zugriff verweigert. Dieser Kalender ist schreibgeschützt oder ohne Schreibzugriff freigegeben.",
     "errorNetwork": "Netzwerkfehler. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
-    "errorGeneric": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+    "errorGeneric": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "errorAuth": "Authentifizierung fehlgeschlagen. Bitte melden Sie sich erneut an.",
+    "errorNotFound": "Dieses Element existiert nicht mehr auf dem Server.",
+    "errorServer": "Der Server ist vorübergehend nicht verfügbar. Bitte später erneut versuchen.",
+    "errorRateLimited": "Zu viele Anfragen. Bitte warten Sie kurz und versuchen Sie es erneut.",
+    "errorRateLimitedRetry": "Zu viele Anfragen. Bitte in {{seconds}} s erneut versuchen."
   },
   "tabs": {
     "calendar": "Kalender",
@@ -36,8 +41,8 @@
       "invalidCreds": "Ungültige Anmeldedaten. Überprüfen Sie Ihr App-Passwort.",
       "connect": "Verbindung fehlgeschlagen: {{msg}}"
     },
-    "qrCameraRequired": "Kamerazugriff ist erforderlich, um den QR-Code zu scannen.",
-    "qrAllowCamera": "Kamera erlauben",
+    "qrCameraDenied": "Kamerazugriff wurde verweigert. Aktivieren Sie ihn in den Geräteeinstellungen, um den QR-Code zu scannen.",
+    "qrOpenSettings": "Einstellungen öffnen",
     "qrHeaderTitle": "Nextcloud-QR scannen",
     "qrInvalidCode": "Kein gültiger Nextcloud-Login-QR-Code. Bitte erneut scannen.",
     "qrTryAgain": "Erneut versuchen",

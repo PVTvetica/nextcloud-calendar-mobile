@@ -6,8 +6,8 @@ import {
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/hooks/useTheme';
-import { useAppStore } from '@/store/appStore';
+import { useTheme } from '@react-navigation/native';
+import { useAppStore } from '@/stores/appStore';
 import type { CalendarEvent } from '@/types';
 
 dayjs.extend(localizedFormat);
@@ -122,11 +122,11 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
   const gridHeight = height * 0.44;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={[styles.grid, { height: gridHeight, borderBottomColor: theme.border }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.grid, { height: gridHeight, borderBottomColor: theme.colors.border }]}>
         <View style={styles.dowRow}>
           {dayHeaders.map((d, i) => (
-            <Text key={i} style={[styles.dowLabel, { color: theme.textTertiary }]}>{d}</Text>
+            <Text key={i} style={[styles.dowLabel, { color: theme.colors.textTertiary }]}>{d}</Text>
           ))}
         </View>
 
@@ -150,17 +150,17 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
                 >
                   <View style={[
                     styles.dayCircle,
-                    isSelected && { backgroundColor: theme.primary },
-                    isToday && !isSelected && { borderWidth: 1.5, borderColor: theme.primary },
+                    isSelected && { backgroundColor: theme.colors.primary },
+                    isToday && !isSelected && { borderWidth: 1.5, borderColor: theme.colors.primary },
                   ]}>
                     <Text
                       numberOfLines={1}
                       allowFontScaling={false}
                       style={[
                         styles.dayNumber,
-                        { color: theme.text },
+                        { color: theme.colors.text },
                         isSelected && { color: '#fff' },
-                        isToday && !isSelected && { color: theme.primary, fontWeight: '700' },
+                        isToday && !isSelected && { color: theme.colors.primary, fontWeight: '700' },
                       ]}>
                       {d.date()}
                     </Text>
@@ -178,26 +178,26 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
       </View>
 
       <View style={styles.dayList}>
-        <Text style={[styles.dayListHeader, { color: theme.textSecondary }]}>
+        <Text style={[styles.dayListHeader, { color: theme.colors.textSecondary }]}>
           {selected.locale(language).format('dddd, LL')}
         </Text>
         {dayEvents.length === 0 ? (
-          <Text style={[styles.emptyText, { color: theme.textTertiary }]}>{t('calendar.noEvents')}</Text>
+          <Text style={[styles.emptyText, { color: theme.colors.textTertiary }]}>{t('calendar.noEvents')}</Text>
         ) : (
           <FlatList
             data={dayEvents}
             keyExtractor={(e) => `${e.calendarId}-${e.uid}-${e.dtstart.getTime()}`}
             renderItem={({ item }) => (
               <TouchableOpacity
-                style={[styles.eventRow, { borderLeftColor: item.color, backgroundColor: theme.surface }]}
+                style={[styles.eventRow, { borderLeftColor: item.color, backgroundColor: theme.colors.surface }]}
                 onPress={() => onPressEvent(item)}
               >
                 <View style={[styles.eventColorBar, { backgroundColor: item.color }]} />
                 <View style={styles.eventInfo}>
-                  <Text style={[styles.eventTitle, { color: theme.text }]} numberOfLines={1}>
+                  <Text style={[styles.eventTitle, { color: theme.colors.text }]} numberOfLines={1}>
                     {item.summary}
                   </Text>
-                  <Text style={[styles.eventTime, { color: theme.textSecondary }]}>
+                  <Text style={[styles.eventTime, { color: theme.colors.textSecondary }]}>
                     {item.allDay
                       ? t('calendar.allDay')
                       : `${dayjs(item.dtstart).locale(language).format('LT')} – ${dayjs(item.dtend).locale(language).format('LT')}`}

@@ -1,6 +1,6 @@
 import { Image, View, Text, StyleSheet } from 'react-native';
 import { useAvatar } from '@/hooks/useAvatar';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@react-navigation/native';
 import type { Account } from '@/types';
 
 interface Props {
@@ -38,7 +38,7 @@ export function AvatarImage({ account, size }: Props) {
     <View
       style={[
         styles.fallback,
-        { width: size, height: size, borderRadius, backgroundColor: theme.primary },
+        { width: size, height: size, borderRadius, backgroundColor: theme.colors.primary },
       ]}
     >
       <Text style={{ color: '#fff', fontSize, fontWeight: '600', lineHeight: size }}>

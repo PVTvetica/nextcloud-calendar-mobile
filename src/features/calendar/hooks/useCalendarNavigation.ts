@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores/appStore';
 import { trailingDebounce } from '@/utils/debounce';
 import type { AgendaViewHandle } from '@/components/AgendaView';
 import type { ViewMode } from '@/types';

@@ -1,21 +1,17 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/hooks/useTheme';
-import { useIsOnline } from '@/api/network';
+import { useTheme } from '@react-navigation/native';
+import { useIsOnline } from '@/services/shared/network';
 
-/**
- * Thin banner shown while the device is offline. Turns a scary blank/stale
- * calendar into clear feedback: the events on screen are the last good cache and
- * will refresh automatically once the connection returns.
- */
+
 export function OfflineBanner() {
   const online = useIsOnline();
   const theme = useTheme();
   const { t } = useTranslation();
   if (online) return null;
   return (
-    <View style={[styles.banner, { backgroundColor: theme.warning }]}>
-      <Text style={[styles.text, { color: theme.primaryText }]} numberOfLines={1}>
+    <View style={[styles.banner, { backgroundColor: theme.colors.warning }]}>
+      <Text style={[styles.text, { color: theme.colors.primaryText }]} numberOfLines={1}>
         {t('calendar.offlineBanner')}
       </Text>
     </View>

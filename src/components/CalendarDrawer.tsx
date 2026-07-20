@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AvatarImage } from '@/components/AvatarImage';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@react-navigation/native';
 import type { Account, CalendarMeta } from '@/types';
 
 const DRAWER_WIDTH = 280;
@@ -65,27 +65,27 @@ export function CalendarDrawer({
         onLayout={(e) => setDrawerHeight(e.nativeEvent.layout.height)}
         style={[
           styles.drawer,
-          { transform: [{ translateX: drawerAnim }], paddingTop: insets.top, backgroundColor: theme.surface },
+          { transform: [{ translateX: drawerAnim }], paddingTop: insets.top, backgroundColor: theme.colors.surface },
         ]}
       >
         <View onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
-          <Text style={[styles.drawerSection, { color: theme.textTertiary }]}>{t('calendar.drawerAccount')}</Text>
+          <Text style={[styles.drawerSection, { color: theme.colors.textTertiary }]}>{t('calendar.drawerAccount')}</Text>
           <View style={styles.drawerAccountRow}>
             {activeAccount && <AvatarImage account={activeAccount} size={48} />}
             <View style={styles.drawerAccountText}>
-              <Text style={[styles.drawerAccount, { color: theme.text }]} numberOfLines={1}>
+              <Text style={[styles.drawerAccount, { color: theme.colors.text }]} numberOfLines={1}>
                 {activeAccount?.displayName ?? activeAccount?.username ?? '—'}
               </Text>
-              <Text style={[styles.drawerAccountSub, { color: theme.textSecondary }]} numberOfLines={1}>
+              <Text style={[styles.drawerAccountSub, { color: theme.colors.textSecondary }]} numberOfLines={1}>
                 {activeAccount?.username}
               </Text>
             </View>
           </View>
           <TouchableOpacity style={styles.drawerSettingsBtn} onPress={onNavigateSettings}>
-            <Text style={[styles.drawerSettingsBtnText, { color: theme.primary }]}>{t('calendar.manageAccounts')}</Text>
+            <Text style={[styles.drawerSettingsBtnText, { color: theme.colors.primary }]}>{t('calendar.manageAccounts')}</Text>
           </TouchableOpacity>
-          <View style={[styles.drawerDivider, { backgroundColor: theme.border }]} />
-          <Text style={[styles.drawerSection, { color: theme.textTertiary }]}>{t('calendar.drawerCalendars')}</Text>
+          <View style={[styles.drawerDivider, { backgroundColor: theme.colors.border }]} />
+          <Text style={[styles.drawerSection, { color: theme.colors.textTertiary }]}>{t('calendar.drawerCalendars')}</Text>
         </View>
 
         <ScrollView
@@ -97,13 +97,13 @@ export function CalendarDrawer({
             return (
               <View key={cal.id} style={styles.drawerCalRow}>
                 <View style={[styles.calDot, { backgroundColor: cal.color }]} />
-                <Text style={[styles.drawerCalName, { color: theme.text }]} numberOfLines={1}>
+                <Text style={[styles.drawerCalName, { color: theme.colors.text }]} numberOfLines={1}>
                   {cal.displayName}
                 </Text>
                 <Switch
                   value={visible}
                   onValueChange={() => toggleCalendarVisibility(cal.id)}
-                  trackColor={{ true: cal.color, false: theme.border }}
+                  trackColor={{ true: cal.color, false: theme.colors.border }}
                   thumbColor="#fff"
                   style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
                 />

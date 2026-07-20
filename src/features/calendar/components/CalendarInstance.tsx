@@ -2,7 +2,7 @@ import { memo, useRef, useDeferredValue } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Calendar } from 'react-native-big-calendar';
 import { styles } from '@/styles/calendarScreen';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores/appStore';
 import { FixedCalendarHeader } from '@/components/CalendarHeader';
 import { resolveFrozenProps } from '../utils/resolveFrozenProps';
 import type { CalMode } from '../constants';

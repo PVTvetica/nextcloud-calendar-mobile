@@ -1,8 +1,10 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from '@react-navigation/native';
+import { lightTheme } from '../../src/theme';
 import SettingsScreen from '../../app/(tabs)/settings/index';
-import { useAppStore } from '../../src/store/appStore';
+import { useAppStore } from '../../src/stores/appStore';
 import i18n from '../../src/i18n';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -13,7 +15,11 @@ jest.mock('@react-navigation/bottom-tabs', () => ({ useBottomTabBarHeight: () =>
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return React.createElement(QueryClientProvider, { client }, children);
+  return React.createElement(
+    QueryClientProvider,
+    { client },
+    React.createElement(ThemeProvider, { value: lightTheme, children })
+  );
 }
 
 describe('SettingsScreen i18n', () => {
@@ -27,15 +33,14 @@ describe('SettingsScreen i18n', () => {
     expect(getByText('Settings')).toBeTruthy();
     expect(getByText('Appearance')).toBeTruthy();
     expect(getByText('Accounts')).toBeTruthy();
-    // Appearance is collapsed by default, so its Language control is hidden
     expect(queryByText('Language')).toBeNull();
   });
 
   it('expands Appearance, opens the dropdown and lists all four languages', () => {
     const { getByText, queryByText } = render(<SettingsScreen />, { wrapper });
     expect(queryByText('Deutsch')).toBeNull();
-    fireEvent.press(getByText('Appearance')); // expand the section
-    fireEvent.press(getByText('English'));     // open the language dropdown
+    fireEvent.press(getByText('Appearance'));
+    fireEvent.press(getByText('English'));
     expect(getByText('Deutsch')).toBeTruthy();
     expect(getByText('Français')).toBeTruthy();
     expect(getByText('Español')).toBeTruthy();

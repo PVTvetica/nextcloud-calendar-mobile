@@ -8,11 +8,11 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { validateCredentials } from '@/api/caldav';
-import { saveAccount, setActiveAccountId } from '@/api/auth';
-import { fetchUserInfo } from '@/api/nextcloud';
-import { useAppStore } from '@/store/appStore';
-import { useTheme } from '@/hooks/useTheme';
+import { validateCredentials } from '@/services/nextcloud/caldav';
+import { saveAccount, setActiveAccountId } from '@/services/nextcloud/auth';
+import { fetchUserInfo } from '@/services/nextcloud/nextcloud';
+import { useAppStore } from '@/stores/appStore';
+import { useTheme } from '@react-navigation/native';
 import { QrLoginScanner } from '@/components/QrLoginScanner';
 import type { NcLoginData } from '@/components/QrLoginScanner';
 import type { Account } from '@/types';
@@ -107,15 +107,15 @@ export default function SetupScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.background }]}>
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
-          <Text style={[styles.brandName, { color: theme.primary }]}>{t('setup.brand')}</Text>
-          <Text style={[styles.title, { color: theme.text }]}>{t('setup.title')}</Text>
+          <Text style={[styles.brandName, { color: theme.colors.primary }]}>{t('setup.brand')}</Text>
+          <Text style={[styles.title, { color: theme.colors.text }]}>{t('setup.title')}</Text>
 
           <TouchableOpacity
-            style={[styles.qrBtn, { backgroundColor: theme.primary }]}
+            style={[styles.qrBtn, { backgroundColor: theme.colors.primary }]}
             onPress={() => setShowScanner(true)}
             disabled={loading}
           >
@@ -124,16 +124,16 @@ export default function SetupScreen() {
           </TouchableOpacity>
 
           <View style={styles.dividerRow}>
-            <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
-            <Text style={[styles.dividerLabel, { color: theme.textTertiary }]}>{t('setup.orManual')}</Text>
-            <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+            <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
+            <Text style={[styles.dividerLabel, { color: theme.colors.textTertiary }]}>{t('setup.orManual')}</Text>
+            <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
           </View>
 
-          <Text style={[styles.label, { color: theme.text }]}>{t('setup.serverUrl')}</Text>
+          <Text style={[styles.label, { color: theme.colors.text }]}>{t('setup.serverUrl')}</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
+            style={[styles.input, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, color: theme.colors.text }]}
             placeholder={t('setup.placeholders.serverUrl')}
-            placeholderTextColor={theme.textTertiary}
+            placeholderTextColor={theme.colors.textTertiary}
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="url"
@@ -141,23 +141,23 @@ export default function SetupScreen() {
             onChangeText={setBaseUrl}
           />
 
-          <Text style={[styles.label, { color: theme.text }]}>{t('setup.username')}</Text>
+          <Text style={[styles.label, { color: theme.colors.text }]}>{t('setup.username')}</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
+            style={[styles.input, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, color: theme.colors.text }]}
             placeholder={t('setup.placeholders.username')}
-            placeholderTextColor={theme.textTertiary}
+            placeholderTextColor={theme.colors.textTertiary}
             autoCapitalize="none"
             autoCorrect={false}
             value={username}
             onChangeText={setUsername}
           />
 
-          <Text style={[styles.label, { color: theme.text }]}>{t('setup.appPassword')}</Text>
-          <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Text style={[styles.label, { color: theme.colors.text }]}>{t('setup.appPassword')}</Text>
+          <View style={[styles.inputRow, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             <TextInput
-              style={[styles.inputInner, { color: theme.text }]}
+              style={[styles.inputInner, { color: theme.colors.text }]}
               placeholder={t('setup.placeholders.appPassword')}
-              placeholderTextColor={theme.textTertiary}
+              placeholderTextColor={theme.colors.textTertiary}
               secureTextEntry={!showPassword}
               autoCapitalize="none"
               autoCorrect={false}
@@ -168,27 +168,27 @@ export default function SetupScreen() {
               <Ionicons
                 name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                 size={20}
-                color={theme.textTertiary}
+                color={theme.colors.textTertiary}
               />
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.label, { color: theme.text }]}>
+          <Text style={[styles.label, { color: theme.colors.text }]}>
             {t('setup.displayName')}{' '}
-            <Text style={{ color: theme.textTertiary, fontWeight: '400' }}>{t('setup.optional')}</Text>
+            <Text style={{ color: theme.colors.textTertiary, fontWeight: '400' }}>{t('setup.optional')}</Text>
           </Text>
           <TextInput
-            style={[styles.input, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
+            style={[styles.input, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, color: theme.colors.text }]}
             placeholder={t('setup.placeholders.displayName')}
-            placeholderTextColor={theme.textTertiary}
+            placeholderTextColor={theme.colors.textTertiary}
             value={displayName}
             onChangeText={setDisplayName}
           />
 
-          {error && <Text style={[styles.error, { color: theme.danger }]}>{error}</Text>}
+          {error && <Text style={[styles.error, { color: theme.colors.danger }]}>{error}</Text>}
 
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: theme.primary }]}
+            style={[styles.button, { backgroundColor: theme.colors.primary }]}
             onPress={handleAdd}
             disabled={loading}
           >
@@ -197,13 +197,13 @@ export default function SetupScreen() {
               : <Text style={styles.buttonText}>{t('setup.connect')}</Text>}
           </TouchableOpacity>
 
-          <Text style={[styles.hint, { color: theme.textTertiary }]}>
+          <Text style={[styles.hint, { color: theme.colors.textTertiary }]}>
             {t('setup.hint')}
           </Text>
 
         </ScrollView>
 
-        <Text style={[styles.footer, { color: theme.textTertiary }]}>
+        <Text style={[styles.footer, { color: theme.colors.textTertiary }]}>
           {t('setup.footer')}
         </Text>
 

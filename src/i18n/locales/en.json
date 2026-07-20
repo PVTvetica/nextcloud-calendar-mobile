@@ -6,7 +6,12 @@
     "close": "Close",
     "errorPermission": "Permission denied. This calendar is read-only or shared without write access.",
     "errorNetwork": "Network error. Check your connection and try again.",
-    "errorGeneric": "Something went wrong. Please try again."
+    "errorGeneric": "Something went wrong. Please try again.",
+    "errorAuth": "Authentication failed. Please sign in again.",
+    "errorNotFound": "This item no longer exists on the server.",
+    "errorServer": "The server is temporarily unavailable. Please try again later.",
+    "errorRateLimited": "Too many requests. Please wait a moment and try again.",
+    "errorRateLimitedRetry": "Too many requests. Please try again in {{seconds}}s."
   },
   "tabs": {
     "calendar": "Calendar",
@@ -36,8 +41,8 @@
       "invalidCreds": "Invalid credentials. Check your app password.",
       "connect": "Could not connect: {{msg}}"
     },
-    "qrCameraRequired": "Camera access is required to scan the QR code.",
-    "qrAllowCamera": "Allow Camera",
+    "qrCameraDenied": "Camera access is denied. Enable it in your device settings to scan the QR code.",
+    "qrOpenSettings": "Open Settings",
     "qrHeaderTitle": "Scan Nextcloud QR",
     "qrInvalidCode": "Not a valid Nextcloud login QR code. Try scanning again.",
     "qrTryAgain": "Try Again",

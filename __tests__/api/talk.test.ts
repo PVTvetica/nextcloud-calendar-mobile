@@ -1,4 +1,4 @@
-import { createTalkRoom } from '../../src/api/talk';
+import { createTalkRoom } from '../../src/services/nextcloud/talk';
 import type { Account } from '../../src/types';
 
 const account: Account = {

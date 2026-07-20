@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef } from 'react';
 import dayjs from 'dayjs';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores/appStore';
 import { useCalendars } from '@/hooks/useCalendars';
-import { loadAccounts } from '@/api/auth';
-import { fetchEventsForCalendars } from '@/api/caldav';
+import { loadAccounts } from '@/services/nextcloud/auth';
+import { fetchEventsForCalendars } from '@/services/nextcloud/caldav';
 import { normalizeEvents } from '@/utils/normalizeEvent';
-import { SUBSCRIBED_EVENTS_STALE } from '@/api/queryConfig';
+import { SUBSCRIBED_EVENTS_STALE } from '@/services/shared/queryConfig';
 import type { CalendarEvent } from '@/types';
 import { monthRange, monthRangeAt } from '../utils/range';
 

@@ -1,35 +1,24 @@
 import { focusManager } from '@tanstack/react-query';
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { useDeferredValue, useEffect } from 'react';
-import { AppState, type AppStateStatus, useColorScheme } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { loadAccounts, getActiveAccountId, setActiveAccountId } from '@/api/auth';
-import { fetchCapabilities } from '@/api/nextcloud';
-import { useAppStore } from '@/store/appStore';
-import { queryClient } from '@/api/queryClient';
-import { setupOnlineManager } from '@/api/network';
+import { useEffect } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
+import { loadAccounts, getActiveAccountId, setActiveAccountId } from '@/services/nextcloud/auth';
+import { fetchCapabilities } from '@/services/nextcloud/nextcloud';
+import { useAppStore } from '@/stores/appStore';
+import { queryClient } from '@/services/shared/queryClient';
+import { setupOnlineManager } from '@/services/shared/network';
+import { migrateFromAsyncStorage } from '@/storage';
+import { Providers } from '@/Providers';
+import { useTheme } from '@react-navigation/native';
 import '@/i18n';
 import { useLanguageSync } from '@/hooks/useLanguageSync';
 SplashScreen.preventAutoHideAsync();
 
-const asyncStoragePersister = createAsyncStoragePersister({
-  storage: AsyncStorage,
-  key: 'rq-cache',
-  throttleTime: 3000,
-});
-
 function ThemedStatusBar() {
-  const systemScheme = useColorScheme();
-  const themePreference = useAppStore((s) => s.themePreference);
-  const resolved =
-    themePreference === 'system' ? (systemScheme ?? 'light') : themePreference;
-  const deferredResolved = useDeferredValue(resolved);
-  return <StatusBar style={deferredResolved === 'dark' ? 'light' : 'dark'} />;
+  const { dark } = useTheme();
+  return <StatusBar style={dark ? 'light' : 'dark'} />;
 }
 
 export default function RootLayout() {
@@ -52,6 +41,9 @@ export default function RootLayout() {
   useEffect(() => {
     (async () => {
       try {
+        await migrateFromAsyncStorage();
+        await useAppStore.persist.rehydrate();
+
         const accounts = await loadAccounts();
         queryClient.setQueryData(['accounts'], accounts);
         if (accounts.length === 0) {
@@ -72,14 +64,9 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{ persister: asyncStoragePersister }}
-      >
-        <ThemedStatusBar />
-        <Stack screenOptions={{ headerShown: false }} />
-      </PersistQueryClientProvider>
-    </GestureHandlerRootView>
+    <Providers>
+      <ThemedStatusBar />
+      <Stack screenOptions={{ headerShown: false }} />
+    </Providers>
   );
 }

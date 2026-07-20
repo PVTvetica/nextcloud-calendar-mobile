@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchCalendars } from '@/api/caldav';
-import { CALENDARS_STALE, CALENDARS_LIVE_POLL } from '@/api/queryConfig';
+import { fetchCalendars } from '@/services/nextcloud/caldav';
+import { CALENDARS_STALE, CALENDARS_LIVE_POLL } from '@/services/shared/queryConfig';
 import type { Account } from '@/types';
 
 export function useCalendars(account: Account | null) {

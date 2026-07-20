@@ -1,12 +1,13 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react-native';
+import { render as rtlRender, screen } from '@testing-library/react-native';
 import { AvatarImage } from '../../src/components/AvatarImage';
+import { ThemeWrapper } from '../helpers/theme';
 import type { Account } from '../../src/types';
 
+const render = (ui: React.ReactElement, opts?: Parameters<typeof rtlRender>[1]) =>
+  rtlRender(ui, { wrapper: ThemeWrapper, ...opts });
+
 jest.mock('../../src/hooks/useAvatar');
-jest.mock('../../src/hooks/useTheme', () => ({
-  useTheme: () => ({ primary: '#0082c9' }),
-}));
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );

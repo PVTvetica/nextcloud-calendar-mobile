@@ -1,4 +1,4 @@
-import { deleteEvent, moveEvent } from '../../src/api/caldav';
+import { deleteEvent, moveEvent } from '../../src/services/nextcloud/caldav';
 import type { Account, CalendarMeta } from '../../src/types';
 
 const account: Account = {

@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import type { CalendarHeaderProps, ICalendarEventBase, Mode } from 'react-native-big-calendar';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
-import { useTheme } from '@/hooks/useTheme';
-import { useAppStore } from '@/store/appStore';
+import { useTheme } from '@react-navigation/native';
+import { useAppStore } from '@/stores/appStore';
 
 dayjs.extend(isoWeek);
 
@@ -40,7 +40,7 @@ export function FixedCalendarHeader<T extends ICalendarEventBase>({
     <View
       style={[
         { flexDirection: 'row' },
-        showAllDayEventCell && { borderBottomWidth: 2, borderBottomColor: theme.border },
+        showAllDayEventCell && { borderBottomWidth: 2, borderBottomColor: theme.colors.border },
         style,
       ]}
       {...headerContainerAccessibilityProps}
@@ -58,27 +58,27 @@ export function FixedCalendarHeader<T extends ICalendarEventBase>({
             {...headerCellAccessibilityProps}
           >
             <View style={{ height: 56, justifyContent: 'space-between' }}>
-              <Text style={{ textAlign: 'center', fontSize: 12, color: isHighlight ? theme.primary : theme.textSecondary }}>
+              <Text style={{ textAlign: 'center', fontSize: 12, color: isHighlight ? theme.colors.primary : theme.colors.textSecondary }}>
                 {dayjs(date.toDate()).locale(language).format('ddd')}
               </Text>
               <View style={[
                 { alignSelf: 'center', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
-                isHighlight && { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.primary, marginBottom: 0 },
+                isHighlight && { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.primary, marginBottom: 0 },
               ]}>
-                <Text style={{ fontSize: 20, textAlign: 'center', color: isHighlight ? '#fff' : theme.text }}>
+                <Text style={{ fontSize: 20, textAlign: 'center', color: isHighlight ? '#fff' : theme.colors.text }}>
                   {date.format('D')}
                 </Text>
               </View>
             </View>
             {showAllDayEventCell && dayAllDayEvents.length > 0 && (
-              <View style={{ borderLeftWidth: 1, borderLeftColor: theme.border, height: allDaySectionHeight }}>
+              <View style={{ borderLeftWidth: 1, borderLeftColor: theme.colors.border, height: allDaySectionHeight }}>
                 {dayAllDayEvents
                   .map((event, index) => {
                     const evStyle = typeof allDayEventCellStyle === 'function' ? allDayEventCellStyle(event) : (allDayEventCellStyle ?? {});
                     return (
                       <TouchableOpacity
                         key={index}
-                        style={[{ backgroundColor: theme.primary, borderRadius: 2, paddingHorizontal: 4, paddingVertical: 2, marginTop: 4, marginHorizontal: 2 }, evStyle]}
+                        style={[{ backgroundColor: theme.colors.primary, borderRadius: 2, paddingHorizontal: 4, paddingVertical: 2, marginTop: 4, marginHorizontal: 2 }, evStyle]}
                         onPress={() => onPressEvent?.(event)}
                         {...allDayEventCellAccessibilityProps}
                       >

@@ -97,7 +97,6 @@ describe('parseIcsObjects', () => {
     expect(event.dtstart.getFullYear()).toBe(2026);
     expect(event.dtstart.getMonth()).toBe(5);
     expect(event.dtstart.getDate()).toBe(15);
-    // iCal DTEND 18 is exclusive -> inclusive last day is 17
     expect(event.dtend.getDate()).toBe(17);
   });
 

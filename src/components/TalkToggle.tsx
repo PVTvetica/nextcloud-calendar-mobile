@@ -1,7 +1,7 @@
 import { View, Text, Switch, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/hooks/useTheme';
-import { useAppStore } from '@/store/appStore';
+import { useTheme } from '@react-navigation/native';
+import { useAppStore } from '@/stores/appStore';
 import type { TalkRoomType } from '@/types';
 
 interface Props {
@@ -19,12 +19,12 @@ export function TalkToggle({ value, onChange, roomType, onRoomTypeChange }: Prop
   if (!talkEnabled) return null;
 
   return (
-    <View style={[styles.container, { borderBottomColor: theme.border }]}>
+    <View style={[styles.container, { borderBottomColor: theme.colors.border }]}>
       <View style={styles.topRow}>
         <View style={styles.textContainer}>
-          <Text style={[styles.label, { color: theme.text }]}>{t('event.talkCreateRoom')}</Text>
+          <Text style={[styles.label, { color: theme.colors.text }]}>{t('event.talkCreateRoom')}</Text>
           {value && (
-            <Text style={[styles.hint, { color: theme.textSecondary }]}>
+            <Text style={[styles.hint, { color: theme.colors.textSecondary }]}>
               {t('event.talkRoomHint')}
             </Text>
           )}
@@ -32,7 +32,7 @@ export function TalkToggle({ value, onChange, roomType, onRoomTypeChange }: Prop
         <Switch
           value={value}
           onValueChange={onChange}
-          trackColor={{ false: theme.border, true: theme.primary }}
+          trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
           thumbColor="#fff"
         />
       </View>
@@ -46,17 +46,17 @@ export function TalkToggle({ value, onChange, roomType, onRoomTypeChange }: Prop
                 key={roomTypeOption}
                 style={[
                   styles.typePill,
-                  { backgroundColor: active ? theme.primary : theme.chip },
+                  { backgroundColor: active ? theme.colors.primary : theme.colors.chip },
                 ]}
                 onPress={() => onRoomTypeChange(roomTypeOption)}
               >
-                <Text style={[styles.typePillText, { color: active ? '#fff' : theme.textSecondary }]}>
+                <Text style={[styles.typePillText, { color: active ? '#fff' : theme.colors.textSecondary }]}>
                   {roomTypeOption === 'private' ? t('event.talkInviteOnly') : t('event.talkPublicLink')}
                 </Text>
               </TouchableOpacity>
             );
           })}
-          <Text style={[styles.typeHint, { color: theme.textTertiary }]}>
+          <Text style={[styles.typeHint, { color: theme.colors.textTertiary }]}>
             {roomType === 'public'
               ? t('event.talkAnyoneWithLink')
               : t('event.talkOnlyInvited')}

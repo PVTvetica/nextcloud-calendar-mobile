@@ -1,4 +1,4 @@
-import { useAppStore } from '../../src/store/appStore';
+import { useAppStore } from '../../src/stores/appStore';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
