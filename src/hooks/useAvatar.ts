@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { AVATAR_STALE, AVATAR_GC } from '@/api/queryConfig';
+import { AVATAR_STALE, AVATAR_GC } from '@/services/shared/queryConfig';
 import type { Account } from '@/types';
 
 function basicAuth(account: Pick<Account, 'username' | 'appPassword'>): string {

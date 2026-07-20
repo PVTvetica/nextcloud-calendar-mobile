@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@react-navigation/native';
 import type { RecurrenceFreq, RecurrenceRule } from '@/types';
 
 interface Props {
@@ -49,7 +49,7 @@ export function RecurrencePicker({ value, onChange }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>{t('event.repeat')}</Text>
+      <Text style={[styles.sectionLabel, { color: theme.colors.textSecondary }]}>{t('event.repeat')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
         {FREQS.map(({ label, value: freq }) => {
           const active = selectedFreq === freq;
@@ -58,11 +58,11 @@ export function RecurrencePicker({ value, onChange }: Props) {
               key={label}
               style={[
                 styles.pill,
-                { backgroundColor: active ? theme.primary : theme.chip },
+                { backgroundColor: active ? theme.colors.primary : theme.colors.chip },
               ]}
               onPress={() => handleFreqSelect(freq)}
             >
-              <Text style={[styles.pillText, { color: active ? '#fff' : theme.textSecondary }]}>
+              <Text style={[styles.pillText, { color: active ? '#fff' : theme.colors.textSecondary }]}>
                 {label}
               </Text>
             </TouchableOpacity>
@@ -72,7 +72,7 @@ export function RecurrencePicker({ value, onChange }: Props) {
 
       {value?.freq === 'WEEKLY' && (
         <View>
-          <Text style={[styles.subLabel, { color: theme.textTertiary }]}>{t('event.onDays')}</Text>
+          <Text style={[styles.subLabel, { color: theme.colors.textTertiary }]}>{t('event.onDays')}</Text>
           <View style={styles.dayRow}>
             {WEEKDAYS.map(({ label, value: day }) => {
               const active = value.byDay?.includes(day) ?? false;
@@ -81,11 +81,11 @@ export function RecurrencePicker({ value, onChange }: Props) {
                   key={day}
                   style={[
                     styles.dayChip,
-                    { backgroundColor: active ? theme.primary : theme.chip },
+                    { backgroundColor: active ? theme.colors.primary : theme.colors.chip },
                   ]}
                   onPress={() => toggleByDay(day)}
                 >
-                  <Text style={[styles.dayChipText, { color: active ? '#fff' : theme.textSecondary }]}>
+                  <Text style={[styles.dayChipText, { color: active ? '#fff' : theme.colors.textSecondary }]}>
                     {label}
                   </Text>
                 </TouchableOpacity>

@@ -4,11 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { loadAccounts } from '@/api/auth';
+import { loadAccounts } from '@/services/nextcloud/auth';
 import { useCalendars } from '@/hooks/useCalendars';
 import { useCreateEvent } from '@/hooks/useMutateEvent';
-import { useAppStore } from '@/store/appStore';
-import { useTheme } from '@/hooks/useTheme';
+import { useAppStore } from '@/stores/appStore';
+import { useTheme } from '@react-navigation/native';
 import { EventForm } from '@/components/EventForm';
 import type { CreateEventInput } from '@/types';
 
@@ -36,8 +36,8 @@ export default function NewEventScreen() {
 
   if (!activeAccount || calendars.length === 0) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.background }]}>
-        <Text style={{ color: theme.textSecondary }}>{t('event.loadingCalendars')}</Text>
+      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
+        <Text style={{ color: theme.colors.textSecondary }}>{t('event.loadingCalendars')}</Text>
       </View>
     );
   }
@@ -47,12 +47,12 @@ export default function NewEventScreen() {
     : `${activeAccount.username}@${new URL(activeAccount.baseUrl).hostname}`;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={[styles.header, { borderBottomColor: theme.border, backgroundColor: theme.headerBackground }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.header, { borderBottomColor: theme.colors.border, backgroundColor: theme.colors.headerBackground }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={[styles.cancel, { color: theme.primary }]}>{t('common.cancel')}</Text>
+          <Text style={[styles.cancel, { color: theme.colors.primary }]}>{t('common.cancel')}</Text>
         </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.text }]}>{t('event.newEvent')}</Text>
+        <Text style={[styles.title, { color: theme.colors.text }]}>{t('event.newEvent')}</Text>
         <View style={styles.spacer} />
       </View>
       <EventForm

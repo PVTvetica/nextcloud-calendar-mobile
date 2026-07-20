@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { zustandStorage } from '@/storage';
 import type { ViewMode, ServerCapabilities } from '@/types';
 import { getInitialLanguage, type AppLanguage } from '@/i18n/languages';
 
@@ -58,7 +58,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'app-store',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => zustandStorage),
       partialize: (state) => ({
         activeAccountId: state.activeAccountId,
         viewMode: state.viewMode,

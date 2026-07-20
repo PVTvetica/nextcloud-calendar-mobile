@@ -2,10 +2,10 @@ import { renderHook, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { useCalendars } from '../../src/hooks/useCalendars';
-import * as caldav from '../../src/api/caldav';
+import * as caldav from '../../src/services/nextcloud/caldav';
 import type { Account, CalendarMeta } from '../../src/types';
 
-jest.mock('../../src/api/caldav');
+jest.mock('../../src/services/nextcloud/caldav');
 const mockFetchCalendars = caldav.fetchCalendars as jest.MockedFunction<typeof caldav.fetchCalendars>;
 
 const account: Account = {

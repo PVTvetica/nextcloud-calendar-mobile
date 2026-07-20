@@ -23,7 +23,7 @@ describe('trailingDebounce', () => {
     d.flush();
     expect(fn).toHaveBeenCalledWith('x');
     jest.advanceTimersByTime(300);
-    expect(fn).toHaveBeenCalledTimes(1); // not fired again
+    expect(fn).toHaveBeenCalledTimes(1);
   });
 
   it('cancel() drops the pending call', () => {

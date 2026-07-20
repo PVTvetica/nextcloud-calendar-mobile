@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  Modal, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator,
+  Modal, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Linking,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@react-navigation/native';
 
 export interface NcLoginData {
   server: string;
@@ -52,6 +52,12 @@ export function QrLoginScanner({ visible, onClose, onScanned }: Props) {
     }
   }, [visible]);
 
+  useEffect(() => {
+    if (visible && permission && !permission.granted && permission.canAskAgain) {
+      requestPermission();
+    }
+  }, [visible, permission, requestPermission]);
+
   function handleBarCodeScanned({ data }: { data: string }) {
     if (scannedRef.current) return;
     scannedRef.current = true;
@@ -69,11 +75,11 @@ export function QrLoginScanner({ visible, onClose, onScanned }: Props) {
 
   if (!visible) return null;
 
-  if (!permission) {
+  if (!permission || (!permission.granted && permission.canAskAgain)) {
     return (
       <Modal visible animationType="slide" onRequestClose={onClose}>
-        <View style={[styles.center, { backgroundColor: theme.background }]}>
-          <ActivityIndicator color={theme.primary} />
+        <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
+          <ActivityIndicator color={theme.colors.primary} />
         </View>
       </Modal>
     );
@@ -82,18 +88,18 @@ export function QrLoginScanner({ visible, onClose, onScanned }: Props) {
   if (!permission.granted) {
     return (
       <Modal visible animationType="slide" onRequestClose={onClose}>
-        <View style={[styles.center, { backgroundColor: theme.background }]}>
-          <Text style={[styles.permText, { color: theme.text }]}>
-            {t('setup.qrCameraRequired')}
+        <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
+          <Text style={[styles.permText, { color: theme.colors.text }]}>
+            {t('setup.qrCameraDenied')}
           </Text>
           <TouchableOpacity
-            style={[styles.btn, { backgroundColor: theme.primary }]}
-            onPress={requestPermission}
+            style={[styles.btn, { backgroundColor: theme.colors.primary }]}
+            onPress={() => Linking.openSettings()}
           >
-            <Text style={styles.btnText}>{t('setup.qrAllowCamera')}</Text>
+            <Text style={styles.btnText}>{t('setup.qrOpenSettings')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelLink} onPress={onClose}>
-            <Text style={{ color: theme.textSecondary }}>{t('common.cancel')}</Text>
+            <Text style={{ color: theme.colors.textSecondary }}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -133,7 +139,7 @@ export function QrLoginScanner({ visible, onClose, onScanned }: Props) {
             <>
               <Text style={styles.errorText}>{parseError}</Text>
               <TouchableOpacity
-                style={[styles.btn, { backgroundColor: theme.primary, marginTop: 12 }]}
+                style={[styles.btn, { backgroundColor: theme.colors.primary, marginTop: 12 }]}
                 onPress={() => { scannedRef.current = false; setScanned(false); setParseError(null); }}
               >
                 <Text style={styles.btnText}>{t('setup.qrTryAgain')}</Text>

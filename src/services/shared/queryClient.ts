@@ -10,16 +10,42 @@ import {
 } from '@/hooks/eventMutationReconcile';
 import type { CalendarEvent } from '@/types';
 import i18n from '@/i18n';
+import { HttpError } from './errors';
+
+function statusOf(error: unknown): number | undefined {
+  if (error instanceof HttpError) return error.status;
+  const msg = error instanceof Error ? error.message : '';
+  const match = msg.match(/\b(\d{3})\b/);
+  return match ? Number(match[1]) : undefined;
+}
 
 export function describeMutationError(error: unknown): string {
-  const msg = error instanceof Error ? error.message : String(error ?? '');
-  if (msg.includes('403')) {
-    return i18n.t('common.errorPermission');
+  const status = statusOf(error);
+
+  switch (status) {
+    case 401:
+      return i18n.t('common.errorAuth');
+    case 403:
+      return i18n.t('common.errorPermission');
+    case 404:
+      return i18n.t('common.errorNotFound');
+    case 429: {
+      const retryAfter = error instanceof HttpError ? error.retryAfter : undefined;
+      return retryAfter
+        ? i18n.t('common.errorRateLimitedRetry', { seconds: retryAfter })
+        : i18n.t('common.errorRateLimited');
+    }
   }
+
+  if (status !== undefined && status >= 500) {
+    return i18n.t('common.errorServer');
+  }
+
+  const msg = error instanceof Error ? error.message : String(error ?? '');
   if (/network|fetch|timeout|abort/i.test(msg)) {
     return i18n.t('common.errorNetwork');
   }
-  return msg || i18n.t('common.errorGeneric');
+  return i18n.t('common.errorGeneric');
 }
 
 function eventMeta(mutation: Mutation<any, any, any, any>): EventMutationMeta | undefined {
@@ -72,5 +98,4 @@ export function createQueryClient(): QueryClient {
   return client;
 }
 
-/** App-wide singleton. */
 export const queryClient = createQueryClient();

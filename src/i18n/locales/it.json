@@ -6,7 +6,12 @@
     "close": "Chiudi",
     "errorPermission": "Autorizzazione negata. Questo calendario è di sola lettura o condiviso senza accesso in scrittura.",
     "errorNetwork": "Errore di rete. Controlla la connessione e riprova.",
-    "errorGeneric": "Qualcosa è andato storto. Riprova."
+    "errorGeneric": "Qualcosa è andato storto. Riprova.",
+    "errorAuth": "Autenticazione non riuscita. Accedi di nuovo.",
+    "errorNotFound": "Questo elemento non esiste più sul server.",
+    "errorServer": "Il server è temporaneamente non disponibile. Riprova più tardi.",
+    "errorRateLimited": "Troppe richieste. Attendi un momento e riprova.",
+    "errorRateLimitedRetry": "Troppe richieste. Riprova tra {{seconds}} s."
   },
   "tabs": {
     "calendar": "Calendario",
@@ -36,8 +41,8 @@
       "invalidCreds": "Credenziali non valide. Controlla la password dell'app.",
       "connect": "Impossibile connettersi: {{msg}}"
     },
-    "qrCameraRequired": "È necessario l'accesso alla fotocamera per scansionare il codice QR.",
-    "qrAllowCamera": "Consenti fotocamera",
+    "qrCameraDenied": "L'accesso alla fotocamera è negato. Attivalo nelle impostazioni del dispositivo per scansionare il codice QR.",
+    "qrOpenSettings": "Apri impostazioni",
     "qrHeaderTitle": "Scansiona QR Nextcloud",
     "qrInvalidCode": "Codice QR di accesso Nextcloud non valido. Riprova a scansionare.",
     "qrTryAgain": "Riprova",

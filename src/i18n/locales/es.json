@@ -6,7 +6,12 @@
     "close": "Cerrar",
     "errorPermission": "Permiso denegado. Este calendario es de solo lectura o está compartido sin acceso de escritura.",
     "errorNetwork": "Error de red. Comprueba tu conexión e inténtalo de nuevo.",
-    "errorGeneric": "Algo salió mal. Inténtalo de nuevo."
+    "errorGeneric": "Algo salió mal. Inténtalo de nuevo.",
+    "errorAuth": "Error de autenticación. Vuelve a iniciar sesión.",
+    "errorNotFound": "Este elemento ya no existe en el servidor.",
+    "errorServer": "El servidor no está disponible temporalmente. Inténtalo más tarde.",
+    "errorRateLimited": "Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.",
+    "errorRateLimitedRetry": "Demasiadas solicitudes. Inténtalo de nuevo en {{seconds}} s."
   },
   "tabs": {
     "calendar": "Calendario",
@@ -36,8 +41,8 @@
       "invalidCreds": "Credenciales no válidas. Comprueba tu contraseña de aplicación.",
       "connect": "No se pudo conectar: {{msg}}"
     },
-    "qrCameraRequired": "Se requiere acceso a la cámara para escanear el código QR.",
-    "qrAllowCamera": "Permitir cámara",
+    "qrCameraDenied": "Se ha denegado el acceso a la cámara. Actívalo en los ajustes del dispositivo para escanear el código QR.",
+    "qrOpenSettings": "Abrir ajustes",
     "qrHeaderTitle": "Escanear QR de Nextcloud",
     "qrInvalidCode": "Código QR de inicio de sesión de Nextcloud no válido. Inténtalo de nuevo.",
     "qrTryAgain": "Intentar de nuevo",

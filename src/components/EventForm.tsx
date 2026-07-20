@@ -7,7 +7,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@react-navigation/native';
 import { TalkToggle } from './TalkToggle';
 import { RecurrencePicker } from './RecurrencePicker';
 import type { CalendarMeta, Attendee, CreateEventInput, RecurrenceRule, TalkRoomType } from '@/types';
@@ -172,8 +172,8 @@ export function EventForm({
     });
   }
 
-  const inputStyle = [styles.input, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }];
-  const labelStyle = [styles.label, { color: theme.textSecondary }];
+  const inputStyle = [styles.input, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, color: theme.colors.text }];
+  const labelStyle = [styles.label, { color: theme.colors.textSecondary }];
 
 
   const androidPickerMode = androidStep?.step === 'time' ? 'time' : 'date';
@@ -185,7 +185,7 @@ export function EventForm({
     <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
     <ScrollView
       ref={scrollRef}
-      style={[styles.scroll, { backgroundColor: theme.background }]}
+      style={[styles.scroll, { backgroundColor: theme.colors.background }]}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="none"
     >
@@ -196,14 +196,14 @@ export function EventForm({
           value={summary}
           onChangeText={setSummary}
           placeholder={t('event.titlePlaceholder')}
-          placeholderTextColor={theme.textTertiary}
+          placeholderTextColor={theme.colors.textTertiary}
           onFocus={() => scrollToField('title')}
         />
       </View>
 
       <Text style={labelStyle}>{t('event.calendar')}</Text>
       {writableCalendars.length === 0 && (
-        <Text style={[styles.readOnlyNote, { color: theme.warning }]}>
+        <Text style={[styles.readOnlyNote, { color: theme.colors.warning }]}>
           {t('event.noWritableCalendars')}
         </Text>
       )}
@@ -213,7 +213,7 @@ export function EventForm({
             key={cal.id}
             style={[
               styles.calChip,
-              { backgroundColor: theme.chip },
+              { backgroundColor: theme.colors.chip },
               calendarId === cal.id && { backgroundColor: cal.color },
               disableCalendarChange && { opacity: 0.6 },
             ]}
@@ -222,7 +222,7 @@ export function EventForm({
           >
             <Text style={[
               styles.calChipText,
-              { color: theme.textSecondary },
+              { color: theme.colors.textSecondary },
               calendarId === cal.id && { color: '#fff' },
             ]}>
               {cal.displayName}
@@ -231,24 +231,24 @@ export function EventForm({
         ))}
       </ScrollView>
       {disableCalendarChange && (
-        <Text style={[styles.readOnlyNote, { color: theme.textTertiary, marginTop: 8 }]}>
+        <Text style={[styles.readOnlyNote, { color: theme.colors.textTertiary, marginTop: 8 }]}>
           {t('event.calendarLockedRecurring')}
         </Text>
       )}
 
-      <View style={[styles.row, { borderBottomColor: theme.border }]}>
+      <View style={[styles.row, { borderBottomColor: theme.colors.border }]}>
         <Text style={labelStyle}>{t('event.allDay')}</Text>
         <Switch
           value={allDay}
           onValueChange={setAllDay}
-          trackColor={{ false: theme.border, true: theme.primary }}
+          trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
           thumbColor="#fff"
         />
       </View>
 
       <Text style={labelStyle}>{t('event.start')}</Text>
       <TouchableOpacity style={inputStyle} onPress={openStartPicker}>
-        <Text style={{ color: theme.text }}>
+        <Text style={{ color: theme.colors.text }}>
           {allDay ? dayjs(dtstart).format('ll') : dayjs(dtstart).format('lll')}
         </Text>
       </TouchableOpacity>
@@ -264,7 +264,7 @@ export function EventForm({
 
       <Text style={labelStyle}>{t('event.end')}</Text>
       <TouchableOpacity style={inputStyle} onPress={openEndPicker}>
-        <Text style={{ color: theme.text }}>
+        <Text style={{ color: theme.colors.text }}>
           {allDay ? dayjs(dtend).format('ll') : dayjs(dtend).format('lll')}
         </Text>
       </TouchableOpacity>
@@ -295,7 +295,7 @@ export function EventForm({
           value={location}
           onChangeText={setLocation}
           placeholder={t('event.locationPlaceholder')}
-          placeholderTextColor={theme.textTertiary}
+          placeholderTextColor={theme.colors.textTertiary}
           onFocus={() => scrollToField('location')}
         />
       </View>
@@ -307,7 +307,7 @@ export function EventForm({
           value={description}
           onChangeText={setDescription}
           placeholder={t('event.descriptionPlaceholder')}
-          placeholderTextColor={theme.textTertiary}
+          placeholderTextColor={theme.colors.textTertiary}
           multiline
           numberOfLines={3}
           onFocus={() => scrollToField('description')}
@@ -321,22 +321,22 @@ export function EventForm({
           value={attendeeInput}
           onChangeText={setAttendeeInput}
           placeholder={t('event.attendeePlaceholder')}
-          placeholderTextColor={theme.textTertiary}
+          placeholderTextColor={theme.colors.textTertiary}
           autoCapitalize="none"
           keyboardType="email-address"
           onSubmitEditing={addAttendee}
           onFocus={() => scrollToField('attendee')}
           onBlur={() => { attendeeFocused.current = false; }}
         />
-        <TouchableOpacity style={[styles.addBtn, { backgroundColor: theme.primary }]} onPress={addAttendee}>
+        <TouchableOpacity style={[styles.addBtn, { backgroundColor: theme.colors.primary }]} onPress={addAttendee}>
           <Text style={styles.addBtnText}>{t('event.add')}</Text>
         </TouchableOpacity>
       </View>
       {attendees.map((att) => (
-        <View key={att.email} style={[styles.attendeeChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[styles.attendeeEmail, { color: theme.primary }]}>{att.email}</Text>
+        <View key={att.email} style={[styles.attendeeChip, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+          <Text style={[styles.attendeeEmail, { color: theme.colors.primary }]}>{att.email}</Text>
           <TouchableOpacity onPress={() => removeAttendee(att.email)}>
-            <Text style={[styles.removeBtn, { color: theme.textTertiary }]}>×</Text>
+            <Text style={[styles.removeBtn, { color: theme.colors.textTertiary }]}>×</Text>
           </TouchableOpacity>
         </View>
       ))}
@@ -348,10 +348,10 @@ export function EventForm({
         onRoomTypeChange={setTalkRoomType}
       />
 
-      {error && <Text style={[styles.error, { color: theme.danger }]}>{error}</Text>}
+      {error && <Text style={[styles.error, { color: theme.colors.danger }]}>{error}</Text>}
 
       <TouchableOpacity
-        style={[styles.saveBtn, { backgroundColor: theme.primary }, loading && styles.saveBtnDisabled]}
+        style={[styles.saveBtn, { backgroundColor: theme.colors.primary }, loading && styles.saveBtnDisabled]}
         onPress={handleSubmit}
         disabled={loading}
       >

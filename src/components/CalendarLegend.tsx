@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import type { CalendarMeta } from '@/types';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores/appStore';
 
 interface Props {
   calendars: CalendarMeta[];

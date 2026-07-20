@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Gesture } from 'react-native-gesture-handler';
-import { useSharedValue, runOnJS } from 'react-native-reanimated';
-import { useAppStore } from '@/store/appStore';
+import { useSharedValue } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
+import { useAppStore } from '@/stores/appStore';
 
 const MIN_HOUR_ROW = 30;
 const MAX_HOUR_ROW = 200;
@@ -37,7 +38,7 @@ export function useZoom() {
         .onUpdate((e) => {
           pendingHeight.value = Math.min(Math.max(Math.round(pinchBase.value * e.scale), MIN_HOUR_ROW), MAX_HOUR_ROW);
         })
-        .onEnd(() => { runOnJS(commitZoom)(pendingHeight.value); }),
+        .onEnd(() => { scheduleOnRN(commitZoom, pendingHeight.value); }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [commitZoom]
   );

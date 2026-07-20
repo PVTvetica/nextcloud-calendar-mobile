@@ -1,6 +1,7 @@
 import type { Account, CalendarMeta, CalendarEvent } from '@/types';
 import { parseIcsObjectsAsync } from '@/utils/caldav-parse';
 import { settleAllOrThrow } from '@/utils/settle';
+import { httpErrorFrom } from '../shared/errors';
 
 function basicAuth(account: Pick<Account, 'username' | 'appPassword'>): string {
   return 'Basic ' + btoa(`${account.username}:${account.appPassword}`);
@@ -267,7 +268,7 @@ export async function putEvent(
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     console.error('[putEvent] error body:', body.slice(0, 300));
-    throw new Error(`putEvent HTTP ${res.status}`);
+    throw httpErrorFrom(res, 'putEvent');
   }
 }
 
@@ -284,7 +285,7 @@ export async function updateEvent(
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     console.error('[updateEvent] error body:', body.slice(0, 300));
-    throw new Error(`updateEvent HTTP ${res.status}`);
+    throw httpErrorFrom(res, 'updateEvent');
   }
 }
 
@@ -302,7 +303,7 @@ export async function moveEvent(
   if (!res.ok && res.status !== 201 && res.status !== 204) {
     const body = await res.text().catch(() => '');
     console.error('[moveEvent] error body:', body.slice(0, 300));
-    throw new Error(`moveEvent HTTP ${res.status}`);
+    throw httpErrorFrom(res, 'moveEvent');
   }
 }
 
@@ -313,5 +314,5 @@ export async function deleteEvent(
   console.log('[deleteEvent] DELETE', href);
   const res = await davFetch(href, account, { method: 'DELETE' });
   console.log('[deleteEvent] status:', res.status);
-  if (!res.ok && res.status !== 404) throw new Error(`deleteEvent HTTP ${res.status}`);
+  if (!res.ok && res.status !== 404) throw httpErrorFrom(res, 'deleteEvent');
 }

@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { styles } from '@/styles/calendarScreen';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@react-navigation/native';
 import type { ViewMode } from '@/types';
 import { VIEW_MODES } from '../constants';
 
@@ -32,13 +32,13 @@ function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOp
   return (
     <SafeAreaView
       edges={['top']}
-      style={[styles.headerWrap, { backgroundColor: theme.headerBackground, borderBottomColor: theme.border }]}
+      style={[styles.headerWrap, { backgroundColor: theme.colors.headerBackground, borderBottomColor: theme.colors.border }]}
     >
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={onOpenDrawer} style={styles.hamburger}>
-          <Text style={[styles.hamburgerIcon, { color: theme.primary }]}>☰</Text>
+          <Text style={[styles.hamburgerIcon, { color: theme.colors.primary }]}>☰</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]} numberOfLines={1}>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>
           {headerTitle}
         </Text>
         <TouchableOpacity
@@ -47,9 +47,9 @@ function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOp
           disabled={isToday || todayLoading}
         >
           {todayLoading ? (
-            <ActivityIndicator size="small" color={theme.primary} />
+            <ActivityIndicator size="small" color={theme.colors.primary} />
           ) : (
-            <Text style={[styles.todayBtnText, { color: theme.primary }]}>{t('calendar.today')}</Text>
+            <Text style={[styles.todayBtnText, { color: theme.colors.primary }]}>{t('calendar.today')}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -59,8 +59,8 @@ function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOp
             key={mode}
             style={[
               styles.modeBtn,
-              { backgroundColor: theme.chip },
-              viewMode === mode && { backgroundColor: theme.chipActive },
+              { backgroundColor: theme.colors.chip },
+              viewMode === mode && { backgroundColor: theme.colors.chipActive },
             ]}
             onPress={() => onSwitchMode(mode)}
           >
@@ -69,8 +69,8 @@ function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOp
               allowFontScaling={false}
               style={[
                 styles.modeBtnText,
-                { color: theme.textSecondary },
-                viewMode === mode && { color: theme.primaryText, fontWeight: '600' },
+                { color: theme.colors.textSecondary },
+                viewMode === mode && { color: theme.colors.primaryText, fontWeight: '600' },
               ]}
             >
               {t(VIEW_MODE_KEYS[mode])}
