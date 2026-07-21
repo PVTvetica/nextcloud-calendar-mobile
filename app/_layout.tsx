@@ -1,5 +1,5 @@
 import { focusManager } from '@tanstack/react-query';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useTheme } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -11,7 +11,6 @@ import { queryClient } from '@/services/shared/queryClient';
 import { setupOnlineManager } from '@/services/shared/network';
 import { migrateFromAsyncStorage } from '@/storage';
 import { Providers } from '@/Providers';
-import { useTheme } from '@react-navigation/native';
 import '@/i18n';
 import { useLanguageSync } from '@/shared/hooks/useLanguageSync';
 SplashScreen.preventAutoHideAsync();

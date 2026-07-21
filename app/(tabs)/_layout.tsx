@@ -1,9 +1,8 @@
 import { Platform, DynamicColorIOS } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Tabs, useTheme } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { Calendar, Settings as SettingsIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@react-navigation/native';
 
 export default function TabsLayout() {
   const theme = useTheme();

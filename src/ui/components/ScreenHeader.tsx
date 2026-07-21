@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import Typography from './Typography';
 import IconButton from './IconButton';

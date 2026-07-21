@@ -1,7 +1,7 @@
 import React from 'react';
 import { FlexAlignType, StyleProp, StyleSheet, ViewProps, ViewStyle, DimensionValue } from 'react-native';
 import Reanimated, { LinearTransition } from 'react-native-reanimated';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 
 
 type Direction = 'vertical' | 'horizontal';

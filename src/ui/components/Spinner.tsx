@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, ActivityIndicatorProps } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 
 interface SpinnerProps extends Omit<ActivityIndicatorProps, 'color'> {
   color?: 'primary' | 'text' | 'secondary';

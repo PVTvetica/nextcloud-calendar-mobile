@@ -4,7 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { TalkToggle } from './TalkToggle';
 import { RecurrencePicker } from './RecurrencePicker';
@@ -205,6 +205,7 @@ export function EventForm({
             {writableCalendars.map((cal) => (
               <Chip
                 key={cal.id}
+                rounded
                 active={calendarId === cal.id}
                 activeColor={cal.color}
                 disabled={disableCalendarChange}

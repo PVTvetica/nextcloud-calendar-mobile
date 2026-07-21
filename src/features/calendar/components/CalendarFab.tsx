@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { StyleSheet } from 'react-native';
 import { Plus } from 'lucide-react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import { AnimatedPressable, Icon } from '@/ui/components';
 
 interface Props {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import AnimatedPressable from './AnimatedPressable';
 
 type Variant = 'ghost' | 'filled' | 'plain';

@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Menu } from 'lucide-react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import { Stack, Typography, Chip, Icon, AnimatedPressable, Spinner } from '@/ui/components';
 import type { ViewMode } from '@/types';
 import { VIEW_MODES } from '../constants';
@@ -74,7 +74,7 @@ function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOp
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills}>
         {VIEW_MODES.map((mode) => (
-          <Chip key={mode} rounded active={viewMode === mode} activeColor={colors.chipActive} onPress={() => onSwitchMode(mode)}>
+          <Chip key={mode} rounded small active={viewMode === mode} activeColor={colors.chipActive} onPress={() => onSwitchMode(mode)}>
             {t(VIEW_MODE_KEYS[mode])}
           </Chip>
         ))}

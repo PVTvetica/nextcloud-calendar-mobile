@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import { CircleCheck, Trash2 } from 'lucide-react-native';
 import { AvatarImage } from '@/shared/components/AvatarImage';
 import { Stack, Typography, Icon, IconButton, AnimatedPressable } from '@/ui/components';

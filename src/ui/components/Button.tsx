@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, PressableProps, StyleSheet, View } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import AnimatedPressable from './AnimatedPressable';
 import Typography from './Typography';
 

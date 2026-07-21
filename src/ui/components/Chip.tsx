@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import AnimatedPressable from './AnimatedPressable';
 import Typography from './Typography';
 
@@ -11,12 +11,13 @@ interface ChipProps {
   disabled?: boolean;
   fullWidth?: boolean;
   rounded?: boolean;
+  small?: boolean;
   activeColor?: string;
   children?: React.ReactNode;
 }
 
 function Chip({
-  active = false, onPress, icon, disabled = false, fullWidth = false, rounded = false, activeColor, children,
+  active = false, onPress, icon, disabled = false, fullWidth = false, rounded = false, small = false, activeColor, children,
 }: ChipProps) {
   const { colors, radius } = useTheme();
   const activeBg = activeColor ?? colors.chipActive;
@@ -28,10 +29,11 @@ function Chip({
       animated={!disabled}
       style={[
         styles.chip,
+        small && styles.chipSmall,
         {
           borderRadius: rounded ? radius.pill : radius.sm,
           backgroundColor: active ? activeBg : colors.surface,
-          borderWidth: 1.5,
+          borderWidth: small ? 1 : 1.5,
           borderColor: active ? activeBg : colors.border,
           opacity: disabled ? 0.5 : 1,
           flex: fullWidth ? 1 : undefined,
@@ -40,7 +42,7 @@ function Chip({
     >
       {icon}
       {typeof children === 'string' ? (
-        <Typography variant="body2" align="center" color={active ? 'light' : 'secondary'}>
+        <Typography variant={small ? 'caption' : 'body2'} align="center" color={active ? 'light' : 'secondary'}>
           {children}
         </Typography>
       ) : (
@@ -58,6 +60,11 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 9,
+  },
+  chipSmall: {
+    gap: 4,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
   },
 });
 

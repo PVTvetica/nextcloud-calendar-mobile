@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import { useIsOnline } from '@/services/shared/network';
 import { Stack, Typography } from '@/ui/components';
 

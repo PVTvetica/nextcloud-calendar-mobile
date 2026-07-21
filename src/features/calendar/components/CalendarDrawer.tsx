@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AvatarImage } from '@/shared/components/AvatarImage';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import type { Account, CalendarMeta } from '@/types';
 
 const DRAWER_WIDTH = 280;
@@ -117,7 +117,7 @@ export function CalendarDrawer({
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)', zIndex: 10 },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.35)', zIndex: 10 },
   drawer: {
     position: 'absolute', left: 0, top: 0, bottom: 0,
     width: DRAWER_WIDTH,

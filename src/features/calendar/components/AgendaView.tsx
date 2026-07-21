@@ -5,7 +5,7 @@ import {
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import type { Theme } from '@/theme';
 import type { CalendarEvent } from '@/types';
 
