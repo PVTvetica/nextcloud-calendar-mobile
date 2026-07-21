@@ -1,5 +1,5 @@
 import type { TextStyle } from 'react-native';
-import { DefaultTheme } from '@react-navigation/native';
+import { DefaultTheme } from 'expo-router';
 
 export type ColorScheme = 'light' | 'dark';
 
@@ -72,15 +72,17 @@ export interface Theme {
 }
 
 
-declare module '@react-navigation/core' {
-  // eslint-disable-next-line @typescript-eslint/no-empty-interface
-  export interface Theme {
-    dark: boolean;
-    colors: ThemeColors;
-    fonts: ThemeFonts;
-    spacing: ThemeSpacing;
-    radius: ThemeRadius;
-    typography: ThemeTypography;
+declare global {
+  namespace ReactNavigation {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface Theme {
+      dark: boolean;
+      colors: ThemeColors;
+      fonts: ThemeFonts;
+      spacing: ThemeSpacing;
+      radius: ThemeRadius;
+      typography: ThemeTypography;
+    }
   }
 }
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ThemeProvider } from '@react-navigation/native';
+import { ThemeProvider } from 'expo-router';
 import { lightTheme } from '../../src/theme';
 
 export function ThemeWrapper({ children }: { children: React.ReactNode }) {

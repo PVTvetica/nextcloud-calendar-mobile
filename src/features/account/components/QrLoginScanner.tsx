@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 
 export interface NcLoginData {
   server: string;
@@ -161,7 +161,7 @@ const BOX = 240;
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  overlay: { ...StyleSheet.absoluteFillObject },
+  overlay: { ...StyleSheet.absoluteFill },
   dimTop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)' },
   middle: { flexDirection: 'row', height: BOX },
   dimSide: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)' },

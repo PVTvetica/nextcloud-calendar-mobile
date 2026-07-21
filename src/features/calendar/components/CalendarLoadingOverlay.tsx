@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import { Stack, Spinner, Typography } from '@/ui/components';
 
 interface Props {
@@ -28,5 +28,5 @@ function CalendarLoadingOverlayImpl({ label }: Props) {
 export const CalendarLoadingOverlay = memo(CalendarLoadingOverlayImpl);
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 5 },
+  overlay: { ...StyleSheet.absoluteFill, zIndex: 5 },
 });

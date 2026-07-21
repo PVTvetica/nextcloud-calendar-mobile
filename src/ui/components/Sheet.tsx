@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import AnimatedPressable from './AnimatedPressable';
 import Typography from './Typography';
 

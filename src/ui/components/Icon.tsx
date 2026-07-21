@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ViewProps } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 
 interface IconProps extends ViewProps {
   children?: React.ReactNode;

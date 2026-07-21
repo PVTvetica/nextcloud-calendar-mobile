@@ -4,7 +4,7 @@ import { Globe, ChevronUp, ChevronDown, Check } from 'lucide-react-native';
 import CountryFlag from 'react-native-country-flag';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/stores/appStore';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import { Typography, AnimatedPressable, Spinner } from '@/ui/components';
 import { LANGUAGES, type AppLanguage } from '@/i18n/languages';
 

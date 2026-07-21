@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import type { RecurrenceFreq, RecurrenceRule } from '@/types';
 
 interface Props {

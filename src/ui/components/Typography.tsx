@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TextProps, TextStyle, StyleProp } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 
 export const VARIANTS = StyleSheet.create({
   body1: { fontSize: 16, fontWeight: '500', lineHeight: 20 },

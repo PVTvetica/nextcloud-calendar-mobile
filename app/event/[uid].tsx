@@ -4,7 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { Pencil, Clock, CalendarDays, MapPin, Video, Repeat, Trash2, Copy, Check } from 'lucide-react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
@@ -14,7 +14,6 @@ import { fetchEvents } from '@/services/nextcloud/caldav';
 import { useCalendars } from '@/shared/hooks/useCalendars';
 import { useDeleteEvent } from '@/features/event/hooks/useMutateEvent';
 import { useAppStore } from '@/stores/appStore';
-import { useTheme } from '@react-navigation/native';
 import { normalizeEvent, normalizeEvents } from '@/shared/utils/normalizeEvent';
 import { sameDisplayedEvent } from '@/features/event/utils/sameDisplayedEvent';
 import { EVENTS_STALE } from '@/services/shared/queryConfig';

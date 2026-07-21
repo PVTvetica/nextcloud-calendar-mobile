@@ -6,7 +6,7 @@ import {
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import { useAppStore } from '@/stores/appStore';
 import type { CalendarEvent } from '@/types';
 
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   dowLabel: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '600', textTransform: 'uppercase' },
   weekRow: { flex: 1, flexDirection: 'row' },
   dayCell: { flex: 1, alignItems: 'center', paddingTop: 2 },
-  dayCircle: { minWidth: 28, height: 28, borderRadius: 14, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center' },
+  dayCircle: { width: 28, height: 28, borderRadius: 14, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   dayNumber: { fontSize: 14, textAlign: 'center' },
   dotsRow: { flexDirection: 'row', gap: 2, marginTop: 2 },
   dot: { width: 5, height: 5, borderRadius: 3 },

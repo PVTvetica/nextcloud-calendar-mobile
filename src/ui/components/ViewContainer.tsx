@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, ViewProps } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 
 function ViewContainer({ children, style, ...rest }: ViewProps) {
   const { colors } = useTheme();

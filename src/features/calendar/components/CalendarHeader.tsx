@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import type { CalendarHeaderProps, ICalendarEventBase, Mode } from 'react-native-big-calendar';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from 'expo-router';
 import { useAppStore } from '@/stores/appStore';
 
 dayjs.extend(isoWeek);
