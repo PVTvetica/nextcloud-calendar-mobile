@@ -2,15 +2,14 @@ import { useEffect, useMemo, useRef } from 'react';
 import dayjs from 'dayjs';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useAppStore } from '@/stores/appStore';
-import { useCalendars } from '@/hooks/useCalendars';
+import { useCalendars } from '@/shared/hooks/useCalendars';
 import { loadAccounts } from '@/services/nextcloud/auth';
 import { fetchEventsForCalendars } from '@/services/nextcloud/caldav';
-import { normalizeEvents } from '@/utils/normalizeEvent';
+import { normalizeEvents } from '@/shared/utils/normalizeEvent';
 import { SUBSCRIBED_EVENTS_STALE } from '@/services/shared/queryConfig';
 import type { CalendarEvent } from '@/types';
 import { monthRange, monthRangeAt } from '../utils/range';
 
-/** Exponential backoff, capped at 30s, for transient low-network event fetches. */
 const eventRetryDelay = (attempt: number) => Math.min(1000 * 2 ** attempt, 30000);
 
 export function useCalendarData(date: Date) {

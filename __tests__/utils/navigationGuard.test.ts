@@ -1,4 +1,4 @@
-import { createNavigationGuard } from '../../src/utils/navigationGuard';
+import { createNavigationGuard } from '@/shared/utils/navigationGuard';
 
 describe('createNavigationGuard', () => {
   beforeEach(() => { jest.useFakeTimers(); jest.setSystemTime(0); });

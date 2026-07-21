@@ -1,5 +1,5 @@
-import { parseIcsObjects, parseIcsObjectsAsync } from '../../src/utils/caldav-parse';
-import { buildAllDayIcs } from '../../src/utils/ics';
+import { parseIcsObjects, parseIcsObjectsAsync } from '@/shared/utils/caldav-parse';
+import { buildAllDayIcs } from '@/shared/utils/ics';
 
 const sampleIcs = `BEGIN:VCALENDAR
 VERSION:2.0

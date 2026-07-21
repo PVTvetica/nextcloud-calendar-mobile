@@ -1,4 +1,4 @@
-import { computeOverlapMap } from '../../src/utils/overlapMap';
+import { computeOverlapMap } from '@/features/calendar/utils/overlapMap';
 import type { CalendarEvent } from '../../src/types';
 
 function ev(uid: string, startISO: string, endISO: string, allDay = false): CalendarEvent {

@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react-native';
 import { act } from 'react';
-import { useLanguageSync } from '../../src/hooks/useLanguageSync';
+import { useLanguageSync } from '@/shared/hooks/useLanguageSync';
 import { useAppStore } from '../../src/stores/appStore';
 
 jest.mock('@react-native-async-storage/async-storage', () =>

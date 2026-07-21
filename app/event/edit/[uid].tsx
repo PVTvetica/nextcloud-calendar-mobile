@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -7,19 +7,20 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { loadAccounts } from '@/services/nextcloud/auth';
 import { fetchEvents } from '@/services/nextcloud/caldav';
-import { useCalendars } from '@/hooks/useCalendars';
-import { useUpdateEvent } from '@/hooks/useMutateEvent';
+import { useCalendars } from '@/shared/hooks/useCalendars';
+import { useUpdateEvent } from '@/features/event/hooks/useMutateEvent';
 import { useAppStore } from '@/stores/appStore';
-import { useTheme } from '@react-navigation/native';
-import { EventForm } from '@/components/EventForm';
-import { normalizeEvent, normalizeEvents } from '@/utils/normalizeEvent';
+import { EventForm } from '@/features/event/components/EventForm';
+import {
+  ViewContainer, Stack, Typography, Button, Spinner, ScreenHeader,
+} from '@/ui/components';
+import { normalizeEvent, normalizeEvents } from '@/shared/utils/normalizeEvent';
 import { EVENTS_STALE } from '@/services/shared/queryConfig';
 import type { CalendarEvent, CreateEventInput, RecurrenceEditScope } from '@/types';
 
 export default function EditEventScreen() {
   const { uid, scope: scopeParam } = useLocalSearchParams<{ uid: string; scope?: string }>();
   const router = useRouter();
-  const theme = useTheme();
   const { t } = useTranslation();
   const activeAccountId = useAppStore((s) => s.activeAccountId);
   const queryClient = useQueryClient();
@@ -76,20 +77,22 @@ export default function EditEventScreen() {
 
   if (isLoading || !activeAccount || calendars.length === 0) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+      <ViewContainer>
+        <Stack flex vAlign="center" hAlign="center">
+          <Spinner size="large" />
+        </Stack>
+      </ViewContainer>
     );
   }
 
   if (!event) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
-        <Text style={{ color: theme.colors.textSecondary }}>{t('event.eventNotFound')}</Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
-          <Text style={{ color: theme.colors.primary }}>{t('event.back')}</Text>
-        </TouchableOpacity>
-      </View>
+      <ViewContainer>
+        <Stack flex vAlign="center" hAlign="center" gap={16}>
+          <Typography variant="body1" color="secondary">{t('event.eventNotFound')}</Typography>
+          <Button variant="link" title={t('event.back')} onPress={() => router.back()} />
+        </Stack>
+      </ViewContainer>
     );
   }
 
@@ -114,38 +117,33 @@ export default function EditEventScreen() {
     : '';
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.header, { borderBottomColor: theme.colors.border, backgroundColor: theme.colors.headerBackground }]}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={[styles.cancel, { color: theme.colors.primary }]}>{t('common.cancel')}</Text>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.colors.text }]} numberOfLines={1}>
-          {t('event.editEvent')}{scopeLabel}
-        </Text>
-        <View style={styles.spacer} />
-      </View>
-      <EventForm
-        calendars={calendars}
-        organizerEmail={organizerEmail}
-        organizerName={activeAccount.displayName}
-        onSubmit={handleSubmit}
-        loading={updateMutation.isPending}
-        initialValues={initialValues}
-        submitLabel={t('event.updateEvent')}
-        disableCalendarChange={event.isRecurring}
-      />
-    </SafeAreaView>
+    <ViewContainer>
+      <SafeAreaView style={styles.flex}>
+        <ScreenHeader
+          title={`${t('event.editEvent')}${scopeLabel}`}
+          left={
+            <Button
+              variant="link" size="small" alignment="start"
+              title={t('common.cancel')}
+              onPress={() => router.back()}
+            />
+          }
+        />
+        <EventForm
+          calendars={calendars}
+          organizerEmail={organizerEmail}
+          organizerName={activeAccount.displayName}
+          onSubmit={handleSubmit}
+          loading={updateMutation.isPending}
+          initialValues={initialValues}
+          submitLabel={t('event.updateEvent')}
+          disableCalendarChange={event.isRecurring}
+        />
+      </SafeAreaView>
+    </ViewContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1,
-  },
-  title: { fontSize: 17, fontWeight: '600', flex: 1, textAlign: 'center' },
-  cancel: { fontSize: 17, minWidth: 60 },
-  spacer: { width: 60 },
+  flex: { flex: 1 },
 });

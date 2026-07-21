@@ -39,6 +39,7 @@
     "errors": {
       "required": "Tutti i campi sono obbligatori.",
       "invalidCreds": "Credenziali non valide. Controlla la password dell'app.",
+      "serverNotFound": "Nessun server Nextcloud trovato a questo indirizzo. Controlla l'URL, ad esempio https://cloud.esempio.com",
       "connect": "Impossibile connettersi: {{msg}}"
     },
     "qrCameraDenied": "L'accesso alla fotocamera è negato. Attivalo nelle impostazioni del dispositivo per scansionare il codice QR.",

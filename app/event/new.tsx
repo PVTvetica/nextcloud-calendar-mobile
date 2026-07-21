@@ -1,21 +1,20 @@
 import { useMemo } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { loadAccounts } from '@/services/nextcloud/auth';
-import { useCalendars } from '@/hooks/useCalendars';
-import { useCreateEvent } from '@/hooks/useMutateEvent';
+import { useCalendars } from '@/shared/hooks/useCalendars';
+import { useCreateEvent } from '@/features/event/hooks/useMutateEvent';
 import { useAppStore } from '@/stores/appStore';
-import { useTheme } from '@react-navigation/native';
-import { EventForm } from '@/components/EventForm';
+import { EventForm } from '@/features/event/components/EventForm';
+import { ViewContainer, Stack, Typography, Button, ScreenHeader } from '@/ui/components';
 import type { CreateEventInput } from '@/types';
 
 export default function NewEventScreen() {
   const { date } = useLocalSearchParams<{ date?: string }>();
   const router = useRouter();
-  const theme = useTheme();
   const { t } = useTranslation();
   const activeAccountId = useAppStore((s) => s.activeAccountId);
 
@@ -36,9 +35,11 @@ export default function NewEventScreen() {
 
   if (!activeAccount || calendars.length === 0) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
-        <Text style={{ color: theme.colors.textSecondary }}>{t('event.loadingCalendars')}</Text>
-      </View>
+      <ViewContainer>
+        <Stack flex vAlign="center" hAlign="center">
+          <Typography variant="body1" color="secondary">{t('event.loadingCalendars')}</Typography>
+        </Stack>
+      </ViewContainer>
     );
   }
 
@@ -47,34 +48,31 @@ export default function NewEventScreen() {
     : `${activeAccount.username}@${new URL(activeAccount.baseUrl).hostname}`;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.header, { borderBottomColor: theme.colors.border, backgroundColor: theme.colors.headerBackground }]}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={[styles.cancel, { color: theme.colors.primary }]}>{t('common.cancel')}</Text>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.colors.text }]}>{t('event.newEvent')}</Text>
-        <View style={styles.spacer} />
-      </View>
-      <EventForm
-        calendars={calendars}
-        defaultDate={defaultDate}
-        organizerEmail={organizerEmail}
-        organizerName={activeAccount.displayName}
-        onSubmit={handleSubmit}
-        loading={createMutation.isPending}
-      />
-    </SafeAreaView>
+    <ViewContainer>
+      <SafeAreaView style={styles.flex}>
+        <ScreenHeader
+          title={t('event.newEvent')}
+          left={
+            <Button
+              variant="link" size="small" alignment="start"
+              title={t('common.cancel')}
+              onPress={() => router.back()}
+            />
+          }
+        />
+        <EventForm
+          calendars={calendars}
+          defaultDate={defaultDate}
+          organizerEmail={organizerEmail}
+          organizerName={activeAccount.displayName}
+          onSubmit={handleSubmit}
+          loading={createMutation.isPending}
+        />
+      </SafeAreaView>
+    </ViewContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1,
-  },
-  title: { fontSize: 17, fontWeight: '600' },
-  cancel: { fontSize: 17 },
-  spacer: { width: 60 },
+  flex: { flex: 1 },
 });

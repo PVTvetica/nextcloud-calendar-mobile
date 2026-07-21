@@ -37,6 +37,7 @@ export interface ThemeColors {
   chipActive: string;
   card: string;
   notification: string;
+  item: string;
 }
 
 export interface ThemeSpacing {
@@ -110,6 +111,7 @@ const lightColors: ThemeColors = {
   chipActive: '#109be6',
   card: '#ffffff',
   notification: '#d32f2f',
+  item: '#f7f7f7',
 };
 
 const darkColors: ThemeColors = {
@@ -134,6 +136,7 @@ const darkColors: ThemeColors = {
   chipActive: '#29aef7',
   card: '#1c1c1e',
   notification: '#ef5350',
+  item: '#1e1e1e',
 };
 
 export const lightTheme: Theme = { dark: false, colors: lightColors, fonts, spacing, radius, typography };

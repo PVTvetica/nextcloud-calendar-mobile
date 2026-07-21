@@ -7,7 +7,7 @@ import {
   refetchEventsTargeted,
   type EventMutationContext,
   type EventMutationMeta,
-} from '@/hooks/eventMutationReconcile';
+} from '@/shared/utils/eventMutationReconcile';
 import type { CalendarEvent } from '@/types';
 import i18n from '@/i18n';
 import { HttpError } from './errors';

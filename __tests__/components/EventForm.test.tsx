@@ -4,7 +4,7 @@ import { ThemeWrapper } from '../helpers/theme';
 
 const render = (ui: ReactElement, opts?: Parameters<typeof rtlRender>[1]) =>
   rtlRender(ui, { wrapper: ThemeWrapper, ...opts });
-import { EventForm } from '../../src/components/EventForm';
+import { EventForm } from '@/features/event/components/EventForm';
 import i18n from '../../src/i18n';
 import type { CalendarMeta } from '../../src/types';
 

@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { useAvatar } from '../../src/hooks/useAvatar';
+import { useAvatar } from '@/features/account/hooks/useAvatar';
 import type { Account } from '../../src/types';
 
 const account: Account = {

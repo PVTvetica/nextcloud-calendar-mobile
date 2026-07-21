@@ -4,7 +4,7 @@ import { ThemeWrapper } from '../helpers/theme';
 
 const render = (ui: ReactElement, opts?: Parameters<typeof rtlRender>[1]) =>
   rtlRender(ui, { wrapper: ThemeWrapper, ...opts });
-import { LanguageSheet } from '../../src/components/LanguageSheet';
+import { LanguageSheet } from '@/shared/components/LanguageSheet';
 import { useAppStore } from '../../src/stores/appStore';
 import i18n from '../../src/i18n';
 

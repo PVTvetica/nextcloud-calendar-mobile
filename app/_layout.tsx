@@ -13,7 +13,7 @@ import { migrateFromAsyncStorage } from '@/storage';
 import { Providers } from '@/Providers';
 import { useTheme } from '@react-navigation/native';
 import '@/i18n';
-import { useLanguageSync } from '@/hooks/useLanguageSync';
+import { useLanguageSync } from '@/shared/hooks/useLanguageSync';
 SplashScreen.preventAutoHideAsync();
 
 function ThemedStatusBar() {

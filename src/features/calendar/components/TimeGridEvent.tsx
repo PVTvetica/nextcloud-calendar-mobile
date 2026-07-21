@@ -1,6 +1,7 @@
 import { memo } from 'react';
-import { Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { TouchableOpacity, StyleSheet, type ViewStyle } from 'react-native';
 import dayjs from 'dayjs';
+import { Typography } from '@/ui/components';
 
 interface Props {
   event: any;
@@ -23,8 +24,8 @@ function TimeGridEventImpl({ event, touchableProps, hourRowHeight, primaryColor 
 
   const libStyle = StyleSheet.flatten(touchableProps.style) as any;
 
-  const positionStyle = {
-    position: 'absolute' as const,
+  const positionStyle: ViewStyle = {
+    position: 'absolute',
     height: libStyle.height,
     top: libStyle.top,
     marginTop: libStyle.marginTop ?? 2,
@@ -41,17 +42,17 @@ function TimeGridEventImpl({ event, touchableProps, hourRowHeight, primaryColor 
       style={[positionStyle, styles.card, { backgroundColor: color, paddingVertical: Math.max(pad - 1, 1) }]}
     >
       {durationMin < 30 ? (
-        <Text style={[styles.title, { fontSize: titleSize }]} numberOfLines={1}>
+        <Typography variant="body2" color="light" style={{ fontSize: titleSize, lineHeight: Math.round(titleSize * 1.25) }} numberOfLines={1}>
           {event.title}
-        </Text>
+        </Typography>
       ) : (
         <>
-          <Text style={[styles.title, { fontSize: titleSize }]} numberOfLines={2}>
+          <Typography variant="body2" color="light" style={{ fontSize: titleSize, lineHeight: Math.round(titleSize * 1.25) }} numberOfLines={2}>
             {event.title}
-          </Text>
-          <Text style={[styles.time, { fontSize: timeSize }]} numberOfLines={1}>
+          </Typography>
+          <Typography color="rgba(255,255,255,0.85)" weight="400" style={{ fontSize: timeSize, lineHeight: Math.round(timeSize * 1.25) }} numberOfLines={1}>
             {dayjs(event.start).format('H:mm')}–{dayjs(event.end).format('H:mm')}
-          </Text>
+          </Typography>
         </>
       )}
     </TouchableOpacity>
@@ -67,6 +68,4 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.35)',
     overflow: 'hidden',
   },
-  title: { color: '#fff', fontWeight: '600' },
-  time: { color: 'rgba(255,255,255,0.85)' },
 });
