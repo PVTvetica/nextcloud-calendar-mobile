@@ -4,8 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'expo-router';
 import { lightTheme } from '../../src/theme';
 import SettingsScreen from '../../app/(tabs)/settings/index';
-import { useAppStore } from '../../src/stores/appStore';
-import i18n from '../../src/i18n';
+import { useSettingsStore } from '../../src/stores/settingsStore';
+import i18n from '../../src/utils/i18n';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -25,7 +25,7 @@ function wrapper({ children }: { children: React.ReactNode }) {
 describe('SettingsScreen i18n', () => {
   beforeEach(async () => {
     await i18n.changeLanguage('en');
-    useAppStore.setState({ language: 'en' });
+    useSettingsStore.setState({ language: 'en' });
   });
 
   it('renders the title and the collapsible section headers', () => {
@@ -51,6 +51,6 @@ describe('SettingsScreen i18n', () => {
     fireEvent.press(getByText('Appearance'));
     fireEvent.press(getByText('English'));
     fireEvent.press(getByText('Deutsch'));
-    expect(useAppStore.getState().language).toBe('de');
+    expect(useSettingsStore.getState().language).toBe('de');
   });
 });

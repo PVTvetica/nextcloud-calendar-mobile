@@ -6,13 +6,15 @@ import { useEffect } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { loadAccounts, getActiveAccountId, setActiveAccountId } from '@/services/nextcloud/auth';
 import { fetchCapabilities } from '@/services/nextcloud/nextcloud';
-import { useAppStore } from '@/stores/appStore';
+import { useAccountStore } from '@/stores/accountStore';
+import { useCalendarStore } from '@/stores/calendarStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { queryClient } from '@/services/shared/queryClient';
 import { setupOnlineManager } from '@/services/shared/network';
 import { migrateFromAsyncStorage } from '@/storage';
-import { Providers } from '@/Providers';
-import '@/i18n';
-import { useLanguageSync } from '@/shared/hooks/useLanguageSync';
+import { Providers } from '@/components/Providers';
+import '@/utils/i18n';
+import { useLanguageSync } from '@/hooks/useLanguageSync';
 SplashScreen.preventAutoHideAsync();
 
 function ThemedStatusBar() {
@@ -22,8 +24,8 @@ function ThemedStatusBar() {
 
 export default function RootLayout() {
   const router = useRouter();
-  const setStoreAccountId = useAppStore((s) => s.setActiveAccountId);
-  const setCapabilities = useAppStore((s) => s.setCapabilities);
+  const setStoreAccountId = useAccountStore((s) => s.setActiveAccountId);
+  const setCapabilities = useAccountStore((s) => s.setCapabilities);
   useLanguageSync();
 
   useEffect(() => {
@@ -41,7 +43,11 @@ export default function RootLayout() {
     (async () => {
       try {
         await migrateFromAsyncStorage();
-        await useAppStore.persist.rehydrate();
+        await Promise.all([
+          useAccountStore.persist.rehydrate(),
+          useCalendarStore.persist.rehydrate(),
+          useSettingsStore.persist.rehydrate(),
+        ]);
 
         const accounts = await loadAccounts();
         queryClient.setQueryData(['accounts'], accounts);

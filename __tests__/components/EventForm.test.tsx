@@ -5,7 +5,7 @@ import { ThemeWrapper } from '../helpers/theme';
 const render = (ui: ReactElement, opts?: Parameters<typeof rtlRender>[1]) =>
   rtlRender(ui, { wrapper: ThemeWrapper, ...opts });
 import { EventForm } from '@/features/event/components/EventForm';
-import i18n from '../../src/i18n';
+import i18n from '../../src/utils/i18n';
 import type { CalendarMeta } from '../../src/types';
 
 jest.mock('@react-native-async-storage/async-storage', () =>

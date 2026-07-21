@@ -1,5 +1,5 @@
 import { decodeXmlEntities } from '../../src/services/nextcloud/caldav';
-import { parseIcsObjects } from '@/shared/utils/caldav-parse';
+import { parseIcsObjects } from '@/utils/caldav-parse';
 
 describe('decodeXmlEntities', () => {
   it('decodes the five named XML entities', () => {

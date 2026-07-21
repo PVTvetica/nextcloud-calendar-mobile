@@ -1,4 +1,4 @@
-import i18n from '../../src/i18n';
+import i18n from '../../src/utils/i18n';
 
 describe('i18n instance', () => {
   afterAll(async () => {

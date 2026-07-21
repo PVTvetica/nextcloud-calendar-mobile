@@ -6,7 +6,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { asyncStorage } from '@/storage';
 import { queryClient } from '@/services/shared/queryClient';
-import { useAppStore } from '@/stores/appStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { lightTheme, darkTheme } from '@/theme';
 
 const asyncStoragePersister = createAsyncStoragePersister({
@@ -17,7 +17,7 @@ const asyncStoragePersister = createAsyncStoragePersister({
 
 export function Providers({ children }: { children: ReactNode }) {
   const systemScheme = useColorScheme();
-  const themePreference = useAppStore((s) => s.themePreference);
+  const themePreference = useSettingsStore((s) => s.themePreference);
   const resolved =
     themePreference === 'system' ? (systemScheme ?? 'light') : themePreference;
   const theme = resolved === 'dark' ? darkTheme : lightTheme;

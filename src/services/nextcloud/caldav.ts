@@ -1,6 +1,6 @@
 import type { Account, CalendarMeta, CalendarEvent } from '@/types';
-import { parseIcsObjectsAsync } from '@/shared/utils/caldav-parse';
-import { settleAllOrThrow } from '@/shared/utils/settle';
+import { parseIcsObjectsAsync } from '@/utils/caldav-parse';
+import { settleAllOrThrow } from '@/utils/settle';
 import { httpErrorFrom } from '../shared/errors';
 
 function basicAuth(account: Pick<Account, 'username' | 'appPassword'>): string {

@@ -11,7 +11,7 @@ import {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AvatarImage } from '@/shared/components/AvatarImage';
+import { AvatarImage } from '@/components/AvatarImage';
 import { useTheme } from 'expo-router';
 import type { Account, CalendarMeta } from '@/types';
 

@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'expo-router';
-import { useAppStore } from '@/stores/appStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import type { CalendarEvent } from '@/types';
 
 dayjs.extend(localizedFormat);
@@ -66,7 +66,7 @@ export function eventCoversDay(e: CalendarEvent, dayKey: string): boolean {
 function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEvent, onPressCell }: Props) {
   const theme = useTheme();
   const { t } = useTranslation();
-  const language = useAppStore((s) => s.language);
+  const language = useSettingsStore((s) => s.language);
   const { height } = useWindowDimensions();
 
   const selected = useMemo(() => dayjs(date), [date]);

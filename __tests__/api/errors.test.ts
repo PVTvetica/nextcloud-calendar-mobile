@@ -1,6 +1,6 @@
 import { HttpError, parseRetryAfter } from '../../src/services/shared/errors';
 import { describeMutationError } from '../../src/services/shared/queryClient';
-import i18n from '../../src/i18n';
+import i18n from '../../src/utils/i18n';
 
 describe('parseRetryAfter', () => {
   it('parses a value in seconds', () => {

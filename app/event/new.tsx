@@ -5,9 +5,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { loadAccounts } from '@/services/nextcloud/auth';
-import { useCalendars } from '@/shared/hooks/useCalendars';
+import { useCalendars } from '@/hooks/useCalendars';
 import { useCreateEvent } from '@/features/event/hooks/useMutateEvent';
-import { useAppStore } from '@/stores/appStore';
+import { useAccountStore } from '@/stores/accountStore';
 import { EventForm } from '@/features/event/components/EventForm';
 import { ViewContainer, Stack, Typography, Button, ScreenHeader } from '@/ui/components';
 import type { CreateEventInput } from '@/types';
@@ -16,7 +16,7 @@ export default function NewEventScreen() {
   const { date } = useLocalSearchParams<{ date?: string }>();
   const router = useRouter();
   const { t } = useTranslation();
-  const activeAccountId = useAppStore((s) => s.activeAccountId);
+  const activeAccountId = useAccountStore((s) => s.activeAccountId);
 
   const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: loadAccounts });
   const activeAccount = accounts?.find((a) => a.id === activeAccountId) ?? null;

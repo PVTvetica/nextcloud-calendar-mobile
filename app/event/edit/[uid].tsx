@@ -7,14 +7,14 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { loadAccounts } from '@/services/nextcloud/auth';
 import { fetchEvents } from '@/services/nextcloud/caldav';
-import { useCalendars } from '@/shared/hooks/useCalendars';
+import { useCalendars } from '@/hooks/useCalendars';
 import { useUpdateEvent } from '@/features/event/hooks/useMutateEvent';
-import { useAppStore } from '@/stores/appStore';
+import { useAccountStore } from '@/stores/accountStore';
 import { EventForm } from '@/features/event/components/EventForm';
 import {
   ViewContainer, Stack, Typography, Button, Spinner, ScreenHeader,
 } from '@/ui/components';
-import { normalizeEvent, normalizeEvents } from '@/shared/utils/normalizeEvent';
+import { normalizeEvent, normalizeEvents } from '@/utils/normalizeEvent';
 import { EVENTS_STALE } from '@/services/shared/queryConfig';
 import type { CalendarEvent, CreateEventInput, RecurrenceEditScope } from '@/types';
 
@@ -22,7 +22,7 @@ export default function EditEventScreen() {
   const { uid, scope: scopeParam } = useLocalSearchParams<{ uid: string; scope?: string }>();
   const router = useRouter();
   const { t } = useTranslation();
-  const activeAccountId = useAppStore((s) => s.activeAccountId);
+  const activeAccountId = useAccountStore((s) => s.activeAccountId);
   const queryClient = useQueryClient();
 
   const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: loadAccounts });
