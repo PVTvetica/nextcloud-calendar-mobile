@@ -1,5 +1,5 @@
 import type { CalendarEvent } from '@/types';
-import type { computeOverlapMap } from '@/utils/overlapMap';
+import type { computeOverlapMap } from '@/features/calendar/utils/overlapMap';
 
 type OverlapMap = ReturnType<typeof computeOverlapMap>;
 

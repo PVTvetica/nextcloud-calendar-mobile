@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Linking } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, StyleSheet, ScrollView, Alert, Linking, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
+import { Pencil, Clock, CalendarDays, MapPin, Video, Repeat, Trash2, Copy, Check } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
@@ -8,18 +11,33 @@ import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
 import { loadAccounts } from '@/services/nextcloud/auth';
 import { fetchEvents } from '@/services/nextcloud/caldav';
-import { useCalendars } from '@/hooks/useCalendars';
-import { useDeleteEvent } from '@/hooks/useMutateEvent';
+import { useCalendars } from '@/shared/hooks/useCalendars';
+import { useDeleteEvent } from '@/features/event/hooks/useMutateEvent';
 import { useAppStore } from '@/stores/appStore';
 import { useTheme } from '@react-navigation/native';
-import { normalizeEvent, normalizeEvents } from '@/utils/normalizeEvent';
-import { sameDisplayedEvent } from '@/utils/sameDisplayedEvent';
+import { normalizeEvent, normalizeEvents } from '@/shared/utils/normalizeEvent';
+import { sameDisplayedEvent } from '@/features/event/utils/sameDisplayedEvent';
 import { EVENTS_STALE } from '@/services/shared/queryConfig';
+import {
+  ViewContainer, Stack, Typography, Button, Chip, Icon, List, Item,
+  SectionHeader, Avatar, Spinner, ScreenHeader,
+  IconButton,
+} from '@/ui/components';
 import type { CalendarEvent, RecurrenceEditScope } from '@/types';
 
 dayjs.extend(localizedFormat);
 
 async function openTalkRoom(talkUrl: string) {
+  if (Platform.OS === 'android') {
+    const withoutScheme = talkUrl.replace(/^https?:\/\//, '');
+    const fallback = encodeURIComponent(talkUrl);
+    try {
+      await Linking.openURL(`intent://${withoutScheme}#Intent;scheme=https;package=com.nextcloud.talk2;S.browser_fallback_url=${fallback};end`);
+    } catch {
+      await Linking.openURL(talkUrl);
+    }
+    return;
+  }
   await Linking.openURL(talkUrl);
 }
 
@@ -121,6 +139,19 @@ export default function EventDetailScreen() {
   const deleteMutation = useDeleteEvent(activeAccount!);
   const canEdit = !calendar?.isReadOnly && !calendar?.isSubscribed;
 
+  const [copied, setCopied] = useState(false);
+  const copyResetRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(copyResetRef.current), []);
+
+  const handleCopyLocation = useCallback(async () => {
+    if (!event?.location) return;
+    await Clipboard.setStringAsync(event.location);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setCopied(true);
+    clearTimeout(copyResetRef.current);
+    copyResetRef.current = setTimeout(() => setCopied(false), 1500);
+  }, [event?.location]);
+
   const recurrenceScopeStrings: RecurrenceScopeStrings = {
     message: t('event.recurrenceScopeMessage'),
     thisOnly: t('event.scopeThisOnly'),
@@ -176,20 +207,22 @@ export default function EventDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+      <ViewContainer>
+        <Stack flex vAlign="center" hAlign="center">
+          <Spinner size="large" />
+        </Stack>
+      </ViewContainer>
     );
   }
 
   if (!event) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
-        <Text style={{ color: theme.colors.textSecondary }}>{t('event.eventNotFound')}</Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
-          <Text style={{ color: theme.colors.primary }}>{t('event.back')}</Text>
-        </TouchableOpacity>
-      </View>
+      <ViewContainer>
+        <Stack flex vAlign="center" hAlign="center" gap={16}>
+          <Typography variant="body1" color="secondary">{t('event.eventNotFound')}</Typography>
+          <Button variant="link" title={t('event.back')} onPress={() => router.back()} />
+        </Stack>
+      </ViewContainer>
     );
   }
 
@@ -200,110 +233,122 @@ export default function EventDetailScreen() {
     : `${dayjs(event.dtstart).format('lll')} – ${dayjs(event.dtend).format('LT')}`;
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 16 }}
-    >
-      <View style={[styles.colorBar, { backgroundColor: event.color, marginTop: insets.top }]} />
-      <View style={[styles.content, styles.contentFlex]}>
-        <View style={styles.topRow}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={[styles.backText, { color: theme.colors.primary }]}>{t('event.back')}</Text>
-          </TouchableOpacity>
-          {canEdit && (
-            <TouchableOpacity onPress={handleEdit}>
-              <Text style={[styles.editText, { color: theme.colors.primary }]}>{t('event.edit')}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+    <ViewContainer>
+      <SafeAreaView edges={['top']} style={styles.flex}>
+        <ScreenHeader
+          onBack={() => router.back()}
+          right={canEdit ? (
+            <IconButton variant="plain" size={40} onPress={handleEdit}>
+              <Pencil size={20} color={theme.colors.primary} />
+            </IconButton>
+          ) : undefined}
+        />
 
-        <Text style={[styles.summary, { color: theme.colors.text }]}>{event.summary}</Text>
-        <Text style={[styles.meta, { color: theme.colors.textSecondary }]}>{timeStr}</Text>
-        {event.isRecurring && (
-          <Text style={[styles.recurringBadge, { color: theme.colors.primary }]}>↻ {t('event.recurring')}</Text>
-        )}
-        {calendar && (
-          <Text style={[styles.calendarName, { color: theme.colors.textTertiary }]}>
-            📅 {calendar.displayName}
-          </Text>
-        )}
+        <View style={[styles.colorBar, { backgroundColor: event.color }]} />
 
-        {event.location && !event.talkUrl && (
-          <Text style={[styles.field, { color: theme.colors.textSecondary }]}>📍 {event.location}</Text>
-        )}
+        <ScrollView style={styles.flex} contentContainerStyle={[styles.content, { paddingBottom: 24 }]}>
+          <Stack gap={20}>
+            <Stack gap={10}>
+              <Typography variant="h3">{event.summary}</Typography>
+              {event.isRecurring && (
+                <Stack direction="horizontal" inline>
+                  <Chip icon={<Repeat size={14} color={theme.colors.primary} />}>
+                    {t('event.recurring')}
+                  </Chip>
+                </Stack>
+              )}
+            </Stack>
 
-        {event.talkUrl && (
-          <TouchableOpacity
-            style={[styles.talkBtn, { backgroundColor: theme.colors.talk }]}
-            onPress={() => openTalkRoom(event.talkUrl!)}
-          >
-            <Text style={styles.talkBtnText}>💬 {t('event.joinTalkRoom')}</Text>
-          </TouchableOpacity>
-        )}
+            <List>
+              <Item
+                leading={<Icon size={20}><Clock color={theme.colors.textSecondary} /></Icon>}
+                title={timeStr}
+              />
+              {calendar && (
+                <Item
+                  leading={<Icon size={20}><CalendarDays color={calendar.color} /></Icon>}
+                  title={calendar.displayName}
+                />
+              )}
+              {event.location && (
+                <Item
+                  leading={<Icon size={20}><MapPin color={theme.colors.textSecondary} /></Icon>}
+                  title={event.location}
+                  trailing={
+                    <IconButton
+                      variant="plain"
+                      size={36}
+                      onPress={handleCopyLocation}
+                    >
+                      {copied
+                        ? <Check size={18} color={theme.colors.primary} />
+                        : <Copy size={18} color={theme.colors.textSecondary} />}
+                    </IconButton>
+                  }
+                />
+              )}
+            </List>
 
-        {event.description && (
-          <View style={[styles.section, { borderTopColor: theme.colors.border }]}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.textTertiary }]}>{t('event.description')}</Text>
-            <Text style={[styles.sectionBody, { color: theme.colors.textSecondary }]}>{event.description}</Text>
-          </View>
-        )}
+            {event.talkUrl && (
+              <Button
+                variant="primary"
+                title={t('event.joinTalkRoom')}
+                icon={<Video size={18} color="#fff" />}
+                onPress={() => openTalkRoom(event.talkUrl!)}
+              />
+            )}
 
-        {event.attendees.length > 0 && (
-          <View style={[styles.section, { borderTopColor: theme.colors.border }]}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.textTertiary }]}>{t('event.attendees')}</Text>
-            {event.attendees.map((att) => (
-              <Text key={att.email} style={[styles.attendee, { color: theme.colors.textSecondary }]}>
-                {att.displayName ? `${att.displayName} (${att.email})` : att.email}
-              </Text>
-            ))}
-          </View>
-        )}
+            {event.description && (
+              <Stack gap={8}>
+                <SectionHeader title={t('event.description')} />
+                <Stack card padding={16}>
+                  <Typography variant="body2" color="secondary">{event.description}</Typography>
+                </Stack>
+              </Stack>
+            )}
 
-        <View style={styles.spacer} />
+            {event.attendees.length > 0 && (
+              <Stack gap={8}>
+                <SectionHeader title={t('event.attendees')} />
+                <List>
+                  {event.attendees.map((att) => (
+                    <Item
+                      key={att.email}
+                      leading={<Avatar name={att.displayName ?? att.email} size={36} />}
+                      title={att.displayName ?? att.email}
+                      description={att.displayName ? att.email : undefined}
+                    />
+                  ))}
+                </List>
+              </Stack>
+            )}
+
+          </Stack>
+        </ScrollView>
 
         {canEdit && (
-          <TouchableOpacity
-            style={[styles.deleteBtn, { borderColor: theme.colors.danger }]}
-            onPress={handleDelete}
-            disabled={deleteMutation.isPending}
+          <Stack
+            padding={[20, 12]}
+            style={[styles.footer, { paddingBottom: insets.bottom + 12, borderTopColor: theme.colors.border }]}
           >
-            {deleteMutation.isPending
-              ? <ActivityIndicator color={theme.colors.danger} />
-              : <Text style={[styles.deleteBtnText, { color: theme.colors.danger }]}>{t('event.deleteEvent')}</Text>}
-          </TouchableOpacity>
+            <Button
+              variant="ghost" color="danger"
+              title={t('event.deleteEvent')}
+              icon={<Trash2 size={18} color={theme.colors.danger} />}
+              loading={deleteMutation.isPending}
+              disabled={deleteMutation.isPending}
+              onPress={handleDelete}
+            />
+          </Stack>
         )}
-      </View>
-    </ScrollView>
+      </SafeAreaView>
+    </ViewContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  contentFlex: { flex: 1 },
-  spacer: { flex: 1, minHeight: 40 },
+  flex: { flex: 1 },
   colorBar: { height: 6 },
   content: { padding: 20 },
-  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  backText: { fontSize: 16 },
-  editText: { fontSize: 16, fontWeight: '600' },
-  summary: { fontSize: 24, fontWeight: '700', marginBottom: 8 },
-  meta: { fontSize: 15, marginBottom: 4 },
-  recurringBadge: { fontSize: 13, marginBottom: 4 },
-  calendarName: { fontSize: 14, marginBottom: 16 },
-  field: { fontSize: 15, marginBottom: 12 },
-  talkBtn: {
-    borderRadius: 8, paddingVertical: 12,
-    alignItems: 'center', marginBottom: 16,
-  },
-  talkBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  section: { marginTop: 20, paddingTop: 20, borderTopWidth: StyleSheet.hairlineWidth },
-  sectionTitle: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', marginBottom: 6 },
-  sectionBody: { fontSize: 15, lineHeight: 22 },
-  attendee: { fontSize: 14, marginBottom: 4 },
-  deleteBtn: {
-    marginTop: 40, borderWidth: 1,
-    borderRadius: 8, paddingVertical: 12, alignItems: 'center',
-  },
-  deleteBtnText: { fontSize: 15, fontWeight: '600' },
+  footer: { borderTopWidth: StyleSheet.hairlineWidth },
 });

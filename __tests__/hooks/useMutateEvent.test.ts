@@ -3,7 +3,7 @@ import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
 import { Alert } from 'react-native';
 import React from 'react';
 import { createQueryClient } from '../../src/services/shared/queryClient';
-import { useCreateEvent, useUpdateEvent, useDeleteEvent } from '../../src/hooks/useMutateEvent';
+import { useCreateEvent, useUpdateEvent, useDeleteEvent } from '@/features/event/hooks/useMutateEvent';
 import * as caldav from '../../src/services/nextcloud/caldav';
 import type { Account, CalendarMeta, CalendarEvent, CreateEventInput } from '../../src/types';
 

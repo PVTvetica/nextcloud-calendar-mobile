@@ -1,9 +1,10 @@
 import { memo } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { styles } from '@/styles/calendarScreen';
+import { Menu } from 'lucide-react-native';
 import { useTheme } from '@react-navigation/native';
+import { Stack, Typography, Chip, Icon, AnimatedPressable, Spinner } from '@/ui/components';
 import type { ViewMode } from '@/types';
 import { VIEW_MODES } from '../constants';
 
@@ -26,56 +27,56 @@ const VIEW_MODE_KEYS: Record<ViewMode, string> = {
 };
 
 function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOpenDrawer, onToday, onSwitchMode }: Props) {
-  const theme = useTheme();
+  const { colors } = useTheme();
   const { t } = useTranslation();
+  const todayDisabled = isToday || todayLoading;
 
   return (
     <SafeAreaView
       edges={['top']}
-      style={[styles.headerWrap, { backgroundColor: theme.colors.headerBackground, borderBottomColor: theme.colors.border }]}
+      style={{ backgroundColor: colors.headerBackground, borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth }}
     >
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={onOpenDrawer} style={styles.hamburger}>
-          <Text style={[styles.hamburgerIcon, { color: theme.colors.primary }]}>☰</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>
+      <Stack direction="horizontal" vAlign="center" gap={0} style={styles.headerRow}>
+        <AnimatedPressable onPress={onOpenDrawer} hitSlop={8} style={styles.hamburger}>
+          <Icon size={24}>
+            <Menu color={colors.primary} />
+          </Icon>
+        </AnimatedPressable>
+
+        <Typography
+          variant="body2"
+          weight="700"
+          color="text"
+          align="center"
+          nowrap
+          adjustsFontSizeToFit
+          minimumFontScale={0.8}
+          style={styles.title}
+        >
           {headerTitle}
-        </Text>
-        <TouchableOpacity
-          style={[styles.todayBtn, { opacity: isToday && !todayLoading ? 0.35 : 1 }]}
+        </Typography>
+
+        <AnimatedPressable
           onPress={onToday}
-          disabled={isToday || todayLoading}
+          disabled={todayDisabled}
+          animated={!todayDisabled}
+          style={[styles.todayBtn, { opacity: isToday && !todayLoading ? 0.35 : 1 }]}
         >
           {todayLoading ? (
-            <ActivityIndicator size="small" color={theme.colors.primary} />
+            <Spinner />
           ) : (
-            <Text style={[styles.todayBtnText, { color: theme.colors.primary }]}>{t('calendar.today')}</Text>
+            <Typography variant="body2" color="primary" nowrap adjustsFontSizeToFit minimumFontScale={0.8}>
+              {t('calendar.today')}
+            </Typography>
           )}
-        </TouchableOpacity>
-      </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modePills}>
+        </AnimatedPressable>
+      </Stack>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills}>
         {VIEW_MODES.map((mode) => (
-          <TouchableOpacity
-            key={mode}
-            style={[
-              styles.modeBtn,
-              { backgroundColor: theme.colors.chip },
-              viewMode === mode && { backgroundColor: theme.colors.chipActive },
-            ]}
-            onPress={() => onSwitchMode(mode)}
-          >
-            <Text
-              numberOfLines={1}
-              allowFontScaling={false}
-              style={[
-                styles.modeBtnText,
-                { color: theme.colors.textSecondary },
-                viewMode === mode && { color: theme.colors.primaryText, fontWeight: '600' },
-              ]}
-            >
-              {t(VIEW_MODE_KEYS[mode])}
-            </Text>
-          </TouchableOpacity>
+          <Chip key={mode} rounded active={viewMode === mode} activeColor={colors.chipActive} onPress={() => onSwitchMode(mode)}>
+            {t(VIEW_MODE_KEYS[mode])}
+          </Chip>
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -83,3 +84,11 @@ function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOp
 }
 
 export const CalendarTopBar = memo(CalendarTopBarImpl);
+
+const styles = StyleSheet.create({
+  headerRow: { height: 44, paddingHorizontal: 12, paddingBottom: 4 },
+  hamburger: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginLeft: -4 },
+  title: { flex: 1, marginHorizontal: 4 },
+  todayBtn: { minWidth: 44, height: 44, paddingLeft: 6, alignItems: 'flex-end', justifyContent: 'center' },
+  pills: { paddingHorizontal: 12, paddingBottom: 8, gap: 8 },
+});

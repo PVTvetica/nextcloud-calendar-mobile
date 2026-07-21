@@ -1,6 +1,6 @@
 import type { Account, CalendarMeta, CalendarEvent } from '@/types';
-import { parseIcsObjectsAsync } from '@/utils/caldav-parse';
-import { settleAllOrThrow } from '@/utils/settle';
+import { parseIcsObjectsAsync } from '@/shared/utils/caldav-parse';
+import { settleAllOrThrow } from '@/shared/utils/settle';
 import { httpErrorFrom } from '../shared/errors';
 
 function basicAuth(account: Pick<Account, 'username' | 'appPassword'>): string {
@@ -39,7 +39,7 @@ export function decodeXmlEntities(input: string): string {
 function splitResponses(xml: string): string[] {
   const chunks: string[] = [];
   const re = /<d:response[^>]*>([\s\S]*?)<\/d:response>/g;
-  let m;
+  let m: RegExpExecArray | null;
   while ((m = re.exec(xml)) !== null) chunks.push(m[0]);
   return chunks;
 }
@@ -78,8 +78,7 @@ export async function validateCredentials(params: {
     method: 'PROPFIND',
     headers: { Depth: '0', 'Content-Type': 'application/xml' },
   });
-  if (res.status === 401) throw new Error('401 auth failed');
-  if (res.status !== 207 && !res.ok) throw new Error(`HTTP ${res.status}`);
+  if (res.status !== 207 && !res.ok) throw httpErrorFrom(res, 'validateCredentials');
   return { davUserId: params.username };
 }
 
