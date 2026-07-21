@@ -10,12 +10,12 @@ import { HttpError } from '@/services/shared/errors';
 import { describeMutationError } from '@/services/shared/queryClient';
 import { saveAccount, setActiveAccountId } from '@/services/nextcloud/auth';
 import { fetchUserInfo } from '@/services/nextcloud/nextcloud';
-import { useAppStore } from '@/stores/appStore';
+import { useAccountStore } from '@/stores/accountStore';
 import { QrLoginScanner } from '@/features/account/components/QrLoginScanner';
 import type { NcLoginData } from '@/features/account/components/QrLoginScanner';
 import type { Account } from '@/types';
 import { useTranslation } from 'react-i18next';
-import { LanguageSheet } from '@/shared/components/LanguageSheet';
+import { LanguageSheet } from '@/components/LanguageSheet';
 import {
   ViewContainer, Stack, Typography, Button, TextField, Divider, IconButton,
 } from '@/ui/components';
@@ -25,7 +25,7 @@ export default function SetupScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const setStoreId = useAppStore((s) => s.setActiveAccountId);
+  const setStoreId = useAccountStore((s) => s.setActiveAccountId);
   const { t } = useTranslation();
 
   const [baseUrl, setBaseUrl] = useState('');

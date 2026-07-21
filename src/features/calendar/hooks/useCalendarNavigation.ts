@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
-import { useAppStore } from '@/stores/appStore';
-import { trailingDebounce } from '@/shared/utils/debounce';
+import { useCalendarStore } from '@/stores/calendarStore';
+import { trailingDebounce } from '@/utils/debounce';
 import type { AgendaViewHandle } from '@/features/calendar/components/AgendaView';
 import type { ViewMode } from '@/types';
 import { CAL_MODES, isCalMode, type CalMode } from '../constants';
@@ -9,8 +9,8 @@ import { CAL_MODES, isCalMode, type CalMode } from '../constants';
 const FETCH_DATE_DEBOUNCE_MS = 300;
 
 export function useCalendarNavigation() {
-  const viewMode = useAppStore((s) => s.viewMode);
-  const setViewMode = useAppStore((s) => s.setViewMode);
+  const viewMode = useCalendarStore((s) => s.viewMode);
+  const setViewMode = useCalendarStore((s) => s.setViewMode);
   const isCalendarMode = isCalMode(viewMode);
 
   const [date, setDateState] = useState(new Date());

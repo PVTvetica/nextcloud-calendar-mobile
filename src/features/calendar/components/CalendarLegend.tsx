@@ -1,14 +1,14 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import type { CalendarMeta } from '@/types';
-import { useAppStore } from '@/stores/appStore';
+import { useCalendarStore } from '@/stores/calendarStore';
 
 interface Props {
   calendars: CalendarMeta[];
 }
 
 export function CalendarLegend({ calendars }: Props) {
-  const hiddenCalendarIds = useAppStore((s) => s.hiddenCalendarIds);
-  const toggleCalendarVisibility = useAppStore((s) => s.toggleCalendarVisibility);
+  const hiddenCalendarIds = useCalendarStore((s) => s.hiddenCalendarIds);
+  const toggleCalendarVisibility = useCalendarStore((s) => s.toggleCalendarVisibility);
 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scroll}>

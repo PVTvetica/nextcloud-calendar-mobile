@@ -4,7 +4,7 @@ import type { CalendarHeaderProps, ICalendarEventBase, Mode } from 'react-native
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { useTheme } from 'expo-router';
-import { useAppStore } from '@/stores/appStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 dayjs.extend(isoWeek);
 
@@ -18,7 +18,7 @@ export function FixedCalendarHeader<T extends ICalendarEventBase>({
   headerContainerAccessibilityProps, headerCellAccessibilityProps,
 }: CalendarHeaderProps<T> & { mode: Mode }) {
   const theme = useTheme();
-  const language = useAppStore((s) => s.language);
+  const language = useSettingsStore((s) => s.language);
 
   const { allDaySectionHeight, matchedByDate } = useMemo(() => {
     if (!showAllDayEventCell || allDayEvents.length === 0) {

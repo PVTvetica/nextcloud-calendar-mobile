@@ -1,4 +1,4 @@
-import { trailingDebounce } from '@/shared/utils/debounce';
+import { trailingDebounce } from '@/utils/debounce';
 
 describe('trailingDebounce', () => {
   beforeEach(() => { jest.useFakeTimers(); });

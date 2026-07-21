@@ -21,6 +21,7 @@
     "@tanstack/react-query-persist-client": "^5.100.9",
     "dayjs": "^1.11.20",
     "expo": "^57.0.0",
+    "expo-blob": "^57.0.1",
     "expo-bottom-tabs": "^0.0.2",
     "expo-camera": "~57.0.3",
     "expo-clipboard": "~57.0.1",

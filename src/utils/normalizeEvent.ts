@@ -5,7 +5,7 @@ export function normalizeEvent(e: CalendarEvent): CalendarEvent {
   return {
     ...e,
     dtstart: e.dtstart instanceof Date ? e.dtstart : new Date(e.dtstart as unknown as string),
-    dtend:   e.dtend   instanceof Date ? e.dtend   : new Date(e.dtend   as unknown as string),
+    dtend: e.dtend   instanceof Date ? e.dtend   : new Date(e.dtend   as unknown as string),
   };
 }
 

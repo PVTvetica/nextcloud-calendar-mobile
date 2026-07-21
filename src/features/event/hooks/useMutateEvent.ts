@@ -2,8 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Crypto from 'expo-crypto';
 import { putEvent, updateEvent, deleteEvent, moveEvent, fetchEventIcs } from '@/services/nextcloud/caldav';
 import { createTalkRoom } from '@/services/nextcloud/talk';
-import { buildIcs, buildAllDayIcs, buildExceptionIcs, injectExdate, truncateRruleUntil } from '@/shared/utils/ics';
-import { parseIcsObjects } from '@/shared/utils/caldav-parse';
+import { buildIcs, buildAllDayIcs, buildExceptionIcs, injectExdate, truncateRruleUntil } from '@/utils/ics';
+import { parseIcsObjects } from '@/utils/caldav-parse';
 import type { Account, CalendarMeta, CalendarEvent, CreateEventInput, RecurrenceEditScope } from '@/types';
 import dayjs from 'dayjs';
 import {
@@ -14,7 +14,7 @@ import {
   seriesBaseUid,
   type EventMutationContext,
   type EventMutationMeta,
-} from '@/shared/utils/eventMutationReconcile';
+} from '@/utils/eventMutationReconcile';
 
 const TALK_URL_PATTERN = /\/call\//;
 

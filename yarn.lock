@@ -5289,6 +5289,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-blob@npm:^57.0.1":
+  version: 57.0.1
+  resolution: "expo-blob@npm:57.0.1"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/570d2be3fd50bfa85141e8e31fad3c6666224474f86469486c26bcb0b1a1e2820f1c5bc698623f7d93e472f864970b6e422740360dcf9441fe76985ae6ef9865
+  languageName: node
+  linkType: hard
+
 "expo-bottom-tabs@npm:^0.0.2":
   version: 0.0.2
   resolution: "expo-bottom-tabs@npm:0.0.2"
@@ -8377,6 +8386,7 @@ __metadata:
     "@types/react": "npm:~19.2.10"
     dayjs: "npm:^1.11.20"
     expo: "npm:^57.0.0"
+    expo-blob: "npm:^57.0.1"
     expo-bottom-tabs: "npm:^0.0.2"
     expo-camera: "npm:~57.0.3"
     expo-clipboard: "npm:~57.0.1"

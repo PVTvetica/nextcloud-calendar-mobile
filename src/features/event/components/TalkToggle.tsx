@@ -1,7 +1,7 @@
 import { View, Text, Switch, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'expo-router';
-import { useAppStore } from '@/stores/appStore';
+import { useAccountStore } from '@/stores/accountStore';
 import type { TalkRoomType } from '@/types';
 
 interface Props {
@@ -14,7 +14,7 @@ interface Props {
 export function TalkToggle({ value, onChange, roomType, onRoomTypeChange }: Props) {
   const theme = useTheme();
   const { t } = useTranslation();
-  const talkEnabled = useAppStore((s) => s.capabilities.talkEnabled);
+  const talkEnabled = useAccountStore((s) => s.capabilities.talkEnabled);
 
   if (!talkEnabled) return null;
 

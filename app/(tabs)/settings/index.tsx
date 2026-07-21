@@ -9,9 +9,11 @@ import { CircleQuestionMark, Bug } from 'lucide-react-native';
 import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
 import { loadAccounts, deleteAccount, setActiveAccountId, clearActiveAccountId } from '@/services/nextcloud/auth';
-import { useAppStore, type ThemePreference } from '@/stores/appStore';
+import { useAccountStore } from '@/stores/accountStore';
+import { useCalendarStore } from '@/stores/calendarStore';
+import { useSettingsStore, type ThemePreference } from '@/stores/settingsStore';
 import { AccountCard } from '@/features/account/components/AccountCard';
-import { LanguageSheet } from '@/shared/components/LanguageSheet';
+import { LanguageSheet } from '@/components/LanguageSheet';
 import {
   ViewContainer, Stack, Typography, Chip, Button, Icon, IconButton, Spinner, AnimatedPressable, Accordion, Dialog,
 } from '@/ui/components';
@@ -35,14 +37,14 @@ export default function SettingsScreen() {
   const appVersion = Constants.expoConfig?.version ?? '—';
   const queryClient = useQueryClient();
   const { t } = useTranslation();
-  const activeAccountId = useAppStore((s) => s.activeAccountId);
-  const setStoreId = useAppStore((s) => s.setActiveAccountId);
-  const themePreference = useAppStore((s) => s.themePreference);
-  const setThemePreference = useAppStore((s) => s.setThemePreference);
-  const hourRowHeight = useAppStore((s) => s.hourRowHeight);
-  const setHourRowHeight = useAppStore((s) => s.setHourRowHeight);
-  const weekStartsOn = useAppStore((s) => s.weekStartsOn);
-  const setWeekStartsOn = useAppStore((s) => s.setWeekStartsOn);
+  const activeAccountId = useAccountStore((s) => s.activeAccountId);
+  const setStoreId = useAccountStore((s) => s.setActiveAccountId);
+  const themePreference = useSettingsStore((s) => s.themePreference);
+  const setThemePreference = useSettingsStore((s) => s.setThemePreference);
+  const hourRowHeight = useCalendarStore((s) => s.hourRowHeight);
+  const setHourRowHeight = useCalendarStore((s) => s.setHourRowHeight);
+  const weekStartsOn = useSettingsStore((s) => s.weekStartsOn);
+  const setWeekStartsOn = useSettingsStore((s) => s.setWeekStartsOn);
 
   const [pendingTheme, setPendingTheme] = useState(themePreference);
   const [pendingWeek, setPendingWeek] = useState(weekStartsOn);

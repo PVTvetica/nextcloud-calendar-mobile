@@ -3,10 +3,10 @@ import { View, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions } f
 import { Globe, ChevronUp, ChevronDown, Check } from 'lucide-react-native';
 import CountryFlag from 'react-native-country-flag';
 import { useTranslation } from 'react-i18next';
-import { useAppStore } from '@/stores/appStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useTheme } from 'expo-router';
 import { Typography, AnimatedPressable, Spinner } from '@/ui/components';
-import { LANGUAGES, type AppLanguage } from '@/i18n/languages';
+import { LANGUAGES, type AppLanguage } from '@/utils/i18n';
 
 function Flag({ code, size = 28 }: { code: AppLanguage; size?: number }) {
   const region = LANGUAGES.find((l) => l.code === code)?.region ?? 'US';
@@ -27,8 +27,8 @@ type Anchor = { x: number; y: number; width: number; height: number };
 export function LanguageSheet({ variant = 'row' }: { variant?: 'row' | 'icon' } = {}) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const language = useAppStore((s) => s.language);
-  const setLanguage = useAppStore((s) => s.setLanguage);
+  const language = useSettingsStore((s) => s.language);
+  const setLanguage = useSettingsStore((s) => s.setLanguage);
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const triggerRef = useRef<View>(null);

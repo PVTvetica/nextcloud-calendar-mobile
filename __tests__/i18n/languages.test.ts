@@ -1,4 +1,4 @@
-import {LANGUAGES, SUPPORTED, isSupported, getInitialLanguage} from '../../src/i18n/languages';
+import {LANGUAGES, SUPPORTED, isSupported, getInitialLanguage} from '../../src/utils/i18n';
 
 const mockGetLocales = jest.fn();
 jest.mock('expo-localization', () => ({

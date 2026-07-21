@@ -11,10 +11,10 @@ import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
 import { loadAccounts } from '@/services/nextcloud/auth';
 import { fetchEvents } from '@/services/nextcloud/caldav';
-import { useCalendars } from '@/shared/hooks/useCalendars';
+import { useCalendars } from '@/hooks/useCalendars';
 import { useDeleteEvent } from '@/features/event/hooks/useMutateEvent';
-import { useAppStore } from '@/stores/appStore';
-import { normalizeEvent, normalizeEvents } from '@/shared/utils/normalizeEvent';
+import { useAccountStore } from '@/stores/accountStore';
+import { normalizeEvent, normalizeEvents } from '@/utils/normalizeEvent';
 import { sameDisplayedEvent } from '@/features/event/utils/sameDisplayedEvent';
 import { EVENTS_STALE } from '@/services/shared/queryConfig';
 import {
@@ -80,7 +80,7 @@ export default function EventDetailScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { t } = useTranslation();
-  const activeAccountId = useAppStore((s) => s.activeAccountId);
+  const activeAccountId = useAccountStore((s) => s.activeAccountId);
   const queryClient = useQueryClient();
 
   const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: loadAccounts });

@@ -1,4 +1,4 @@
-import { buildIcs, buildAllDayIcs } from '@/shared/utils/ics';
+import { buildIcs, buildAllDayIcs } from '@/utils/ics';
 import type { Attendee } from '../../src/types';
 
 const base = {

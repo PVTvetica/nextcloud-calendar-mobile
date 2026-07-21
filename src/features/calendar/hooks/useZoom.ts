@@ -3,15 +3,15 @@ import { useFocusEffect } from 'expo-router';
 import { Gesture } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { useAppStore } from '@/stores/appStore';
+import { useCalendarStore } from '@/stores/calendarStore';
 
 const MIN_HOUR_ROW = 30;
 const MAX_HOUR_ROW = 200;
 
 
 export function useZoom() {
-  const hourRowHeight = useAppStore((s) => s.hourRowHeight);
-  const setHourRowHeight = useAppStore((s) => s.setHourRowHeight);
+  const hourRowHeight = useCalendarStore((s) => s.hourRowHeight);
+  const setHourRowHeight = useCalendarStore((s) => s.setHourRowHeight);
 
   const [calendarKey, setCalendarKey] = useState(0);
   const [committedHeight, setCommittedHeight] = useState(hourRowHeight);

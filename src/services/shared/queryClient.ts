@@ -7,9 +7,9 @@ import {
   refetchEventsTargeted,
   type EventMutationContext,
   type EventMutationMeta,
-} from '@/shared/utils/eventMutationReconcile';
+} from '@/utils/eventMutationReconcile';
 import type { CalendarEvent } from '@/types';
-import i18n from '@/i18n';
+import i18n from '@/utils/i18n';
 import { HttpError } from './errors';
 
 function statusOf(error: unknown): number | undefined {

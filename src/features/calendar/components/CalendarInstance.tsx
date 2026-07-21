@@ -1,7 +1,7 @@
 import { memo, useRef, useDeferredValue } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Calendar } from 'react-native-big-calendar';
-import { useAppStore } from '@/stores/appStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { FixedCalendarHeader } from '@/features/calendar/components/CalendarHeader';
 import { resolveFrozenProps } from '../utils/resolveFrozenProps';
 import { ViewLayer } from './ViewLayer';
@@ -30,7 +30,7 @@ interface Props extends LiveProps {
 }
 
 function CalendarInstanceImpl({ mode, calendarKey, visible, ...live }: Props) {
-  const language = useAppStore((s) => s.language);
+  const language = useSettingsStore((s) => s.language);
   const deferredLanguage = useDeferredValue(language);
   const frozen = useRef<LiveProps>(live);
   const { props, nextFrozen } = resolveFrozenProps(visible, live as LiveProps, frozen.current);

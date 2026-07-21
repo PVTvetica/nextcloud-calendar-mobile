@@ -6,14 +6,15 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { useRouter, useTheme } from 'expo-router';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
-import { useAppStore } from '@/stores/appStore';
+import { useCalendarStore } from '@/stores/calendarStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { ViewContainer, Spinner } from '@/ui/components';
 import { CalendarDrawer } from '@/features/calendar/components/CalendarDrawer';
 import { OfflineBanner } from '@/features/calendar/components/OfflineBanner';
 import { MonthDayView } from '@/features/calendar/components/MonthDayView';
 import { AgendaView } from '@/features/calendar/components/AgendaView';
 import { computeOverlapMap } from '@/features/calendar/utils/overlapMap';
-import { createNavigationGuard } from '@/shared/utils/navigationGuard';
+import { createNavigationGuard } from '@/utils/navigationGuard';
 import type { CalendarEvent } from '@/types';
 import { useCalendarNavigation } from '@/features/calendar/hooks/useCalendarNavigation';
 import { useCalendarData } from '@/features/calendar/hooks/useCalendarData';
@@ -36,10 +37,10 @@ export default function CalendarScreen() {
   const theme = useTheme();
   const { t } = useTranslation();
 
-  const weekStartsOn = useAppStore((s) => s.weekStartsOn);
-  const language = useAppStore((s) => s.language);
-  const hiddenCalendarIds = useAppStore((s) => s.hiddenCalendarIds);
-  const toggleCalendarVisibility = useAppStore((s) => s.toggleCalendarVisibility);
+  const weekStartsOn = useSettingsStore((s) => s.weekStartsOn);
+  const language = useSettingsStore((s) => s.language);
+  const hiddenCalendarIds = useCalendarStore((s) => s.hiddenCalendarIds);
+  const toggleCalendarVisibility = useCalendarStore((s) => s.toggleCalendarVisibility);
 
   const nav = useCalendarNavigation();
   const { viewMode, date, fetchDate, agendaVisibleDate, navigateMonth, goToday } = nav;

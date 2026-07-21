@@ -1,6 +1,6 @@
 import React from 'react';
 import { render as rtlRender, screen } from '@testing-library/react-native';
-import { AvatarImage } from '@/shared/components/AvatarImage';
+import { AvatarImage } from '@/components/AvatarImage';
 import { ThemeWrapper } from '../helpers/theme';
 import type { Account } from '../../src/types';
 

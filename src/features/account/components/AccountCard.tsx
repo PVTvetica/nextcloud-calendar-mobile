@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'expo-router';
 import { CircleCheck, Trash2 } from 'lucide-react-native';
-import { AvatarImage } from '@/shared/components/AvatarImage';
+import { AvatarImage } from '@/components/AvatarImage';
 import { Stack, Typography, Icon, IconButton, AnimatedPressable } from '@/ui/components';
 import type { Account } from '@/types';
 
