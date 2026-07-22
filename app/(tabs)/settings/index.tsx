@@ -1,7 +1,6 @@
-import { View, ScrollView, Alert, Modal, Linking, Image } from 'react-native';
-import { useDeferredValue, useState, useEffect, useCallback } from 'react';
+import { ScrollView, Alert, Linking, Image } from 'react-native';
+import { useDeferredValue, useState, useEffect, useCallback, useContext } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useBottomTabBarHeight } from 'expo-router/js-tabs';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { CircleQuestionMark, Bug } from 'lucide-react-native';
@@ -68,8 +67,6 @@ export default function SettingsScreen() {
     : hourRowHeight <= 120 ? t('settings.zoom.expanded')
     : t('settings.zoom.large');
 
-  const tabBarHeight = useBottomTabBarHeight();
-
   const accounts = useAccounts();
 
   async function handleSetActive(id: string) {
@@ -131,7 +128,7 @@ export default function SettingsScreen() {
           <Button variant="link" color="text" title={t('common.close')} onPress={() => setAboutVisible(false)} />
         </Dialog>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight + 16, paddingTop: 8 }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ paddingBottom: 16, paddingTop: 8 }} keyboardShouldPersistTaps="handled">
           <Accordion title={t('settings.appearance')} open={appearanceOpen} onToggle={() => setAppearanceOpen((o) => !o)}>
             <Stack card gap={12} padding={16} hAlign="stretch" style={cardOuter}>
               <Typography variant="body1">{t('settings.theme')}</Typography>

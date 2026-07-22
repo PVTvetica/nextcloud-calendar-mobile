@@ -9,7 +9,7 @@ function ViewLayerImpl({ visible, style, children, ...rest }: Props) {
   return (
     <View
       {...rest}
-      style={[StyleSheet.absoluteFill, { opacity: visible ? 1 : 0, zIndex: visible ? 1 : 0 }, style]}
+      style={[StyleSheet.absoluteFill, { display: visible ? 'flex' : 'none' }, style]}
       pointerEvents={visible ? 'auto' : 'none'}
     >
       {children}

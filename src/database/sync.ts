@@ -211,7 +211,9 @@ export async function syncCalendarDelta(account: Account, calendar: CalendarMeta
 
     if (fullSync) {
       const changedSet = new Set(result.changed);
-      const existing = await events.query(Q.where('calendar_id', calendar.id)).fetch();
+      const existing = await events
+        .query(Q.where('account_id', account.id), Q.where('calendar_id', calendar.id))
+        .fetch();
       if (result.changed.length > 0) {
         for (const r of existing) {
           if (!changedSet.has(r.href) || fetchedHrefs.has(r.href)) {
