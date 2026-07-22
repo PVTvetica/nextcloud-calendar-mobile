@@ -28,6 +28,12 @@ export function useCalendarData(date: Date) {
 
   useEffect(() => {
     if (!activeAccount || calendars.length === 0) return;
+    if (calendars.some((c) => c.accountId !== activeAccount.id)) {
+      if (__DEV__) {
+        console.warn('[useCalendarData] stale calendars for account, skipping sync', activeAccount.id);
+      }
+      return;
+    }
     let active = true;
     setSyncing(true);
     (async () => {

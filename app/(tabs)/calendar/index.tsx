@@ -29,8 +29,30 @@ import { CalendarFab } from '@/features/calendar/components/CalendarFab';
 import { CalendarLoadingOverlay } from '@/features/calendar/components/CalendarLoadingOverlay';
 import { toBigCalendarEvents } from '@/features/calendar/utils/toCalendarEvents';
 import { isCalMode } from '@/features/calendar/constants';
+import { lightTheme, darkTheme, type ThemeColors } from '@/theme';
 
 dayjs.extend(isoWeek);
+
+function makeBigCalendarTheme(colors: ThemeColors) {
+  return {
+    palette: {
+      primary: { main: colors.primary },
+      gray: {
+        '100': colors.borderSubtle,
+        '200': colors.border,
+        '500': colors.textSecondary,
+        '800': colors.text,
+      },
+    },
+    typography: {
+      xs: { fontSize: 12, lineHeight: 15 },
+      sm: { fontSize: 13, lineHeight: 17 },
+    },
+  };
+}
+
+const BIG_CAL_THEME_LIGHT = makeBigCalendarTheme(lightTheme.colors);
+const BIG_CAL_THEME_DARK = makeBigCalendarTheme(darkTheme.colors);
 
 export default function CalendarScreen() {
   const router = useRouter();
@@ -115,25 +137,7 @@ export default function CalendarScreen() {
     [theme.colors.primary]
   );
 
-  const bigCalendarTheme = useMemo(
-    () => ({
-      palette: {
-        primary: { main: theme.colors.primary },
-        gray: {
-          '100': theme.colors.borderSubtle,
-          '200': theme.colors.border,
-          '500': theme.colors.textSecondary,
-          '800': theme.colors.text,
-        },
-      },
-      // Larger hour-guide / time labels for a more readable week view.
-      typography: {
-        xs: { fontSize: 12, lineHeight: 15 },
-        sm: { fontSize: 13, lineHeight: 17 },
-      },
-    }),
-    [theme.colors.primary, theme.colors.borderSubtle, theme.colors.border, theme.colors.textSecondary, theme.colors.text]
-  );
+  const bigCalendarTheme = theme.dark ? BIG_CAL_THEME_DARK : BIG_CAL_THEME_LIGHT;
 
   const isToday = viewMode === 'schedule'
     ? dayjs(agendaVisibleDate).isSame(dayjs(), 'day')

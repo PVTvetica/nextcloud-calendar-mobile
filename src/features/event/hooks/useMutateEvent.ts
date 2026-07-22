@@ -136,26 +136,24 @@ export function useCreateEvent(account: Account, calendars: CalendarMeta[]) {
       const calendar = resolveCalendar(calendars, input.calendarId);
       if (!calendar) return;
 
-      const tempBase = `optimistic-${Crypto.randomUUID()}`;
+      const uid = Crypto.randomUUID();
       const optimistic = input.rrule
-        ? expandOccurrences(tempBase, input, calendar, account)
-        : [eventFromInput(tempBase, input, calendar, account)];
+        ? expandOccurrences(uid, input, calendar, account)
+        : [eventFromInput(uid, input, calendar, account)];
       await insertEvents(optimistic);
 
       try {
         const resolved = await resolveLocationAndDescription(account, input);
         const timezone = resolveTimezone(account);
-        const uid = Crypto.randomUUID();
         const ics = buildIcsForInput(uid, input, resolved.location, resolved.description, timezone);
         await putEvent(account, calendar, uid, ics);
 
-        await removeWhere(account.id, (e) => seriesBaseUid(e.uid) === tempBase);
         const real = input.rrule
           ? expandOccurrences(uid, input, calendar, account)
           : [eventFromInput(uid, input, calendar, account, resolved)];
         await insertEvents(real);
       } catch (error) {
-        await removeWhere(account.id, (e) => seriesBaseUid(e.uid) === tempBase);
+        await removeWhere(account.id, (e) => seriesBaseUid(e.uid) === uid);
         Alert.alert(i18n.t('event.errorCreateFailed'), describeMutationError(error));
       }
     }, [account, calendars]),
