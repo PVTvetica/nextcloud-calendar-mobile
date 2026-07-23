@@ -23,16 +23,18 @@ describe('buildIcs', () => {
     expect(ics).toContain('END:VCALENDAR\r\n');
   });
 
-  it('emits DTSTART and DTEND with TZID in the given timezone', () => {
-    const ics = buildIcs(base);
-    expect(ics).toContain('DTSTART;TZID=UTC:20260601T140000\r\n');
-    expect(ics).toContain('DTEND;TZID=UTC:20260601T150000\r\n');
+  it('writes non-recurring timed events in UTC (self-contained, no TZID)', () => {
+    const ics = buildIcs({ ...base, timezone: 'Europe/Paris' });
+    expect(ics).toContain('DTSTART:20260601T140000Z\r\n');
+    expect(ics).toContain('DTEND:20260601T150000Z\r\n');
+    expect(ics).not.toContain('TZID');
   });
 
-  it('converts UTC dates to local time when timezone is Europe/Paris (UTC+2 in June)', () => {
-    const ics = buildIcs({ ...base, timezone: 'Europe/Paris' });
+  it('recurring events keep their anchor zone via TZID', () => {
+    const ics = buildIcs({ ...base, timezone: 'Europe/Paris', rrule: { freq: 'WEEKLY' } });
     expect(ics).toContain('DTSTART;TZID=Europe/Paris:20260601T160000\r\n');
     expect(ics).toContain('DTEND;TZID=Europe/Paris:20260601T170000\r\n');
+    expect(ics).toContain('RRULE:FREQ=WEEKLY\r\n');
   });
 
   it('encodes UID correctly', () => {

@@ -7,7 +7,7 @@ import { putEvent, updateEvent, deleteEvent, moveEvent, fetchEventIcs } from '@/
 import { createTalkRoom } from '@/services/nextcloud/talk';
 import { describeMutationError } from '@/services/shared/errors';
 import { buildIcs, buildAllDayIcs, buildExceptionIcs, injectExdate, truncateRruleUntil } from '@/utils/ics';
-import { parseIcsObjects } from '@/utils/caldav-parse';
+import { parseIcsObjects, extractDtstartTzid } from '@/utils/caldav-parse';
 import i18n from '@/utils/i18n';
 import {
   insertEvents,
@@ -194,9 +194,16 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
 
       try {
         const { location, description } = await resolveLocationAndDescription(account, input);
-        const timezone = resolveTimezone(account);
+        let timezone = resolveTimezone(account);
 
         if (!event.isRecurring || scope === 'all') {
+          if (event.isRecurring) {
+            try {
+              const masterIcs = await fetchEventIcs(account, event.href);
+              timezone = extractDtstartTzid(masterIcs) ?? timezone;
+            } catch {
+            }
+          }
           const ics = buildIcsForInput(event.uid, input, location, description, timezone);
           await updateEvent(account, event.href, ics);
           if (!event.isRecurring && input.calendarId !== event.calendarId) {

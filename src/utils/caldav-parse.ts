@@ -1,6 +1,7 @@
 import ICAL from 'ical.js';
 import type { CalendarEvent, Attendee } from '@/types';
 import { yieldToUI } from '@/utils/scheduling';
+import { isValidTimeZone, zonedWallTimeToUtc } from '@/utils/timezone';
 
 interface ParseCalMeta {
   calendarId: string;
@@ -13,11 +14,22 @@ const TALK_URL_PATTERN = /\/call\//;
 const MAX_OCCURRENCES = 1000;
 
 
-function icalTimeToDate(t: ICAL.Time, isEnd = false): Date {
+function eventTzid(vevent: ICAL.Component): string | undefined {
+  const raw = vevent.getFirstProperty('dtstart')?.getParameter('tzid');
+  if (typeof raw !== 'string' || !raw) return undefined;
+  if (isValidTimeZone(raw)) return raw;
+  console.warn(`[caldav-parse] unresolvable TZID "${raw}", falling back to ical.js`);
+  return undefined;
+}
+
+function resolveInstant(t: ICAL.Time, tzid: string | undefined, isEnd = false): Date {
   if (t.isDate) {
     return isEnd
       ? new Date(t.year, t.month - 1, t.day - 1)
       : new Date(t.year, t.month - 1, t.day);
+  }
+  if (tzid) {
+    return zonedWallTimeToUtc(t.year, t.month, t.day, t.hour, t.minute, t.second, tzid);
   }
   return t.toJSDate();
 }
@@ -41,6 +53,7 @@ export function parseIcsItem(
       if (vevent.getFirstPropertyValue('recurrence-id')) continue;
 
       const icalEvent = new ICAL.Event(vevent, { strictExceptions: false });
+      const tzid = eventTzid(vevent);
 
       const attendees: Attendee[] = vevent.getAllProperties('attendee').map((prop: ICAL.Property) => {
         const value = (prop.getFirstValue() as string) ?? '';
@@ -89,7 +102,7 @@ export function parseIcsItem(
         let nextTime: ICAL.Time;
 
         while ((nextTime = iter.next()) && emitted < MAX_OCCURRENCES) {
-          const occStart = icalTimeToDate(nextTime);
+          const occStart = resolveInstant(nextTime, tzid);
 
           if (rangeEnd && occStart >= rangeEnd) break;
 
@@ -97,7 +110,7 @@ export function parseIcsItem(
 
           const details = icalEvent.getOccurrenceDetails(nextTime);
           const occAllDay = details.startDate.isDate;
-          const occEnd = icalTimeToDate(details.endDate, true);
+          const occEnd = resolveInstant(details.endDate, tzid, true);
 
           if (rangeStart && occEnd <= rangeStart) continue;
 
@@ -114,15 +127,22 @@ export function parseIcsItem(
       } else {
         events.push({
           ...base,
-          dtstart: icalTimeToDate(icalEvent.startDate),
-          dtend: icalTimeToDate(icalEvent.endDate, true),
+          dtstart: resolveInstant(icalEvent.startDate, tzid),
+          dtend: resolveInstant(icalEvent.endDate, tzid, true),
         });
       }
     }
-  } catch {
+  } catch (error) {
+    console.warn(`[caldav-parse] failed to parse ICS (${href}):`, error);
   }
 
   return events;
+}
+
+export function extractDtstartTzid(ics: string): string | undefined {
+  const m = ics.match(/^DTSTART[^:\r\n]*;TZID=([^:;\r\n]+)/m);
+  const tzid = m?.[1];
+  return tzid && isValidTimeZone(tzid) ? tzid : undefined;
 }
 
 export function parseIcsObjects(
