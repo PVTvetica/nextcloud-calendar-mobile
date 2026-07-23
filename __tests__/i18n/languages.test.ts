@@ -6,9 +6,9 @@ jest.mock('expo-localization', () => ({
 }));
 
 describe('languages catalog', () => {
-    it('exposes the six supported codes', () => {
-        expect(SUPPORTED).toEqual(['en', 'fr', 'de', 'es', 'ru', 'it']);
-        expect(LANGUAGES.map((l) => l.code)).toEqual(['en', 'fr', 'de', 'es', 'ru', 'it']);
+    it('exposes the eight supported codes', () => {
+        expect(SUPPORTED).toEqual(['en', 'fr', 'de', 'es', 'ru', 'it', 'pt', 'nl']);
+        expect(LANGUAGES.map((l) => l.code)).toEqual(['en', 'fr', 'de', 'es', 'ru', 'it', 'pt', 'nl']);
     });
 
     it('every language has a non-empty native label', () => {
@@ -17,7 +17,8 @@ describe('languages catalog', () => {
 
     it('isSupported guards unknown and empty codes', () => {
         expect(isSupported('fr')).toBe(true);
-        expect(isSupported('pt')).toBe(false);
+        expect(isSupported('pt')).toBe(true);
+        expect(isSupported('zz')).toBe(false);
         expect(isSupported(null)).toBe(false);
         expect(isSupported(undefined)).toBe(false);
     });
@@ -28,7 +29,7 @@ describe('languages catalog', () => {
     });
 
     it('getInitialLanguage falls back to en for unsupported locales', () => {
-        mockGetLocales.mockReturnValue([{languageCode: 'pt'}]);
+        mockGetLocales.mockReturnValue([{languageCode: 'zz'}]);
         expect(getInitialLanguage()).toBe('en');
     });
 
