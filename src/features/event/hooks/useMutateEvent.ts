@@ -21,17 +21,25 @@ import type { Account, CalendarMeta, CalendarEvent, CreateEventInput, Recurrence
 
 const TALK_URL_PATTERN = /\/call\//;
 
-/** Minimal { mutate, isPending } shim replacing TanStack's useMutation. */
-function useAction<V>(run: (value: V) => Promise<void>): { mutate: (value: V) => void; isPending: boolean } {
+function useAction<V>(run: (value: V) => Promise<void>): {
+  mutate: (value: V) => void;
+  mutateAsync: (value: V) => Promise<void>;
+  isPending: boolean;
+} {
   const [isPending, setIsPending] = useState(false);
-  const mutate = useCallback(
-    (value: V) => {
+  const mutateAsync = useCallback(
+    async (value: V) => {
       setIsPending(true);
-      run(value).finally(() => setIsPending(false));
+      try {
+        await run(value);
+      } finally {
+        setIsPending(false);
+      }
     },
     [run],
   );
-  return { mutate, isPending };
+  const mutate = useCallback((value: V) => { void mutateAsync(value); }, [mutateAsync]);
+  return { mutate, mutateAsync, isPending };
 }
 
 function resolveTimezone(account: Account): string {

@@ -25,9 +25,9 @@ export default function NewEventScreen() {
 
   const createMutation = useCreateEvent(activeAccount!, calendars);
 
-  function handleSubmit(input: CreateEventInput) {
+  async function handleSubmit(input: CreateEventInput) {
     if (!activeAccount) return;
-    createMutation.mutate(input);
+    await createMutation.mutateAsync(input);
     if (router.canGoBack()) router.back();
     else router.replace('/(tabs)/calendar');
   }

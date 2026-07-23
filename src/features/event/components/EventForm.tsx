@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { View, StyleSheet, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, StyleSheet, ScrollView, Platform, KeyboardAvoidingView, useWindowDimensions } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
@@ -8,7 +8,7 @@ import { useTheme } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { TalkToggle } from './TalkToggle';
 import { RecurrencePicker } from './RecurrencePicker';
-import { Stack, Typography, TextField, Button, Chip, Toggle, IconButton } from '@/ui/components';
+import { Stack, Typography, TextField, DateField, Button, Chip, Toggle, IconButton } from '@/ui/components';
 import type { CalendarMeta, Attendee, CreateEventInput, RecurrenceRule, TalkRoomType } from '@/types';
 
 dayjs.extend(localizedFormat);
@@ -47,6 +47,8 @@ export function EventForm({
 }: Props) {
   const theme = useTheme();
   const { t } = useTranslation();
+  // Tablet: lay Start and End side by side; phone: stacked.
+  const twoColDates = useWindowDimensions().width >= 600;
 
   const [summary, setSummary] = useState(initialValues?.summary ?? '');
   const writableCalendars = calendars.filter((c) => !c.isReadOnly && !c.isSubscribed);
@@ -68,7 +70,9 @@ export function EventForm({
   const [attendeeInput, setAttendeeInput] = useState('');
   const [attendees, setAttendees] = useState<Attendee[]>(initialValues?.attendees ?? []);
   const [rrule, setRrule] = useState<RecurrenceRule | undefined>(initialValues?.rrule);
-  const [error, setError] = useState<string | null>(null);
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
+  const [endError, setEndError] = useState<string | null>(null);
 
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
@@ -123,6 +127,7 @@ export function EventForm({
       if (allDay) return dayjs(prevEnd).isBefore(dayjs(d), 'day') ? d : prevEnd;
       return prevEnd > d ? prevEnd : dayjs(d).add(1, 'hour').toDate();
     });
+    setEndError(null);
   }
 
   function applyEnd(d: Date) {
@@ -132,11 +137,15 @@ export function EventForm({
       setDtstart(allDay ? d : dayjs(d).subtract(1, 'hour').toDate());
       return;
     }
-    // Clamp: the end can't be before the start.
-    if (allDay) {
-      setDtend(dayjs(d).isBefore(dayjs(dtstart), 'day') ? dtstart : d);
+    const invalid = allDay
+      ? dayjs(d).isBefore(dayjs(dtstart), 'day')
+      : d <= dtstart;
+    if (invalid) {
+      setDtend(allDay ? dtstart : dayjs(dtstart).add(1, 'hour').toDate());
+      setEndError(t('event.errorEndAfterStart'));
     } else {
-      setDtend(d > dtstart ? d : dayjs(dtstart).add(1, 'hour').toDate());
+      setDtend(d);
+      setEndError(null);
     }
   }
 
@@ -188,22 +197,51 @@ export function EventForm({
   }
 
   function handleSubmit() {
-    if (!summary.trim()) { setError(t('event.errorTitleRequired')); return; }
-    if (!calendarId) { setError(t('event.errorSelectCalendar')); return; }
+    setTitleError(null);
+    setCalendarError(null);
+    if (!summary.trim()) { setTitleError(t('event.errorTitleRequired')); return; }
+    if (!calendarId) { setCalendarError(t('event.errorSelectCalendar')); return; }
     if (allDay) {
       if (dayjs(dtend).startOf('day').isBefore(dayjs(dtstart).startOf('day'))) {
-        setError(t('event.errorEndAfterStart')); return;
+        setEndError(t('event.errorEndAfterStart')); return;
       }
     } else if (dtend <= dtstart) {
-      setError(t('event.errorEndAfterStart')); return;
+      setEndError(t('event.errorEndAfterStart')); return;
     }
-    setError(null);
     onSubmit({
       summary: summary.trim(), calendarId, dtstart, dtend, allDay,
       description, location, attendees, withTalkRoom, talkRoomType,
       organizerEmail, organizerName, rrule,
     });
   }
+
+  const startBlock = (
+    <View style={twoColDates ? styles.grow : undefined}>
+      <DateField
+        label={t('event.start')}
+        value={dayjs(dtstart).format('ddd ll')}
+        time={allDay ? undefined : dayjs(dtstart).format('LT')}
+        onPress={openStartPicker}
+      />
+      {Platform.OS === 'ios' && showStartPicker && (
+        <DateTimePicker value={dtstart} mode={allDay ? 'date' : 'datetime'} onChange={handleIosStartChange} />
+      )}
+    </View>
+  );
+  const endBlock = (
+    <View style={twoColDates ? styles.grow : undefined}>
+      <DateField
+        label={t('event.end')}
+        value={dayjs(dtend).format('ddd ll')}
+        time={allDay ? undefined : dayjs(dtend).format('LT')}
+        onPress={openEndPicker}
+        error={endError ?? undefined}
+      />
+      {Platform.OS === 'ios' && showEndPicker && (
+        <DateTimePicker value={dtend} mode={allDay ? 'date' : 'datetime'} onChange={handleIosEndChange} />
+      )}
+    </View>
+  );
 
   const androidPickerMode = androidStep?.step === 'time' ? 'time' : 'date';
   const androidPickerValue = androidStep?.step === 'time' && androidStep.partial
@@ -224,8 +262,9 @@ export function EventForm({
           <TextField
             label={t('event.titleLabel')}
             value={summary}
-            onChangeText={setSummary}
+            onChangeText={(v) => { setSummary(v); if (titleError) setTitleError(null); }}
             placeholder={t('event.titlePlaceholder')}
+            error={titleError ?? undefined}
             onFocus={() => scrollToField('title')}
           />
         </View>
@@ -243,12 +282,15 @@ export function EventForm({
                 active={calendarId === cal.id}
                 activeColor={cal.color}
                 disabled={disableCalendarChange}
-                onPress={() => setCalendarId(cal.id)}
+                onPress={() => { setCalendarId(cal.id); if (calendarError) setCalendarError(null); }}
               >
                 {cal.displayName}
               </Chip>
             ))}
           </ScrollView>
+          {calendarError ? (
+            <Typography variant="caption" color="danger">{calendarError}</Typography>
+          ) : null}
           {disableCalendarChange && (
             <Typography variant="caption" color="secondary">{t('event.calendarLockedRecurring')}</Typography>
           )}
@@ -257,33 +299,14 @@ export function EventForm({
         <Stack direction="horizontal" vAlign="center" hAlign="center">
           <Typography variant="body2" color="secondary">{t('event.allDay')}</Typography>
           <View style={styles.pushRight}>
-            <Toggle value={allDay} onValueChange={setAllDay} />
+            <Toggle value={allDay} onValueChange={(v) => { setAllDay(v); setEndError(null); }} />
           </View>
         </Stack>
 
-        <Stack gap={6}>
-          <Typography variant="body2" color="secondary">{t('event.start')}</Typography>
-          <Button
-            variant="secondary" color="text" alignment="start"
-            title={allDay ? dayjs(dtstart).format('ll') : dayjs(dtstart).format('lll')}
-            onPress={openStartPicker}
-          />
+        <Stack direction={twoColDates ? 'horizontal' : 'vertical'} gap={twoColDates ? 12 : 16}>
+          {startBlock}
+          {endBlock}
         </Stack>
-        {Platform.OS === 'ios' && showStartPicker && (
-          <DateTimePicker value={dtstart} mode={allDay ? 'date' : 'datetime'} onChange={handleIosStartChange} />
-        )}
-
-        <Stack gap={6}>
-          <Typography variant="body2" color="secondary">{t('event.end')}</Typography>
-          <Button
-            variant="secondary" color="text" alignment="start"
-            title={allDay ? dayjs(dtend).format('ll') : dayjs(dtend).format('lll')}
-            onPress={openEndPicker}
-          />
-        </Stack>
-        {Platform.OS === 'ios' && showEndPicker && (
-          <DateTimePicker value={dtend} mode={allDay ? 'date' : 'datetime'} onChange={handleIosEndChange} />
-        )}
 
         {Platform.OS === 'android' && androidStep !== null && (
           <DateTimePicker
@@ -361,8 +384,6 @@ export function EventForm({
           roomType={talkRoomType}
           onRoomTypeChange={setTalkRoomType}
         />
-
-        {error ? <Typography variant="caption" color="danger">{error}</Typography> : null}
 
         <Button
           variant="primary"

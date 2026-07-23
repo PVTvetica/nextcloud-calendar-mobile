@@ -148,8 +148,8 @@ export default function EventDetailScreen() {
           { text: t('common.cancel'), style: 'cancel' },
           {
             text: t('event.delete'), style: 'destructive',
-            onPress: () => {
-              deleteMutation.mutate({ event, scope });
+            onPress: async () => {
+              await deleteMutation.mutateAsync({ event, scope });
               if (router.canGoBack()) router.back();
               else router.replace('/(tabs)/calendar');
             },

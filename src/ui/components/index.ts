@@ -9,6 +9,7 @@ export { default as ViewContainer } from './ViewContainer';
 export { default as Item } from './Item';
 export { default as List } from './List';
 export { default as TextField } from './TextField';
+export { default as DateField } from './DateField';
 export { default as Toggle } from './Toggle';
 export { default as Divider } from './Divider';
 export { default as Spinner } from './Spinner';

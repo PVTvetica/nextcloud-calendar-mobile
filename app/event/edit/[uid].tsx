@@ -47,9 +47,9 @@ export default function EditEventScreen() {
 
   const updateMutation = useUpdateEvent(activeAccount!, calendars);
 
-  function handleSubmit(input: CreateEventInput) {
+  async function handleSubmit(input: CreateEventInput) {
     if (!activeAccount || !event) return;
-    updateMutation.mutate({ event, input, scope });
+    await updateMutation.mutateAsync({ event, input, scope });
     if (router.canGoBack()) router.back();
     else router.replace('/(tabs)/calendar');
   }
