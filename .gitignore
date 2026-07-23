@@ -37,9 +37,16 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# generated native folders
-/ios
-/android
+ios/
+!ios/NextcloudCalendar
+!ios/NextcloudCalendar.xcodeproj/xcshareddata/xcschemes
+ios/Podfile
+android/**
+android/*
+!android/app/
+!android/app/src/
+!android/app/src/main/
+!android/app/src/main/AndroidManifest.xml
 
 .claude
 .superpowers
