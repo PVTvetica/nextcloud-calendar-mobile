@@ -1,11 +1,21 @@
 import { useRef, useState, useDeferredValue } from 'react';
-import { View, Text, TouchableOpacity, Modal, Pressable, ScrollView, ActivityIndicator, StyleSheet, Dimensions } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { View, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
+import { Globe, ChevronUp, ChevronDown, Check } from 'lucide-react-native';
+import CountryFlag from 'react-native-country-flag';
 import { useTranslation } from 'react-i18next';
-import { useAppStore } from '@/store/appStore';
-import { useTheme } from '@/hooks/useTheme';
-import { LANGUAGES, type AppLanguage } from '@/i18n/languages';
-import { Flag } from '@/i18n/flags';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { useTheme } from 'expo-router';
+import { Typography, AnimatedPressable, Spinner } from '@/ui/components';
+import { LANGUAGES, type AppLanguage } from '@/utils/i18n';
+
+function Flag({ code, size = 28 }: { code: AppLanguage; size?: number }) {
+  const region = LANGUAGES.find((l) => l.code === code)?.region ?? 'US';
+  return (
+    <View style={[styles.flagCircle, { width: size, height: size, borderRadius: size / 2 }]}>
+      <CountryFlag isoCode={region.toLowerCase()} size={size} />
+    </View>
+  );
+}
 
 const ROW_HEIGHT = 58;
 const MAX_VISIBLE = 5;
@@ -15,10 +25,10 @@ const ICON_DROPDOWN_WIDTH = 240;
 type Anchor = { x: number; y: number; width: number; height: number };
 
 export function LanguageSheet({ variant = 'row' }: { variant?: 'row' | 'icon' } = {}) {
-  const theme = useTheme();
+  const { colors } = useTheme();
   const { t } = useTranslation();
-  const language = useAppStore((s) => s.language);
-  const setLanguage = useAppStore((s) => s.setLanguage);
+  const language = useSettingsStore((s) => s.language);
+  const setLanguage = useSettingsStore((s) => s.setLanguage);
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const triggerRef = useRef<View>(null);
@@ -38,7 +48,7 @@ export function LanguageSheet({ variant = 'row' }: { variant?: 'row' | 'icon' } 
     if (code !== language) setLanguage(code);
   }
 
-  const screenH = Dimensions.get('window').height;
+  const { height: screenH } = useWindowDimensions();
   const a = anchor;
   let dropdownPos: Record<string, number>;
   if (!a) {
@@ -54,59 +64,61 @@ export function LanguageSheet({ variant = 'row' }: { variant?: 'row' | 'icon' } 
 
   return (
     <View>
-      {variant === 'icon' ? (
-        <TouchableOpacity
-          ref={triggerRef}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.language')}
-          accessibilityState={{ expanded: open }}
-          hitSlop={10}
-          onPress={toggle}
-        >
-          {switching
-            ? <ActivityIndicator size="small" color={theme.textSecondary} />
-            : <Ionicons name="globe-outline" size={24} color={theme.textSecondary} />}
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity
-          ref={triggerRef}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.language')}
-          accessibilityState={{ expanded: open }}
-          style={[styles.trigger, { backgroundColor: theme.surface, borderColor: open ? theme.primary : theme.border }]}
-          onPress={toggle}
-        >
-          <Flag code={active.code} size={26} />
-          <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>{active.label}</Text>
-          <Text style={[styles.code, { color: theme.textTertiary }]}>({active.region})</Text>
-          <View style={styles.spacer} />
-          {switching
-            ? <ActivityIndicator size="small" color={theme.primary} />
-            : <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={20} color={theme.textTertiary} />}
-        </TouchableOpacity>
-      )}
+      <View ref={triggerRef} collapsable={false}>
+        {variant === 'icon' ? (
+          <AnimatedPressable
+            accessibilityRole="button"
+            accessibilityLabel={t('common.language')}
+            accessibilityState={{ expanded: open }}
+            hitSlop={10}
+            onPress={toggle}
+          >
+            {switching
+              ? <Spinner size="small" color="secondary" />
+              : <Globe size={24} color={colors.textSecondary} />}
+          </AnimatedPressable>
+        ) : (
+          <AnimatedPressable
+            accessibilityRole="button"
+            accessibilityLabel={t('common.language')}
+            accessibilityState={{ expanded: open }}
+            style={[styles.trigger, { backgroundColor: colors.surface, borderColor: open ? colors.primary : colors.border }]}
+            onPress={toggle}
+          >
+            <Flag code={active.code} size={26} />
+            <Typography variant="body1" color="text" nowrap style={styles.name}>{active.label}</Typography>
+            <Typography color={colors.textTertiary} weight="400" style={styles.code}>({active.region})</Typography>
+            <View style={styles.spacer} />
+            {switching
+              ? <Spinner size="small" />
+              : open
+                ? <ChevronUp size={20} color={colors.textTertiary} />
+                : <ChevronDown size={20} color={colors.textTertiary} />}
+          </AnimatedPressable>
+        )}
+      </View>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
-        <View style={[styles.dropdown, dropdownPos, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View style={[styles.dropdown, dropdownPos, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <ScrollView style={{ maxHeight: MAX_LIST_HEIGHT }} bounces={false}>
             {LANGUAGES.map((l, i) => (
-              <TouchableOpacity
+              <AnimatedPressable
                 key={l.code}
                 accessibilityRole="button"
                 accessibilityState={{ selected: l.code === language }}
                 style={[
                   styles.option,
-                  i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border },
+                  i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
                 ]}
                 onPress={() => select(l.code)}
               >
                 <Flag code={l.code} size={30} />
-                <Text style={[styles.name, { color: theme.text }]}>{l.label}</Text>
-                <Text style={[styles.code, { color: theme.textTertiary }]}>({l.region})</Text>
+                <Typography variant="body1" color="text" style={styles.name}>{l.label}</Typography>
+                <Typography color={colors.textTertiary} weight="400" style={styles.code}>({l.region})</Typography>
                 <View style={styles.spacer} />
-                {l.code === language && <Ionicons name="checkmark" size={20} color={theme.primary} />}
-              </TouchableOpacity>
+                {l.code === language && <Check size={20} color={colors.primary} />}
+              </AnimatedPressable>
             ))}
           </ScrollView>
         </View>
@@ -144,4 +156,10 @@ const styles = StyleSheet.create({
   name: { fontSize: 16, marginLeft: 14 },
   code: { fontSize: 15, marginLeft: 6 },
   spacer: { flex: 1 },
+  flagCircle: {
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.04)',
+  },
 });

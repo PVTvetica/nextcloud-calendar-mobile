@@ -1,5 +1,5 @@
-import { parseIcsObjects, parseIcsObjectsAsync } from '../../src/utils/caldav-parse';
-import { buildAllDayIcs } from '../../src/utils/ics';
+import { parseIcsObjects, parseIcsObjectsAsync } from '@/utils/caldav-parse';
+import { buildAllDayIcs } from '@/utils/ics';
 
 const sampleIcs = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -97,7 +97,6 @@ describe('parseIcsObjects', () => {
     expect(event.dtstart.getFullYear()).toBe(2026);
     expect(event.dtstart.getMonth()).toBe(5);
     expect(event.dtstart.getDate()).toBe(15);
-    // iCal DTEND 18 is exclusive -> inclusive last day is 17
     expect(event.dtend.getDate()).toBe(17);
   });
 
@@ -128,6 +127,33 @@ describe('parseIcsObjects', () => {
   it('handles multiple ICS strings', () => {
     const events = parseIcsObjects([{ ics: sampleIcs, href: '/cal/s.ics' }, { ics: allDayIcs, href: '/cal/a.ics' }], calMeta);
     expect(events).toHaveLength(2);
+  });
+});
+
+describe('recurring expansion — old series', () => {
+  const calMeta = { calendarId: 'cal-1', accountId: 'acc-1', color: '#0082c9' };
+  const oldDailyIcs = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:old-daily
+SUMMARY:Ancient Standup
+DTSTART:20200101T090000Z
+DTEND:20200101T091500Z
+RRULE:FREQ=DAILY
+END:VEVENT
+END:VCALENDAR`;
+
+  it('emits in-window occurrences for a series that started years earlier', () => {
+    const rangeStart = new Date('2026-06-01T00:00:00Z');
+    const rangeEnd = new Date('2026-07-01T00:00:00Z');
+    const events = parseIcsObjects(
+      [{ ics: oldDailyIcs, href: '/cal/old.ics' }],
+      calMeta,
+      rangeStart,
+      rangeEnd,
+    );
+    expect(events.length).toBe(30);
+    expect(events.every((e) => e.dtstart >= rangeStart && e.dtstart < rangeEnd)).toBe(true);
   });
 });
 

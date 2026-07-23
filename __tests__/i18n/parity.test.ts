@@ -1,9 +1,9 @@
-import en from '../../src/i18n/locales/en.json';
-import fr from '../../src/i18n/locales/fr.json';
-import de from '../../src/i18n/locales/de.json';
-import es from '../../src/i18n/locales/es.json';
-import itLocale from '../../src/i18n/locales/it.json';
-import ru from '../../src/i18n/locales/ru.json';
+import en from '../../src/locales/en.json';
+import fr from '../../src/locales/fr.json';
+import de from '../../src/locales/de.json';
+import es from '../../src/locales/es.json';
+import itLocale from '../../src/locales/it.json';
+import ru from '../../src/locales/ru.json';
 
 function keyPaths(obj: Record<string, unknown>, prefix = ''): string[] {
   return Object.entries(obj).flatMap(([k, v]) => {

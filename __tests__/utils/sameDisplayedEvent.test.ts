@@ -1,4 +1,4 @@
-import { sameDisplayedEvent } from '../../src/utils/sameDisplayedEvent';
+import { sameDisplayedEvent } from '@/features/event/utils/sameDisplayedEvent';
 import type { CalendarEvent } from '../../src/types';
 
 const base: CalendarEvent = {

@@ -1,25 +1,39 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Linking } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { View, StyleSheet, ScrollView, Alert, Linking, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
+import { Pencil, Clock, CalendarDays, MapPin, Video, Repeat, Trash2, Copy, Check } from 'lucide-react-native';
+import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
-import { loadAccounts } from '@/api/auth';
-import { fetchEvents } from '@/api/caldav';
+import { syncEvents } from '@/database/sync';
+import { useEventByUid } from '@/database/useEventByUid';
 import { useCalendars } from '@/hooks/useCalendars';
-import { useDeleteEvent } from '@/hooks/useMutateEvent';
-import { useAppStore } from '@/store/appStore';
-import { useTheme } from '@/hooks/useTheme';
-import { normalizeEvent, normalizeEvents } from '@/utils/normalizeEvent';
-import { sameDisplayedEvent } from '@/utils/sameDisplayedEvent';
-import { EVENTS_STALE } from '@/api/queryConfig';
+import { useAccounts } from '@/hooks/useAccounts';
+import { useDeleteEvent } from '@/features/event/hooks/useMutateEvent';
+import { useAccountStore } from '@/stores/accountStore';
+import {
+  ViewContainer, Stack, Typography, Button, Chip, Icon, List, Item,
+  SectionHeader, Avatar, Spinner, ScreenHeader,
+  IconButton,
+} from '@/ui/components';
 import type { CalendarEvent, RecurrenceEditScope } from '@/types';
 
 dayjs.extend(localizedFormat);
 
 async function openTalkRoom(talkUrl: string) {
+  if (Platform.OS === 'android') {
+    const withoutScheme = talkUrl.replace(/^https?:\/\//, '');
+    const fallback = encodeURIComponent(talkUrl);
+    try {
+      await Linking.openURL(`intent://${withoutScheme}#Intent;scheme=https;package=com.nextcloud.talk2;S.browser_fallback_url=${fallback};end`);
+    } catch {
+      await Linking.openURL(talkUrl);
+    }
+    return;
+  }
   await Linking.openURL(talkUrl);
 }
 
@@ -63,63 +77,42 @@ export default function EventDetailScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { t } = useTranslation();
-  const activeAccountId = useAppStore((s) => s.activeAccountId);
-  const queryClient = useQueryClient();
-
-  const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: loadAccounts });
-  const activeAccount = accounts?.find((a) => a.id === activeAccountId) ?? null;
+  const activeAccountId = useAccountStore((s) => s.activeAccountId);
+  const accounts = useAccounts();
+  const activeAccount = accounts.find((a) => a.id === activeAccountId) ?? null;
   const { data: calendars = [] } = useCalendars(activeAccount);
 
-  const findInCache = useCallback((): CalendarEvent | undefined => {
-    const allCached = queryClient.getQueriesData<CalendarEvent[]>({
-      queryKey: [activeAccountId, 'events'],
-    });
-    for (const [, data] of allCached) {
-      if (!Array.isArray(data)) continue;
-      const found = data.find((e) => e.uid === uid);
-      if (found) return normalizeEvent(found);
-    }
-    return undefined;
-  }, [queryClient, activeAccountId, uid]);
-
-  const findInCacheRef = useRef(findInCache);
-  findInCacheRef.current = findInCache;
-
-  const [cachedEvent, setCachedEvent] = useState<CalendarEvent | undefined>(() => findInCache());
-
-  useEffect(() => {
-    return queryClient.getQueryCache().subscribe((evt) => {
-      const key = evt?.query?.queryKey;
-      if (!Array.isArray(key) || key[0] !== activeAccountId || key[1] !== 'events') return;
-      setCachedEvent((prev) => {
-        const next = findInCacheRef.current();
-        if (!next) return prev;
-        if (prev && sameDisplayedEvent(prev, next)) return prev;
-        return next;
-      });
-    });
-  }, [queryClient, activeAccountId]);
+  const event = useEventByUid(activeAccountId, uid);
 
   const start = useMemo(() => dayjs().subtract(3, 'months').toDate(), []);
   const end = useMemo(() => dayjs().add(3, 'months').toDate(), []);
+  const [synced, setSynced] = useState(false);
+  useEffect(() => {
+    if (!activeAccount || calendars.length === 0) return;
+    let active = true;
+    syncEvents(activeAccount, calendars, start, end)
+      .catch(() => undefined)
+      .finally(() => { if (active) setSynced(true); });
+    return () => { active = false; };
+  }, [activeAccount, calendars, start, end]);
 
-  const { data: fetchedEvents = [], isLoading: eventsLoading } = useQuery<CalendarEvent[]>({
-    queryKey: [activeAccountId, 'events-detail', start.toISOString(), end.toISOString()],
-    queryFn: async () => {
-      if (!activeAccount || calendars.length === 0) return [];
-      const results = await Promise.all(
-        calendars.map((cal) => fetchEvents(activeAccount, cal, start, end))
-      );
-      return results.flat();
-    },
-    enabled: activeAccount !== null && calendars.length > 0 && cachedEvent === undefined,
-    staleTime: EVENTS_STALE,
-  });
-
-  const event: CalendarEvent | undefined = cachedEvent ?? normalizeEvents(fetchedEvents).find((e) => e.uid === uid);
   const calendar = calendars.find((c) => c.id === event?.calendarId);
   const deleteMutation = useDeleteEvent(activeAccount!);
   const canEdit = !calendar?.isReadOnly && !calendar?.isSubscribed;
+  const eventsLoading = !synced && event === undefined;
+
+  const [copied, setCopied] = useState(false);
+  const copyResetRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(copyResetRef.current), []);
+
+  const handleCopyLocation = useCallback(async () => {
+    if (!event?.location) return;
+    await Clipboard.setStringAsync(event.location);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setCopied(true);
+    clearTimeout(copyResetRef.current);
+    copyResetRef.current = setTimeout(() => setCopied(false), 1500);
+  }, [event?.location]);
 
   const recurrenceScopeStrings: RecurrenceScopeStrings = {
     message: t('event.recurrenceScopeMessage'),
@@ -155,8 +148,8 @@ export default function EventDetailScreen() {
           { text: t('common.cancel'), style: 'cancel' },
           {
             text: t('event.delete'), style: 'destructive',
-            onPress: () => {
-              deleteMutation.mutate({ event, scope });
+            onPress: async () => {
+              await deleteMutation.mutateAsync({ event, scope });
               if (router.canGoBack()) router.back();
               else router.replace('/(tabs)/calendar');
             },
@@ -172,24 +165,26 @@ export default function EventDetailScreen() {
     }
   }
 
-  const isLoading = eventsLoading && cachedEvent === undefined;
+  const isLoading = eventsLoading;
 
   if (isLoading) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.primary} />
-      </View>
+      <ViewContainer>
+        <Stack flex vAlign="center" hAlign="center">
+          <Spinner size="large" />
+        </Stack>
+      </ViewContainer>
     );
   }
 
   if (!event) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.background }]}>
-        <Text style={{ color: theme.textSecondary }}>{t('event.eventNotFound')}</Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
-          <Text style={{ color: theme.primary }}>{t('event.back')}</Text>
-        </TouchableOpacity>
-      </View>
+      <ViewContainer>
+        <Stack flex vAlign="center" hAlign="center" gap={16}>
+          <Typography variant="body1" color="secondary">{t('event.eventNotFound')}</Typography>
+          <Button variant="link" title={t('event.back')} onPress={() => router.back()} />
+        </Stack>
+      </ViewContainer>
     );
   }
 
@@ -200,110 +195,122 @@ export default function EventDetailScreen() {
     : `${dayjs(event.dtstart).format('lll')} – ${dayjs(event.dtend).format('LT')}`;
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme.background }]}
-      contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 16 }}
-    >
-      <View style={[styles.colorBar, { backgroundColor: event.color, marginTop: insets.top }]} />
-      <View style={[styles.content, styles.contentFlex]}>
-        <View style={styles.topRow}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={[styles.backText, { color: theme.primary }]}>{t('event.back')}</Text>
-          </TouchableOpacity>
-          {canEdit && (
-            <TouchableOpacity onPress={handleEdit}>
-              <Text style={[styles.editText, { color: theme.primary }]}>{t('event.edit')}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+    <ViewContainer>
+      <SafeAreaView edges={['top']} style={styles.flex}>
+        <ScreenHeader
+          onBack={() => router.back()}
+          right={canEdit ? (
+            <IconButton variant="plain" size={40} onPress={handleEdit}>
+              <Pencil size={20} color={theme.colors.primary} />
+            </IconButton>
+          ) : undefined}
+        />
 
-        <Text style={[styles.summary, { color: theme.text }]}>{event.summary}</Text>
-        <Text style={[styles.meta, { color: theme.textSecondary }]}>{timeStr}</Text>
-        {event.isRecurring && (
-          <Text style={[styles.recurringBadge, { color: theme.primary }]}>↻ {t('event.recurring')}</Text>
-        )}
-        {calendar && (
-          <Text style={[styles.calendarName, { color: theme.textTertiary }]}>
-            📅 {calendar.displayName}
-          </Text>
-        )}
+        <View style={[styles.colorBar, { backgroundColor: event.color }]} />
 
-        {event.location && !event.talkUrl && (
-          <Text style={[styles.field, { color: theme.textSecondary }]}>📍 {event.location}</Text>
-        )}
+        <ScrollView style={styles.flex} contentContainerStyle={[styles.content, { paddingBottom: 24 }]}>
+          <Stack gap={20}>
+            <Stack gap={10}>
+              <Typography variant="h3">{event.summary}</Typography>
+              {event.isRecurring && (
+                <Stack direction="horizontal" inline>
+                  <Chip icon={<Repeat size={14} color={theme.colors.primary} />}>
+                    {t('event.recurring')}
+                  </Chip>
+                </Stack>
+              )}
+            </Stack>
 
-        {event.talkUrl && (
-          <TouchableOpacity
-            style={[styles.talkBtn, { backgroundColor: theme.talk }]}
-            onPress={() => openTalkRoom(event.talkUrl!)}
-          >
-            <Text style={styles.talkBtnText}>💬 {t('event.joinTalkRoom')}</Text>
-          </TouchableOpacity>
-        )}
+            <List>
+              <Item
+                leading={<Icon size={20}><Clock color={theme.colors.textSecondary} /></Icon>}
+                title={timeStr}
+              />
+              {calendar && (
+                <Item
+                  leading={<Icon size={20}><CalendarDays color={calendar.color} /></Icon>}
+                  title={calendar.displayName}
+                />
+              )}
+              {event.location && (
+                <Item
+                  leading={<Icon size={20}><MapPin color={theme.colors.textSecondary} /></Icon>}
+                  title={event.location}
+                  trailing={
+                    <IconButton
+                      variant="plain"
+                      size={36}
+                      onPress={handleCopyLocation}
+                    >
+                      {copied
+                        ? <Check size={18} color={theme.colors.primary} />
+                        : <Copy size={18} color={theme.colors.textSecondary} />}
+                    </IconButton>
+                  }
+                />
+              )}
+            </List>
 
-        {event.description && (
-          <View style={[styles.section, { borderTopColor: theme.border }]}>
-            <Text style={[styles.sectionTitle, { color: theme.textTertiary }]}>{t('event.description')}</Text>
-            <Text style={[styles.sectionBody, { color: theme.textSecondary }]}>{event.description}</Text>
-          </View>
-        )}
+            {event.talkUrl && (
+              <Button
+                variant="primary"
+                title={t('event.joinTalkRoom')}
+                icon={<Video size={18} color="#fff" />}
+                onPress={() => openTalkRoom(event.talkUrl!)}
+              />
+            )}
 
-        {event.attendees.length > 0 && (
-          <View style={[styles.section, { borderTopColor: theme.border }]}>
-            <Text style={[styles.sectionTitle, { color: theme.textTertiary }]}>{t('event.attendees')}</Text>
-            {event.attendees.map((att) => (
-              <Text key={att.email} style={[styles.attendee, { color: theme.textSecondary }]}>
-                {att.displayName ? `${att.displayName} (${att.email})` : att.email}
-              </Text>
-            ))}
-          </View>
-        )}
+            {event.description && (
+              <Stack gap={8}>
+                <SectionHeader title={t('event.description')} />
+                <Stack card padding={16}>
+                  <Typography variant="body2" color="secondary">{event.description}</Typography>
+                </Stack>
+              </Stack>
+            )}
 
-        <View style={styles.spacer} />
+            {event.attendees.length > 0 && (
+              <Stack gap={8}>
+                <SectionHeader title={t('event.attendees')} />
+                <List>
+                  {event.attendees.map((att) => (
+                    <Item
+                      key={att.email}
+                      leading={<Avatar name={att.displayName ?? att.email} size={36} />}
+                      title={att.displayName ?? att.email}
+                      description={att.displayName ? att.email : undefined}
+                    />
+                  ))}
+                </List>
+              </Stack>
+            )}
+
+          </Stack>
+        </ScrollView>
 
         {canEdit && (
-          <TouchableOpacity
-            style={[styles.deleteBtn, { borderColor: theme.danger }]}
-            onPress={handleDelete}
-            disabled={deleteMutation.isPending}
+          <Stack
+            padding={[20, 12]}
+            style={[styles.footer, { paddingBottom: insets.bottom + 12, borderTopColor: theme.colors.border }]}
           >
-            {deleteMutation.isPending
-              ? <ActivityIndicator color={theme.danger} />
-              : <Text style={[styles.deleteBtnText, { color: theme.danger }]}>{t('event.deleteEvent')}</Text>}
-          </TouchableOpacity>
+            <Button
+              variant="ghost" color="danger"
+              title={t('event.deleteEvent')}
+              icon={<Trash2 size={18} color={theme.colors.danger} />}
+              loading={deleteMutation.isPending}
+              disabled={deleteMutation.isPending}
+              onPress={handleDelete}
+            />
+          </Stack>
         )}
-      </View>
-    </ScrollView>
+      </SafeAreaView>
+    </ViewContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  contentFlex: { flex: 1 },
-  spacer: { flex: 1, minHeight: 40 },
+  flex: { flex: 1 },
   colorBar: { height: 6 },
   content: { padding: 20 },
-  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  backText: { fontSize: 16 },
-  editText: { fontSize: 16, fontWeight: '600' },
-  summary: { fontSize: 24, fontWeight: '700', marginBottom: 8 },
-  meta: { fontSize: 15, marginBottom: 4 },
-  recurringBadge: { fontSize: 13, marginBottom: 4 },
-  calendarName: { fontSize: 14, marginBottom: 16 },
-  field: { fontSize: 15, marginBottom: 12 },
-  talkBtn: {
-    borderRadius: 8, paddingVertical: 12,
-    alignItems: 'center', marginBottom: 16,
-  },
-  talkBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  section: { marginTop: 20, paddingTop: 20, borderTopWidth: StyleSheet.hairlineWidth },
-  sectionTitle: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', marginBottom: 6 },
-  sectionBody: { fontSize: 15, lineHeight: 22 },
-  attendee: { fontSize: 14, marginBottom: 4 },
-  deleteBtn: {
-    marginTop: 40, borderWidth: 1,
-    borderRadius: 8, paddingVertical: 12, alignItems: 'center',
-  },
-  deleteBtnText: { fontSize: 15, fontWeight: '600' },
+  footer: { borderTopWidth: StyleSheet.hairlineWidth },
 });

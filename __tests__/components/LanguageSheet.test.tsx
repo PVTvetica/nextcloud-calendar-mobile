@@ -1,7 +1,12 @@
-import { render, fireEvent } from '@testing-library/react-native';
-import { LanguageSheet } from '../../src/components/LanguageSheet';
-import { useAppStore } from '../../src/store/appStore';
-import i18n from '../../src/i18n';
+import type { ReactElement } from 'react';
+import { render as rtlRender, fireEvent } from '@testing-library/react-native';
+import { ThemeWrapper } from '../helpers/theme';
+
+const render = (ui: ReactElement, opts?: Parameters<typeof rtlRender>[1]) =>
+  rtlRender(ui, { wrapper: ThemeWrapper, ...opts });
+import { LanguageSheet } from '@/components/LanguageSheet';
+import { useSettingsStore } from '../../src/stores/settingsStore';
+import i18n from '../../src/utils/i18n';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -10,7 +15,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 describe('LanguageSheet', () => {
   beforeEach(async () => {
     await i18n.changeLanguage('en');
-    useAppStore.setState({ language: 'en' });
+    useSettingsStore.setState({ language: 'en' });
   });
 
   it('shows the active language label on the trigger row', () => {
@@ -31,6 +36,6 @@ describe('LanguageSheet', () => {
     const { getByText } = render(<LanguageSheet />);
     fireEvent.press(getByText('English'));
     fireEvent.press(getByText('Français'));
-    expect(useAppStore.getState().language).toBe('fr');
+    expect(useSettingsStore.getState().language).toBe('fr');
   });
 });

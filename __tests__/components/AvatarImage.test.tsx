@@ -1,17 +1,18 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react-native';
-import { AvatarImage } from '../../src/components/AvatarImage';
+import { render as rtlRender, screen } from '@testing-library/react-native';
+import { AvatarImage } from '@/components/AvatarImage';
+import { ThemeWrapper } from '../helpers/theme';
 import type { Account } from '../../src/types';
 
-jest.mock('../../src/hooks/useAvatar');
-jest.mock('../../src/hooks/useTheme', () => ({
-  useTheme: () => ({ primary: '#0082c9' }),
-}));
+const render = (ui: React.ReactElement, opts?: Parameters<typeof rtlRender>[1]) =>
+  rtlRender(ui, { wrapper: ThemeWrapper, ...opts });
+
+jest.mock('@/features/account/hooks/useAvatar');
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
 
-import { useAvatar } from '../../src/hooks/useAvatar';
+import { useAvatar } from '@/features/account/hooks/useAvatar';
 const mockUseAvatar = useAvatar as jest.MockedFunction<typeof useAvatar>;
 
 const account: Account = {

@@ -22,12 +22,7 @@ function icalTimeToDate(t: ICAL.Time, isEnd = false): Date {
   return t.toJSDate();
 }
 
-/**
- * Parse a single ICS resource into zero or more CalendarEvents.
- * Recurring events are expanded across [rangeStart, rangeEnd). Malformed ICS
- * is skipped (returns []). This is the atomic, synchronous unit of work shared
- * by the sync and chunked-async parsers below.
- */
+
 export function parseIcsItem(
   item: { ics: string; href: string },
   meta: ParseCalMeta,
@@ -45,13 +40,12 @@ export function parseIcsItem(
     for (const vevent of vevents) {
       if (vevent.getFirstPropertyValue('recurrence-id')) continue;
 
-      const icalEvent = new ICAL.Event(vevent);
+      const icalEvent = new ICAL.Event(vevent, { strictExceptions: false });
 
-      const attendeePropList = vevent.getAllProperties('attendee');
-      const attendees: Attendee[] = attendeePropList.map((prop: any) => {
-        const value: string = prop.getFirstValue() ?? '';
+      const attendees: Attendee[] = vevent.getAllProperties('attendee').map((prop: ICAL.Property) => {
+        const value = (prop.getFirstValue() as string) ?? '';
         const email = value.replace(/^mailto:/i, '');
-        const displayName = prop.getParameter('cn') ?? undefined;
+        const displayName = (prop.getParameter('cn') as string) ?? undefined;
         return { email, displayName };
       });
 
@@ -87,27 +81,25 @@ export function parseIcsItem(
       };
 
       if (isRecurring && (rangeStart || rangeEnd)) {
-        const expandComp = new ICAL.Component(jcal);
-        const expandEvent = new ICAL.Event(expandComp.getFirstSubcomponent('vevent')!, {
-          strictExceptions: false,
-        });
-        const iter = expandEvent.iterator();
-        let count = 0;
+        const durationMs =
+          icalEvent.endDate.toJSDate().getTime() - icalEvent.startDate.toJSDate().getTime();
+        const rangeStartMs = rangeStart?.getTime() ?? -Infinity;
+        const iter = icalEvent.iterator();
+        let emitted = 0;
         let nextTime: ICAL.Time;
 
-        while ((nextTime = iter.next()) && count < MAX_OCCURRENCES) {
+        while ((nextTime = iter.next()) && emitted < MAX_OCCURRENCES) {
           const occStart = icalTimeToDate(nextTime);
 
           if (rangeEnd && occStart >= rangeEnd) break;
 
-          const details = expandEvent.getOccurrenceDetails(nextTime);
+          if (occStart.getTime() + durationMs <= rangeStartMs) continue;
+
+          const details = icalEvent.getOccurrenceDetails(nextTime);
           const occAllDay = details.startDate.isDate;
           const occEnd = icalTimeToDate(details.endDate, true);
 
-          if (rangeStart && occEnd <= rangeStart) {
-            count++;
-            continue;
-          }
+          if (rangeStart && occEnd <= rangeStart) continue;
 
           events.push({
             ...base,
@@ -117,7 +109,7 @@ export function parseIcsItem(
             dtend: occEnd,
             allDay: occAllDay,
           });
-          count++;
+          emitted++;
         }
       } else {
         events.push({
@@ -128,14 +120,11 @@ export function parseIcsItem(
       }
     }
   } catch {
-    // Skip malformed ICS
   }
 
   return events;
 }
 
-/** Synchronous parse of many ICS resources. Kept for tests and any caller
- *  that is not on the UI's critical path. */
 export function parseIcsObjects(
   items: { ics: string; href: string }[],
   meta: ParseCalMeta,
@@ -150,15 +139,7 @@ export function parseIcsObjects(
   return events;
 }
 
-/**
- * Chunked, cooperative parse of many ICS resources.
- *
- * Identical output to `parseIcsObjects`, but time-sliced: after each
- * `frameBudgetMs` of synchronous work it `await`s `yieldToUI()` so the JS
- * thread can service touches, gesture callbacks and renders before resuming.
- * This is what the event queries use, so a large background fetch never freezes
- * scrolling/swiping/zooming.
- */
+
 export async function parseIcsObjectsAsync(
   items: { ics: string; href: string }[],
   meta: ParseCalMeta,

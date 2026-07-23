@@ -1,6 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
-import { saveAccount, loadAccounts, deleteAccount, getActiveAccountId, setActiveAccountId } from '../../src/api/auth';
+import { saveAccount, loadAccounts, deleteAccount, getActiveAccountId, setActiveAccountId } from '../../src/services/nextcloud/auth';
+import { storage } from '../../src/storage';
 import type { Account } from '../../src/types';
 
 jest.mock('expo-secure-store');
@@ -21,18 +21,18 @@ const account: Account = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  AsyncStorage.clear();
+  storage.clearAll();
 });
 
 describe('saveAccount', () => {
-  it('stores account in SecureStore and adds id to AsyncStorage', async () => {
+  it('stores account in SecureStore and adds id to storage', async () => {
     mockSecureStore.setItemAsync.mockResolvedValue();
     await saveAccount(account);
     expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
       'account_acc-1',
       JSON.stringify(account)
     );
-    const ids = JSON.parse((await AsyncStorage.getItem('account_ids')) ?? '[]');
+    const ids = JSON.parse(storage.getString('account_ids') ?? '[]');
     expect(ids).toContain('acc-1');
   });
 
@@ -40,14 +40,14 @@ describe('saveAccount', () => {
     mockSecureStore.setItemAsync.mockResolvedValue();
     await saveAccount(account);
     await saveAccount(account);
-    const ids = JSON.parse((await AsyncStorage.getItem('account_ids')) ?? '[]');
+    const ids = JSON.parse(storage.getString('account_ids') ?? '[]');
     expect(ids.filter((id: string) => id === 'acc-1')).toHaveLength(1);
   });
 });
 
 describe('loadAccounts', () => {
   it('returns all accounts from SecureStore', async () => {
-    await AsyncStorage.setItem('account_ids', JSON.stringify(['acc-1']));
+    storage.set('account_ids', JSON.stringify(['acc-1']));
     mockSecureStore.getItemAsync.mockResolvedValue(JSON.stringify(account));
     const accounts = await loadAccounts();
     expect(accounts).toHaveLength(1);
@@ -61,12 +61,12 @@ describe('loadAccounts', () => {
 });
 
 describe('deleteAccount', () => {
-  it('removes account from SecureStore and AsyncStorage', async () => {
+  it('removes account from SecureStore and storage', async () => {
     mockSecureStore.deleteItemAsync.mockResolvedValue();
-    await AsyncStorage.setItem('account_ids', JSON.stringify(['acc-1', 'acc-2']));
+    storage.set('account_ids', JSON.stringify(['acc-1', 'acc-2']));
     await deleteAccount('acc-1');
     expect(mockSecureStore.deleteItemAsync).toHaveBeenCalledWith('account_acc-1');
-    const ids = JSON.parse((await AsyncStorage.getItem('account_ids')) ?? '[]');
+    const ids = JSON.parse(storage.getString('account_ids') ?? '[]');
     expect(ids).not.toContain('acc-1');
     expect(ids).toContain('acc-2');
   });

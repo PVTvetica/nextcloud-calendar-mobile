@@ -1,4 +1,4 @@
-import { InteractionManager } from 'react-native';
+type IdleCb = (cb: () => void, opts?: { timeout: number }) => void;
 
 export function yieldToUI(maxWaitMs = 250): Promise<void> {
   return new Promise<void>((resolve) => {
@@ -8,9 +8,12 @@ export function yieldToUI(maxWaitMs = 250): Promise<void> {
       settled = true;
       resolve();
     };
-    setTimeout(() => {
-      InteractionManager.runAfterInteractions(finish);
-    }, 0);
+    const ric = (globalThis as { requestIdleCallback?: IdleCb }).requestIdleCallback;
+    if (typeof ric === 'function') {
+      ric(finish, { timeout: maxWaitMs });
+    } else {
+      setTimeout(finish, 0);
+    }
     setTimeout(finish, maxWaitMs);
   });
 }

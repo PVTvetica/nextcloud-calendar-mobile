@@ -1,4 +1,4 @@
-import { fetchUserInfo } from '../../src/api/nextcloud';
+import { fetchUserInfo } from '../../src/services/nextcloud/nextcloud';
 import type { Account } from '../../src/types';
 
 const account: Account = {

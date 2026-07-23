@@ -1,4 +1,4 @@
-import { settleAllOrThrow } from '../../src/utils/settle';
+import { settleAllOrThrow } from '@/utils/settle';
 
 describe('settleAllOrThrow', () => {
   it('returns [] when there are no tasks', async () => {

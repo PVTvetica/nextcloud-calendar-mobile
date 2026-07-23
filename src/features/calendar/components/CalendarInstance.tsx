@@ -1,10 +1,10 @@
 import { memo, useRef, useDeferredValue } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Calendar } from 'react-native-big-calendar';
-import { styles } from '@/styles/calendarScreen';
-import { useAppStore } from '@/store/appStore';
-import { FixedCalendarHeader } from '@/components/CalendarHeader';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { FixedCalendarHeader } from '@/features/calendar/components/CalendarHeader';
 import { resolveFrozenProps } from '../utils/resolveFrozenProps';
+import { ViewLayer } from './ViewLayer';
 import type { CalMode } from '../constants';
 import type { BigCalendarEvent } from '../utils/toCalendarEvents';
 
@@ -30,18 +30,15 @@ interface Props extends LiveProps {
 }
 
 function CalendarInstanceImpl({ mode, calendarKey, visible, ...live }: Props) {
-  const language = useAppStore((s) => s.language);
+  const language = useSettingsStore((s) => s.language);
   const deferredLanguage = useDeferredValue(language);
   const frozen = useRef<LiveProps>(live);
   const { props, nextFrozen } = resolveFrozenProps(visible, live as LiveProps, frozen.current);
   frozen.current = nextFrozen;
 
   return (
-    <View
-      style={[StyleSheet.absoluteFill, { opacity: visible ? 1 : 0, zIndex: visible ? 1 : 0 }]}
-      pointerEvents={visible ? 'auto' : 'none'}
-    >
-      <View style={styles.calendarWrapper}>
+    <ViewLayer visible={visible}>
+      <View style={styles.wrapper}>
         <Calendar
           key={calendarKey}
           locale={deferredLanguage}
@@ -64,8 +61,12 @@ function CalendarInstanceImpl({ mode, calendarKey, visible, ...live }: Props) {
           theme={props.bigCalendarTheme}
         />
       </View>
-    </View>
+    </ViewLayer>
   );
 }
 
 export const CalendarInstance = memo(CalendarInstanceImpl);
+
+const styles = StyleSheet.create({
+  wrapper: { flex: 1, overflow: 'hidden' },
+});

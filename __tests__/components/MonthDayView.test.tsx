@@ -1,8 +1,12 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render as rtlRender } from '@testing-library/react-native';
+import { ThemeWrapper } from '../helpers/theme';
 import dayjs from 'dayjs';
+
+const render = (ui: React.ReactElement, opts?: Parameters<typeof rtlRender>[1]) =>
+  rtlRender(ui, { wrapper: ThemeWrapper, ...opts });
 import 'dayjs/locale/fr';
-import { MonthDayView, buildMonthGrid, eventDayKeys } from '../../src/components/MonthDayView';
+import { MonthDayView, buildMonthGrid, eventDayKeys } from '@/features/calendar/components/MonthDayView';
 import type { CalendarEvent } from '../../src/types';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -38,7 +42,7 @@ describe('buildMonthGrid', () => {
   });
 
   function expectColumnsMatchWeekdays(weekStartsOn: 0 | 1) {
-    const grid = buildMonthGrid(2026, 5, weekStartsOn); // June 2026
+    const grid = buildMonthGrid(2026, 5, weekStartsOn);
     for (const week of grid) {
       week.forEach((cell, col) => {
         if (cell === null) return;
@@ -68,7 +72,7 @@ describe('buildMonthGrid', () => {
       const grid = buildMonthGrid(2026, 5, weekStartsOn);
       const firstRow = grid.find((week) => week.some(isJune1))!;
       const col = firstRow.findIndex(isJune1);
-      expect((weekStartsOn + col) % 7).toBe(1); // 1 = Monday
+      expect((weekStartsOn + col) % 7).toBe(1);
     }
   });
 });
@@ -117,8 +121,6 @@ describe('MonthDayView', () => {
 });
 
 describe('MonthDayView multi-day all-day events', () => {
-  // June 15 → 17 inclusive. The parser stores all-day dtend as the inclusive
-  // last day at local midnight (exclusive iCal DTEND minus one day).
   const conference: CalendarEvent = {
     uid: 'e2', href: '/e2.ics', calendarId: 'c1', accountId: 'a1',
     summary: 'Conference',

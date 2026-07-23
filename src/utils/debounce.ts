@@ -1,9 +1,6 @@
 export interface TrailingDebounce<A extends any[]> {
-  /** Schedule fn(...args); a later call before the delay replaces the args. */
   call: (...args: A) => void;
-  /** Run any pending call right now and clear the timer. */
   flush: () => void;
-  /** Drop any pending call without running it. */
   cancel: () => void;
 }
 

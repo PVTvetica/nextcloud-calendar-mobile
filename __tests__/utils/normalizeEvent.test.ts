@@ -1,4 +1,4 @@
-import { normalizeEvent, normalizeEvents } from '../../src/utils/normalizeEvent';
+import { normalizeEvent, normalizeEvents } from '@/utils/normalizeEvent';
 import type { CalendarEvent } from '../../src/types';
 
 function makeEvent(over: Partial<CalendarEvent> = {}): CalendarEvent {

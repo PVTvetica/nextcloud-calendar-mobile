@@ -1,6 +1,21 @@
+import type { TextStyle } from 'react-native';
+import { DefaultTheme } from 'expo-router';
+
 export type ColorScheme = 'light' | 'dark';
 
-export interface Theme {
+export interface ThemeFontStyle {
+  fontFamily: string;
+  fontWeight: TextStyle['fontWeight'];
+}
+
+export interface ThemeFonts {
+  regular: ThemeFontStyle;
+  medium: ThemeFontStyle;
+  bold: ThemeFontStyle;
+  heavy: ThemeFontStyle;
+}
+
+export interface ThemeColors {
   background: string;
   surface: string;
   surfaceRaised: string;
@@ -20,9 +35,63 @@ export interface Theme {
   headerBackground: string;
   chip: string;
   chipActive: string;
+  card: string;
+  notification: string;
+  item: string;
 }
 
-export const lightTheme: Theme = {
+export interface ThemeSpacing {
+  xs: number;
+  sm: number;
+  md: number;
+  lg: number;
+  xl: number;
+}
+
+export interface ThemeRadius {
+  sm: number;
+  md: number;
+  lg: number;
+  pill: number;
+}
+
+export interface ThemeTypography {
+  caption: number;
+  body: number;
+  title: number;
+  heading: number;
+}
+
+export interface Theme {
+  dark: boolean;
+  colors: ThemeColors;
+  fonts: ThemeFonts;
+  spacing: ThemeSpacing;
+  radius: ThemeRadius;
+  typography: ThemeTypography;
+}
+
+
+declare global {
+  namespace ReactNavigation {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface Theme {
+      dark: boolean;
+      colors: ThemeColors;
+      fonts: ThemeFonts;
+      spacing: ThemeSpacing;
+      radius: ThemeRadius;
+      typography: ThemeTypography;
+    }
+  }
+}
+
+const spacing: ThemeSpacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 };
+const radius: ThemeRadius = { sm: 8, md: 12, lg: 16, pill: 999 };
+const typography: ThemeTypography = { caption: 13, body: 15, title: 17, heading: 22 };
+const fonts: ThemeFonts = DefaultTheme.fonts;
+
+const lightColors: ThemeColors = {
   background: '#ffffff',
   surface: '#f5f5f5',
   surfaceRaised: '#ffffff',
@@ -42,9 +111,12 @@ export const lightTheme: Theme = {
   headerBackground: '#ffffff',
   chip: '#f0f0f0',
   chipActive: '#109be6',
+  card: '#ffffff',
+  notification: '#d32f2f',
+  item: '#f7f7f7',
 };
 
-export const darkTheme: Theme = {
+const darkColors: ThemeColors = {
   background: '#121212',
   surface: '#1e1e1e',
   surfaceRaised: '#2a2a2a',
@@ -64,4 +136,10 @@ export const darkTheme: Theme = {
   headerBackground: '#1c1c1e',
   chip: '#2c2c2e',
   chipActive: '#29aef7',
+  card: '#1c1c1e',
+  notification: '#ef5350',
+  item: '#1e1e1e',
 };
+
+export const lightTheme: Theme = { dark: false, colors: lightColors, fonts, spacing, radius, typography };
+export const darkTheme: Theme = { dark: true, colors: darkColors, fonts, spacing, radius, typography };

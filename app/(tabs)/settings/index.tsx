@@ -1,21 +1,27 @@
-import { View, Text, TouchableOpacity, Pressable, ScrollView, Alert, Modal, Linking, Image, ActivityIndicator } from 'react-native';
-import { useDeferredValue, useState, useEffect, useCallback } from 'react';
-import { styles } from '@/styles/settingsScreen';
+import { ScrollView, Alert, Linking, Image } from 'react-native';
+import { useDeferredValue, useState, useEffect, useCallback, useContext } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { loadAccounts, deleteAccount, setActiveAccountId, clearActiveAccountId } from '@/api/auth';
-import { useAppStore, type ThemePreference } from '@/store/appStore';
-import { useTheme } from '@/hooks/useTheme';
-import { AccountCard } from '@/components/AccountCard';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { CircleQuestionMark, Bug } from 'lucide-react-native';
 import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
+import { deleteAccount, setActiveAccountId, clearActiveAccountId } from '@/services/nextcloud/auth';
+import { useAccounts, refreshAccounts } from '@/hooks/useAccounts';
+import { ClearDatabaseForAccount } from '@/database/DatabaseProvider';
+import { storage } from '@/storage';
+import { useAccountStore } from '@/stores/accountStore';
+import { useCalendarStore } from '@/stores/calendarStore';
+import { useSettingsStore, type ThemePreference } from '@/stores/settingsStore';
+import { AccountCard } from '@/features/account/components/AccountCard';
 import { LanguageSheet } from '@/components/LanguageSheet';
+import {
+  ViewContainer, Stack, Typography, Chip, Button, Icon, IconButton, Spinner, AnimatedPressable, Accordion, Dialog,
+} from '@/ui/components';
 
 const GITHUB_URL = 'https://github.com/SoluceTechnologies/nextcloud-calendar-mobile';
 const ISSUES_URL = 'https://github.com/SoluceTechnologies/nextcloud-calendar-mobile/issues/new';
+const DEFAULT_ZOOM = 60;
 
 const THEME_VALUES: ThemePreference[] = ['system', 'light', 'dark'];
 const THEME_LABEL_KEY: Record<ThemePreference, string> = {
@@ -30,17 +36,15 @@ export default function SettingsScreen() {
   const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [accountsOpen, setAccountsOpen] = useState(true);
   const appVersion = Constants.expoConfig?.version ?? '—';
-  const queryClient = useQueryClient();
-  const theme = useTheme();
   const { t } = useTranslation();
-  const activeAccountId = useAppStore((s) => s.activeAccountId);
-  const setStoreId = useAppStore((s) => s.setActiveAccountId);
-  const themePreference = useAppStore((s) => s.themePreference);
-  const setThemePreference = useAppStore((s) => s.setThemePreference);
-  const hourRowHeight = useAppStore((s) => s.hourRowHeight);
-  const setHourRowHeight = useAppStore((s) => s.setHourRowHeight);
-  const weekStartsOn = useAppStore((s) => s.weekStartsOn);
-  const setWeekStartsOn = useAppStore((s) => s.setWeekStartsOn);
+  const activeAccountId = useAccountStore((s) => s.activeAccountId);
+  const setStoreId = useAccountStore((s) => s.setActiveAccountId);
+  const themePreference = useSettingsStore((s) => s.themePreference);
+  const setThemePreference = useSettingsStore((s) => s.setThemePreference);
+  const hourRowHeight = useCalendarStore((s) => s.hourRowHeight);
+  const setHourRowHeight = useCalendarStore((s) => s.setHourRowHeight);
+  const weekStartsOn = useSettingsStore((s) => s.weekStartsOn);
+  const setWeekStartsOn = useSettingsStore((s) => s.setWeekStartsOn);
 
   const [pendingTheme, setPendingTheme] = useState(themePreference);
   const [pendingWeek, setPendingWeek] = useState(weekStartsOn);
@@ -48,35 +52,26 @@ export default function SettingsScreen() {
   useEffect(() => { setPendingWeek(weekStartsOn); }, [weekStartsOn]);
 
   useFocusEffect(
-    useCallback(() => {
-      return () => {
-        setAppearanceOpen(false);
-        setAccountsOpen(true);
-      };
+    useCallback(() => () => {
+      setAppearanceOpen(false);
+      setAccountsOpen(true);
     }, [])
   );
 
   const deferredThemePref = useDeferredValue(themePreference);
   const themeSwitching = themePreference !== deferredThemePref;
 
-  const DEFAULT_ZOOM = 60;
   const zoomLabel =
     hourRowHeight <= 45 ? t('settings.zoom.compact')
     : hourRowHeight <= 75 ? t('settings.zoom.normal')
     : hourRowHeight <= 120 ? t('settings.zoom.expanded')
     : t('settings.zoom.large');
 
-  const tabBarHeight = useBottomTabBarHeight();
-
-  const { data: accounts = [] } = useQuery({
-    queryKey: ['accounts'],
-    queryFn: loadAccounts,
-  });
+  const accounts = useAccounts();
 
   async function handleSetActive(id: string) {
     await setActiveAccountId(id);
     setStoreId(id);
-    queryClient.invalidateQueries({ queryKey: [id] });
   }
 
   function handleDelete(id: string, displayName: string) {
@@ -86,10 +81,9 @@ export default function SettingsScreen() {
         text: t('common.remove'), style: 'destructive',
         onPress: async () => {
           await deleteAccount(id);
-          const remaining = accounts.filter((a) => a.id !== id);
-          queryClient.setQueryData(['accounts'], remaining);
-          queryClient.removeQueries({ queryKey: [id] });
-          queryClient.removeQueries({ queryKey: ['avatar', id] });
+          await ClearDatabaseForAccount(id).catch(() => undefined);
+          storage.remove(`avatar:${id}`);
+          const remaining = await refreshAccounts();
           if (activeAccountId === id) {
             const next = remaining[0]?.id ?? null;
             if (next) {
@@ -99,7 +93,6 @@ export default function SettingsScreen() {
               await clearActiveAccountId();
               setStoreId(null);
               router.replace('/(auth)/setup');
-              return;
             }
           }
         },
@@ -108,192 +101,115 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={[styles.pageHeader]}>
-        <Text style={[styles.pageTitle, { color: theme.text }]}>{t('settings.title')}</Text>
-        <TouchableOpacity onPress={() => setAboutVisible(true)} hitSlop={8}>
-          <Ionicons name="help-circle-outline" size={26} color={theme.textSecondary} />
-        </TouchableOpacity>
-      </View>
+    <ViewContainer centered>
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+        <Stack direction="horizontal" vAlign="center" padding={[16, 12]}>
+          <Typography variant="h2">{t('settings.title')}</Typography>
+          <AnimatedPressable onPress={() => setAboutVisible(true)} hitSlop={8} style={{ marginLeft: 'auto' }}>
+            <Icon size={26}><CircleQuestionMark /></Icon>
+          </AnimatedPressable>
+        </Stack>
 
-      <Modal visible={aboutVisible} transparent animationType="fade" onRequestClose={() => setAboutVisible(false)}>
-        <Pressable style={styles.modalBackdrop} onPress={() => setAboutVisible(false)}>
-          <Pressable style={[styles.modalCard, { backgroundColor: theme.surface, borderColor: theme.border }]} onPress={() => {}}>
-            <Image source={require('../../../assets/icon.png')} style={styles.appIcon} />
-            <Text style={[styles.modalAppName, { color: theme.text }]}>{t('settings.about.name')}</Text>
-            <Text style={[styles.modalVersion, { color: theme.textSecondary }]}>{t('settings.version', { version: appVersion })}</Text>
-            <Text style={[styles.modalDescription, { color: theme.textSecondary }]}>
-              {t('settings.about.description')}
-            </Text>
-            <TouchableOpacity
-              style={[styles.modalBtn, { backgroundColor: theme.chipActive, borderColor: theme.primary }]}
-              onPress={() => Linking.openURL(GITHUB_URL)}
-            >
-              <Ionicons name="logo-github" size={18} color={theme.primaryText} />
-              <Text style={[styles.modalBtnText, { color: theme.primaryText }]}>{t('settings.about.github')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalBtn, { backgroundColor: theme.chip, borderColor: theme.border }]}
-              onPress={() => Linking.openURL(ISSUES_URL)}
-            >
-              <Ionicons name="bug-outline" size={18} color={theme.text} />
-              <Text style={[styles.modalBtnText, { color: theme.text }]}>{t('settings.about.reportBug')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setAboutVisible(false)} style={styles.modalClose}>
-              <Text style={[styles.modalCloseText, { color: theme.textTertiary }]}>{t('common.close')}</Text>
-            </TouchableOpacity>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight + 16 }} keyboardShouldPersistTaps="handled">
-        <TouchableOpacity
-          style={styles.accordionHeader}
-          onPress={() => setAppearanceOpen((o) => !o)}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: appearanceOpen }}
-        >
-          <Text style={[styles.sectionHeader, styles.accordionTitle, { color: theme.textTertiary }]}>{t('settings.appearance')}</Text>
-          <Ionicons name={appearanceOpen ? 'chevron-up' : 'chevron-down'} size={18} color={theme.textTertiary} />
-        </TouchableOpacity>
-        {appearanceOpen && (
-          <>
-        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[styles.cardLabel, { color: theme.text }]}>{t('settings.theme')}</Text>
-          <View style={styles.themeRow}>
-            {THEME_VALUES.map((value) => (
-              <TouchableOpacity
-                key={value}
-                style={[
-                  styles.themeChip,
-                  { backgroundColor: theme.chip, borderColor: theme.border },
-                  pendingTheme === value && {
-                    backgroundColor: theme.chipActive,
-                    borderColor: theme.primary,
-                  },
-                ]}
-                onPress={() => {
-                  setPendingTheme(value);
-                  setThemePreference(value);
-                }}
-              >
-                {themeSwitching && pendingTheme === value ? (
-                  <ActivityIndicator size="small" color={theme.primaryText} style={styles.themeChipSpinner} />
-                ) : (
-                  <Text
-                    style={[
-                      styles.themeChipText,
-                      { color: theme.textSecondary },
-                      pendingTheme === value && { color: theme.primaryText, fontWeight: '600' },
-                    ]}
-                  >
-                    {t(THEME_LABEL_KEY[value])}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[styles.cardLabel, { color: theme.text }]}>{t('common.language')}</Text>
-          <LanguageSheet />
-        </View>
-
-        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[styles.cardLabel, { color: theme.text }]}>{t('settings.weekStart')}</Text>
-          <View style={styles.themeRow}>
-            {([
-              { labelKey: 'settings.sunday', value: 0 },
-              { labelKey: 'settings.monday', value: 1 },
-            ] as const).map((opt) => (
-              <TouchableOpacity
-                key={String(opt.value)}
-                style={[
-                  styles.themeChip,
-                  { backgroundColor: theme.chip, borderColor: theme.border },
-                  pendingWeek === opt.value && {
-                    backgroundColor: theme.chipActive,
-                    borderColor: theme.primary,
-                  },
-                ]}
-                onPress={() => {
-                  setPendingWeek(opt.value);
-                  setWeekStartsOn(opt.value);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.themeChipText,
-                    { color: theme.textSecondary },
-                    pendingWeek === opt.value && { color: theme.primaryText, fontWeight: '600' },
-                  ]}
-                >
-                  {t(opt.labelKey)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <View style={styles.zoomHeader}>
-            <Text style={[styles.cardLabel, { color: theme.text, marginBottom: 0 }]}>{t('settings.calendarZoom')}</Text>
-            <TouchableOpacity onPress={() => setHourRowHeight(DEFAULT_ZOOM)} disabled={hourRowHeight === DEFAULT_ZOOM}>
-              <Text style={[styles.resetText, { color: hourRowHeight === DEFAULT_ZOOM ? theme.textTertiary : theme.primary }]}>{t('settings.reset')}</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.zoomRow}>
-            <TouchableOpacity
-              style={[styles.zoomBtn, { backgroundColor: theme.chip, borderColor: theme.border }]}
-              onPress={() => setHourRowHeight(Math.max(hourRowHeight - 15, 30))}
-              disabled={hourRowHeight <= 30}
-            >
-              <Text style={[styles.zoomBtnText, { color: hourRowHeight <= 30 ? theme.textTertiary : theme.text }]}>−</Text>
-            </TouchableOpacity>
-            <Text style={[styles.zoomLabel, { color: theme.textSecondary }]}>{zoomLabel}</Text>
-            <TouchableOpacity
-              style={[styles.zoomBtn, { backgroundColor: theme.chip, borderColor: theme.border }]}
-              onPress={() => setHourRowHeight(Math.min(hourRowHeight + 15, 200))}
-              disabled={hourRowHeight >= 200}
-            >
-              <Text style={[styles.zoomBtnText, { color: hourRowHeight >= 200 ? theme.textTertiary : theme.text }]}>+</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-          </>
-        )}
-
-        <TouchableOpacity
-          style={styles.accordionHeader}
-          onPress={() => setAccountsOpen((o) => !o)}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: accountsOpen }}
-        >
-          <Text style={[styles.sectionHeader, styles.accordionTitle, { color: theme.textTertiary }]}>{t('settings.accounts')}</Text>
-          <Ionicons name={accountsOpen ? 'chevron-up' : 'chevron-down'} size={18} color={theme.textTertiary} />
-        </TouchableOpacity>
-        {accountsOpen && (
-          <>
-        {accounts.map((account) => (
-          <AccountCard
-            key={account.id}
-            account={account}
-            isActive={account.id === activeAccountId}
-            onSetActive={() => handleSetActive(account.id)}
-            onDelete={() => handleDelete(account.id, account.displayName)}
+        <Dialog visible={aboutVisible} onClose={() => setAboutVisible(false)}>
+          <Image source={require('../../../assets/icon.png')} style={{ width: 72, height: 72, borderRadius: 16 }} />
+          <Typography variant="title">{t('settings.about.name')}</Typography>
+          <Typography variant="caption" color="secondary">{t('settings.version', { version: appVersion })}</Typography>
+          <Typography variant="caption" color="secondary" align="center">{t('settings.about.description')}</Typography>
+          <Button
+            variant="primary" title={t('settings.about.github')}
+            icon={<Icon size={18}><Ionicons name="logo-github" color="#fff" /></Icon>}
+            onPress={() => Linking.openURL(GITHUB_URL)}
           />
-        ))}
-        <TouchableOpacity
-          style={[styles.addBtn, { borderColor: theme.primary }]}
-          onPress={() => router.push('/(auth)/setup')}
-        >
-          <Text style={[styles.addBtnText, { color: theme.primary }]}>{t('settings.addAccount')}</Text>
-        </TouchableOpacity>
-          </>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+          <Button
+            variant="secondary" color="text" title={t('settings.about.reportBug')}
+            icon={<Icon size={18}><Bug /></Icon>}
+            onPress={() => Linking.openURL(ISSUES_URL)}
+          />
+          <Button variant="link" color="text" title={t('common.close')} onPress={() => setAboutVisible(false)} />
+        </Dialog>
+
+        <ScrollView contentContainerStyle={{ paddingBottom: 16, paddingTop: 8 }} keyboardShouldPersistTaps="handled">
+          <Accordion title={t('settings.appearance')} open={appearanceOpen} onToggle={() => setAppearanceOpen((o) => !o)}>
+            <Stack card gap={12} padding={16} hAlign="stretch" style={cardOuter}>
+              <Typography variant="body1">{t('settings.theme')}</Typography>
+              <Stack direction="horizontal" gap={8}>
+                {THEME_VALUES.map((value) => (
+                  <Chip
+                    key={value}
+                    fullWidth
+                    active={pendingTheme === value}
+                    onPress={() => { setPendingTheme(value); setThemePreference(value); }}
+                  >
+                    {themeSwitching && pendingTheme === value
+                      ? <Spinner color="text" />
+                      : t(THEME_LABEL_KEY[value])}
+                  </Chip>
+                ))}
+              </Stack>
+            </Stack>
+
+            <Stack card gap={12} padding={16} hAlign="stretch" style={cardOuter}>
+              <Typography variant="body1">{t('common.language')}</Typography>
+              <LanguageSheet />
+            </Stack>
+
+            <Stack card gap={12} padding={16} hAlign="stretch" style={cardOuter}>
+              <Typography variant="body1">{t('settings.weekStart')}</Typography>
+              <Stack direction="horizontal" gap={8}>
+                {([
+                  { labelKey: 'settings.sunday', value: 0 },
+                  { labelKey: 'settings.monday', value: 1 },
+                ] as const).map((opt) => (
+                  <Chip
+                    key={String(opt.value)}
+                    fullWidth
+                    active={pendingWeek === opt.value}
+                    onPress={() => { setPendingWeek(opt.value); setWeekStartsOn(opt.value); }}
+                  >
+                    {t(opt.labelKey)}
+                  </Chip>
+                ))}
+              </Stack>
+            </Stack>
+
+            <Stack card gap={12} padding={16} hAlign="stretch" style={cardOuter}>
+              <Typography variant="body1">{t('settings.calendarZoom')}</Typography>
+              <Stack direction="horizontal" vAlign="center" gap={12}>
+                <IconButton disabled={hourRowHeight <= 30} onPress={() => setHourRowHeight(Math.max(hourRowHeight - 15, 30))}>
+                  <Typography variant="h4" color="text">−</Typography>
+                </IconButton>
+                <Typography variant="body2" color="secondary" style={{ flex: 1, textAlign: 'center' }}>{zoomLabel}</Typography>
+                <IconButton disabled={hourRowHeight >= 200} onPress={() => setHourRowHeight(Math.min(hourRowHeight + 15, 200))}>
+                  <Typography variant="h4" color="text">+</Typography>
+                </IconButton>
+              </Stack>
+              <Button
+                variant="link" size="small" alignment="start" color="primary"
+                title={t('settings.reset')}
+                disabled={hourRowHeight === DEFAULT_ZOOM}
+                onPress={() => setHourRowHeight(DEFAULT_ZOOM)}
+              />
+            </Stack>
+          </Accordion>
+
+          <Accordion title={t('settings.accounts')} open={accountsOpen} onToggle={() => setAccountsOpen((o) => !o)}>
+            {accounts.map((account) => (
+              <AccountCard
+                key={account.id}
+                account={account}
+                isActive={account.id === activeAccountId}
+                onSetActive={() => handleSetActive(account.id)}
+                onDelete={() => handleDelete(account.id, account.displayName)}
+              />
+            ))}
+            <Stack padding={[16, 8]}>
+              <Button variant="ghost" dashed title={t('settings.addAccount')} onPress={() => router.push('/(auth)/setup')} />
+            </Stack>
+          </Accordion>
+        </ScrollView>
+      </SafeAreaView>
+    </ViewContainer>
   );
 }
 
+const cardOuter = { marginHorizontal: 16, marginBottom: 4 };
