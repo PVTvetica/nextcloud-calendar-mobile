@@ -1,6 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, PressableProps, StyleSheet, View } from 'react-native';
 import { useTheme } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import AnimatedPressable from './AnimatedPressable';
 import Typography from './Typography';
 
@@ -22,6 +23,7 @@ interface ButtonProps extends Omit<PressableProps, 'children'> {
   alignment?: Alignment;
   disableAnimation?: boolean;
   dashed?: boolean;
+  hapticFeedback?: Haptics.ImpactFeedbackStyle | null;
 }
 
 const SIZE = StyleSheet.create({
@@ -45,6 +47,7 @@ function Button({
   alignment = 'center',
   disableAnimation = false,
   dashed = false,
+  hapticFeedback = Haptics.ImpactFeedbackStyle.Light,
   style,
   ...rest
 }: ButtonProps) {
@@ -68,6 +71,7 @@ function Button({
   return (
     <AnimatedPressable
       {...rest}
+      hapticFeedback={hapticFeedback ?? undefined}
       animated={!disableAnimation && !disabled}
       disabled={disabled || loading}
       style={[

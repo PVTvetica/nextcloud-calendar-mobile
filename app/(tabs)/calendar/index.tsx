@@ -204,6 +204,7 @@ export default function CalendarScreen() {
             calendarKey={calendarKeyFull}
             events={calendarEvents}
             calDates={deferredCalDates}
+            activeDate={deferredDate}
             heightFor={heightFor}
             hourRowHeight={hourRowHeight}
             weekStartsOn={deferredWeekStartsOn}

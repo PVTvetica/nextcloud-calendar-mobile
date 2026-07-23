@@ -13,6 +13,7 @@ interface Props {
   calendarKey: string;
   events: BigCalendarEvent[];
   calDates: Record<CalMode, Date>;
+  activeDate: Date;
   heightFor: (m: CalMode, focusDate: Date) => number;
   hourRowHeight: number;
   weekStartsOn: 0 | 1;
@@ -26,7 +27,7 @@ interface Props {
 }
 
 function TimeGridViewImpl({
-  pinchGesture, mountedCalModes, viewMode, calendarKey, events, calDates, heightFor,
+  pinchGesture, mountedCalModes, viewMode, calendarKey, events, calDates, activeDate, heightFor,
   hourRowHeight, weekStartsOn, scrollOffset, onPressEvent, onPressCell,
   onSwipeEndHandlers, renderEvent, eventCellStyle, bigCalendarTheme,
 }: Props) {
@@ -42,7 +43,7 @@ function TimeGridViewImpl({
               visible={viewMode === m}
               events={events}
               date={calDates[m]}
-              height={heightFor(m, calDates[m])}
+              height={heightFor(m, viewMode === m ? activeDate : calDates[m])}
               hourRowHeight={hourRowHeight}
               weekStartsOn={weekStartsOn}
               scrollOffset={scrollOffset}

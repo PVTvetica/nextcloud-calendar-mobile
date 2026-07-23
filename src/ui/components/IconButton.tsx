@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTheme } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import AnimatedPressable from './AnimatedPressable';
 
 type Variant = 'ghost' | 'filled' | 'plain';
@@ -10,9 +11,13 @@ interface IconButtonProps {
   variant?: Variant;
   disabled?: boolean;
   children?: React.ReactNode;
+  hapticFeedback?: Haptics.ImpactFeedbackStyle | null;
 }
 
-function IconButton({ onPress, size = 44, variant = 'ghost', disabled = false, children }: IconButtonProps) {
+function IconButton({
+  onPress, size = 44, variant = 'ghost', disabled = false, children,
+  hapticFeedback = Haptics.ImpactFeedbackStyle.Light,
+}: IconButtonProps) {
   const { colors, radius } = useTheme();
 
   return (
@@ -20,6 +25,7 @@ function IconButton({ onPress, size = 44, variant = 'ghost', disabled = false, c
       onPress={onPress}
       disabled={disabled}
       animated={!disabled}
+      hapticFeedback={hapticFeedback ?? undefined}
       style={{
         width: size,
         height: size,

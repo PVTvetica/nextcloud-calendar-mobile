@@ -1,10 +1,11 @@
-import { Platform, DynamicColorIOS } from 'react-native';
+import { DynamicColorIOS } from 'react-native';
 import { Tabs, useTheme } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { Calendar, Settings as SettingsIcon, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import type { AndroidSymbol } from 'expo-symbols';
+import { nativeTabsEnabled } from '@/utils/nativeTabs';
 
 type IconState<T> = { default: T; selected: T };
 
@@ -32,10 +33,6 @@ const TAB_ITEMS: TabItem[] = [
     Icon: SettingsIcon,
   },
 ];
-
-function useNativeTabs(): boolean {
-  return Platform.OS === 'ios' && parseInt(Platform.Version as string, 10) >= 26;
-}
 
 function NativeTabsLayout() {
   const { t } = useTranslation();
@@ -90,5 +87,5 @@ function JsTabsLayout() {
 }
 
 export default function TabsLayout() {
-  return useNativeTabs() ? <NativeTabsLayout /> : <JsTabsLayout />;
+  return nativeTabsEnabled() ? <NativeTabsLayout /> : <JsTabsLayout />;
 }
