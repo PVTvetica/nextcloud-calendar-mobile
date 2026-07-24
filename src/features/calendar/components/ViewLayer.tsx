@@ -1,15 +1,23 @@
 import { memo } from 'react';
-import { View, StyleSheet, type ViewProps } from 'react-native';
+import { View, StyleSheet, Platform, type ViewProps, type ViewStyle } from 'react-native';
 
 interface Props extends ViewProps {
   visible: boolean;
+}
+
+function visibilityStyle(visible: boolean): ViewStyle {
+  if (Platform.OS === 'ios') {
+    return { opacity: visible ? 1 : 0, zIndex: visible ? 1 : 0 };
+  }
+  return { display: visible ? 'flex' : 'none' };
 }
 
 function ViewLayerImpl({ visible, style, children, ...rest }: Props) {
   return (
     <View
       {...rest}
-      style={[StyleSheet.absoluteFill, { display: visible ? 'flex' : 'none' }, style]}
+      collapsable={false}
+      style={[StyleSheet.absoluteFill, visibilityStyle(visible), style]}
       pointerEvents={visible ? 'auto' : 'none'}
     >
       {children}
