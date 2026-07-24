@@ -65,7 +65,11 @@ export function FixedCalendarHeader<T extends ICalendarEventBase>({
                 { alignSelf: 'center', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
                 isHighlight && { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.primary, marginBottom: 0 },
               ]}>
-                <Text style={{ fontSize: 20, textAlign: 'center', color: isHighlight ? '#fff' : theme.colors.text }}>
+                <Text
+                  numberOfLines={1}
+                  allowFontScaling={false}
+                  style={{ fontSize: 20, textAlign: 'center', color: isHighlight ? '#fff' : theme.colors.text }}
+                >
                   {date.format('D')}
                 </Text>
               </View>
