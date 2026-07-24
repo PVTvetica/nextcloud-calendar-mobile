@@ -98,5 +98,3 @@ Optionally attach a Nextcloud Talk room to any event at creation time, the Talk 
 ## 🤝 Open to Collaboration
 
 This project is free and open source. If you're interested in contributing, have a partnership opportunity in mind, or want to discuss how this could fit your organization's workflow, feel free to reach out. All conversations welcome.
-
-
