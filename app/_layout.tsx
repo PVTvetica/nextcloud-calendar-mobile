@@ -10,6 +10,7 @@ import FakeSplash from '@/components/FakeSplash';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
 import '@/utils/i18n';
 import { useLanguageSync } from '@/hooks/useLanguageSync';
+import { useWidgetSync } from '@/features/widget';
 import { isTablet } from '@/utils/device';
 
 function useOrientationLock() {
@@ -31,6 +32,7 @@ export default function RootLayout() {
   const { isAppReady } = useAppInitialization();
   useLanguageSync();
   useOrientationLock();
+  useWidgetSync();
 
   const onLayoutRootView = useCallback(() => {
     SplashScreen.hideAsync().catch(() => undefined);

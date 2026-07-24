@@ -24,6 +24,11 @@
           "nextcloudtalk"
         ],
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.soluce.nextcloud-calendar"
+        ]
       }
     },
     "android": {
@@ -69,7 +74,51 @@
       ],
       "expo-localization",
       "expo-status-bar",
-      "expo-font"
+      "expo-font",
+      "expo-widgets",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "CalendarSmallWidget",
+              "label": "Nextcloud Calendar",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "description": "Shows the next upcoming event",
+              "previewImage": "./assets/icon.png",
+              "updatePeriodMillis": 1800000,
+              "resizeMode": "horizontal|vertical"
+            },
+            {
+              "name": "CalendarMediumWidget",
+              "label": "Nextcloud Calendar",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "description": "Shows up to three upcoming events",
+              "previewImage": "./assets/icon.png",
+              "updatePeriodMillis": 1800000,
+              "resizeMode": "horizontal|vertical"
+            },
+            {
+              "name": "CalendarLargeWidget",
+              "label": "Nextcloud Calendar",
+              "minWidth": "250dp",
+              "minHeight": "250dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 4,
+              "description": "Multi-day agenda grouped by day",
+              "previewImage": "./assets/icon.png",
+              "updatePeriodMillis": 1800000,
+              "resizeMode": "horizontal|vertical"
+            }
+          ]
+        }
+      ]
     ]
   }
 }

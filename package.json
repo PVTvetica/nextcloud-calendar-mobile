@@ -1,7 +1,16 @@
 {
   "name": "nextcloud-calendar",
   "version": "1.4.0",
-  "main": "expo-router/entry",
+  "main": "index.ts",
+  "expo": {
+    "autolinking": {
+      "android": {
+        "exclude": [
+          "expo-widgets"
+        ]
+      }
+    }
+  },
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
@@ -26,7 +35,7 @@
     "expo-clipboard": "~57.0.1",
     "expo-constants": "~57.0.6",
     "expo-crypto": "~57.0.1",
-    "expo-dev-client": "~57.0.7",
+    "expo-dev-client": "~57.0.9",
     "expo-font": "~57.0.1",
     "expo-haptics": "~57.0.1",
     "expo-linking": "~57.0.3",
@@ -38,6 +47,7 @@
     "expo-splash-screen": "~57.0.4",
     "expo-status-bar": "~57.0.1",
     "expo-web-browser": "~57.0.1",
+    "expo-widgets": "~57.0.6",
     "i18next": "^26.3.1",
     "ical.js": "^2.2.1",
     "lucide-react-native": "^1.25.0",
@@ -45,6 +55,7 @@
     "react-dom": "19.2.3",
     "react-i18next": "^17.0.8",
     "react-native": "0.86.0",
+    "react-native-android-widget": "^0.21.0",
     "react-native-big-calendar": "5.0.0-beta.12",
     "react-native-country-flag": "^2.0.2",
     "react-native-gesture-handler": "~2.32.0",

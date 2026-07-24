@@ -1507,7 +1507,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@expo/ui@npm:^57.0.7":
+"@expo/ui@npm:^57.0.7, @expo/ui@npm:~57.0.7":
   version: 57.0.7
   resolution: "@expo/ui@npm:57.0.7"
   dependencies:
@@ -5350,32 +5350,32 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-dev-client@npm:~57.0.7":
-  version: 57.0.7
-  resolution: "expo-dev-client@npm:57.0.7"
+"expo-dev-client@npm:~57.0.9":
+  version: 57.0.9
+  resolution: "expo-dev-client@npm:57.0.9"
   dependencies:
-    expo-dev-launcher: "npm:~57.0.7"
-    expo-dev-menu: "npm:~57.0.7"
+    expo-dev-launcher: "npm:~57.0.9"
+    expo-dev-menu: "npm:~57.0.9"
     expo-dev-menu-interface: "npm:~57.0.0"
     expo-manifests: "npm:~57.0.1"
     expo-updates-interface: "npm:~57.0.1"
   peerDependencies:
     expo: "*"
-  checksum: 10c0/701228cf42f6ff41b8fb1e37c894e2ad426c30ae3e1c912cf489914dfae12b1e4f3e5894ad9f380b05bea275b2975f35cd9ec669f951e3b3ae98601c87886483
+  checksum: 10c0/ad432f28886d970d683028d107a0f0278149abe13f695b2a047becc09312486a9eb43a2019ae082f99ac50ee55f0d740de5f439df1896e31038cb9d607646d2b
   languageName: node
   linkType: hard
 
-"expo-dev-launcher@npm:~57.0.7":
-  version: 57.0.7
-  resolution: "expo-dev-launcher@npm:57.0.7"
+"expo-dev-launcher@npm:~57.0.9":
+  version: 57.0.9
+  resolution: "expo-dev-launcher@npm:57.0.9"
   dependencies:
     "@expo/schema-utils": "npm:^57.0.2"
-    expo-dev-menu: "npm:~57.0.7"
+    expo-dev-menu: "npm:~57.0.9"
     expo-manifests: "npm:~57.0.1"
   peerDependencies:
     expo: "*"
     react-native: "*"
-  checksum: 10c0/3692c40a5a08cfc0c70e2838377ea24a95f93518383887d152b7a55e014dd8ff43aac0114932ada08b7675043b6652a6a7c78ec339134f32594601056d8ace54
+  checksum: 10c0/a1c5a249cfbf3291d5d69811a76e747b78f2d4775d82700bbc3b7f7ebb960b6d9b83ab3cb9e0898836c60f202c10ab8ecbb0590b9b699639f759a074d97f343f
   languageName: node
   linkType: hard
 
@@ -5388,15 +5388,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-dev-menu@npm:~57.0.7":
-  version: 57.0.7
-  resolution: "expo-dev-menu@npm:57.0.7"
+"expo-dev-menu@npm:~57.0.9":
+  version: 57.0.9
+  resolution: "expo-dev-menu@npm:57.0.9"
   dependencies:
     expo-dev-menu-interface: "npm:~57.0.0"
   peerDependencies:
     expo: "*"
     react-native: "*"
-  checksum: 10c0/2bd37762051632ba4c94e124ee0d51a64f128af58f82b7f1d6a5dafcc488a95705362744cca25a912494e0adcc8b5d0e84d40cc8f6d6e791b014e9e0e0417ffd
+  checksum: 10c0/43fc82f3f0ed3357707363bfd184e8e07c495a3f3def5816fee2894940708ed9561ee5ee233b084d8d7fa030efaf71869911f1314ba3ba883dffbb591bb622c8
   languageName: node
   linkType: hard
 
@@ -5694,6 +5694,20 @@ __metadata:
     expo: "*"
     react-native: "*"
   checksum: 10c0/196f2961b7e221fd11e0970cf90a23dc7b20012c5477c177890dd54fd596af7973101a5c41712c16419b06f3720fe90a5edaa68b693c9e00376423b4b8256cc8
+  languageName: node
+  linkType: hard
+
+"expo-widgets@npm:~57.0.6":
+  version: 57.0.6
+  resolution: "expo-widgets@npm:57.0.6"
+  dependencies:
+    "@expo/plist": "npm:^0.8.1"
+    "@expo/ui": "npm:~57.0.7"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/f3e52cbc471fbf14245b038ffb55d30be34878ddb42a4c58c54023b98bcc5619a885823ef3d32bc511b9c716ea35664de41c9c06471be0cd1ac2c62d6bfa900a
   languageName: node
   linkType: hard
 
@@ -8404,7 +8418,7 @@ __metadata:
     expo-clipboard: "npm:~57.0.1"
     expo-constants: "npm:~57.0.6"
     expo-crypto: "npm:~57.0.1"
-    expo-dev-client: "npm:~57.0.7"
+    expo-dev-client: "npm:~57.0.9"
     expo-font: "npm:~57.0.1"
     expo-haptics: "npm:~57.0.1"
     expo-linking: "npm:~57.0.3"
@@ -8416,6 +8430,7 @@ __metadata:
     expo-splash-screen: "npm:~57.0.4"
     expo-status-bar: "npm:~57.0.1"
     expo-web-browser: "npm:~57.0.1"
+    expo-widgets: "npm:~57.0.6"
     i18next: "npm:^26.3.1"
     ical.js: "npm:^2.2.1"
     jest: "npm:^29.7.0"
@@ -8426,6 +8441,7 @@ __metadata:
     react-dom: "npm:19.2.3"
     react-i18next: "npm:^17.0.8"
     react-native: "npm:0.86.0"
+    react-native-android-widget: "npm:^0.21.0"
     react-native-big-calendar: "npm:5.0.0-beta.12"
     react-native-country-flag: "npm:^2.0.2"
     react-native-gesture-handler: "npm:~2.32.0"
@@ -9285,6 +9301,20 @@ __metadata:
   version: 16.13.1
   resolution: "react-is@npm:16.13.1"
   checksum: 10c0/33977da7a5f1a287936a0c85639fec6ca74f4f15ef1e59a6bc20338fc73dc69555381e211f7a3529b8150a1f71e4225525b41b60b52965bda53ce7d47377ada1
+  languageName: node
+  linkType: hard
+
+"react-native-android-widget@npm:^0.21.0":
+  version: 0.21.0
+  resolution: "react-native-android-widget@npm:0.21.0"
+  peerDependencies:
+    expo: ">=54.0.0"
+    react: "*"
+    react-native: "*"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: 10c0/185febdd613809e4d1836545ab27b7bbf6562d8428f519741bfaed3b736123ffeb9705debc430b06ce376531860357b4eb1a80ea15db70c00e77ce0f7f78a0e9
   languageName: node
   linkType: hard
 
