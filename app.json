@@ -3,7 +3,7 @@
     "name": "Nextcloud Calendar",
     "slug": "nextcloud-calendar",
     "scheme": "nextcloud-calendar",
-    "version": "1.4.1",
+    "version": "1.4.2",
     "orientation": "default",
     "userInterfaceStyle": "automatic",
     "platforms": [
