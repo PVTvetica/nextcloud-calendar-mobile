@@ -161,6 +161,17 @@
       "github": "Vedi su GitHub",
       "reportBug": "Segnala un bug"
     },
-    "accountActive": "Attivo"
+    "accountActive": "Attivo",
+    "notifications": {
+      "title": "Notifiche",
+      "liveActivity": "Attività in tempo reale",
+      "liveActivityHint": "Mostra una notifica persistente mentre un evento è in corso.",
+      "permissionDenied": "Le notifiche sono disattivate per questa app.",
+      "openSettings": "Apri impostazioni di sistema"
+    }
+  },
+  "widget": {
+    "liveRemaining": "{{count}} min rimanenti",
+    "liveRemainingShort": "{{count}}min"
   }
 }

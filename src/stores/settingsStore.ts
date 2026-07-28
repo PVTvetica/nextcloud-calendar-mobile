@@ -9,9 +9,11 @@ interface SettingsState {
   themePreference: ThemePreference;
   language: AppLanguage;
   weekStartsOn: 0 | 1;
+  liveActivityEnabled: boolean;
   setThemePreference: (pref: ThemePreference) => void;
   setLanguage: (lang: AppLanguage) => void;
   setWeekStartsOn: (v: 0 | 1) => void;
+  setLiveActivityEnabled: (v: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -20,9 +22,11 @@ export const useSettingsStore = create<SettingsState>()(
       themePreference: 'system',
       language: getInitialLanguage(),
       weekStartsOn: 0,
+      liveActivityEnabled: true,
       setThemePreference: (pref) => set({ themePreference: pref }),
       setLanguage: (lang) => set({ language: lang }),
       setWeekStartsOn: (v) => set({ weekStartsOn: v }),
+      setLiveActivityEnabled: (v) => set({ liveActivityEnabled: v }),
     }),
     {
       name: 'settings-store',
@@ -33,6 +37,7 @@ export const useSettingsStore = create<SettingsState>()(
         themePreference: state.themePreference,
         language: state.language,
         weekStartsOn: state.weekStartsOn,
+        liveActivityEnabled: state.liveActivityEnabled,
       }),
     }
   )

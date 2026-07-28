@@ -161,6 +161,17 @@
       "github": "Открыть на GitHub",
       "reportBug": "Сообщить об ошибке"
     },
-    "accountActive": "Активный"
+    "accountActive": "Активный",
+    "notifications": {
+      "title": "Уведомления",
+      "liveActivity": "Живая активность",
+      "liveActivityHint": "Показывает постоянное уведомление во время события.",
+      "permissionDenied": "Уведомления для этого приложения отключены.",
+      "openSettings": "Открыть системные настройки"
+    }
+  },
+  "widget": {
+    "liveRemaining": "осталось {{count}} мин",
+    "liveRemainingShort": "{{count}}мин"
   }
 }

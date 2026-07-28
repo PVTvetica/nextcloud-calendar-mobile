@@ -26,7 +26,8 @@ export async function syncWidget(now: Date = new Date()): Promise<void> {
       }
 
       if (liveActivity.isSupported()) {
-        const ongoing = selectOngoingEvent(events, now);
+        const enabled = useSettingsStore.getState().liveActivityEnabled;
+        const ongoing = enabled ? selectOngoingEvent(events, now) : null;
         if (ongoing) await liveActivity.update(ongoing);
         else await liveActivity.clear();
       }

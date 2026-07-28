@@ -4,10 +4,11 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { useAccountStore } from '@/stores/accountStore';
 
 import { observeTodayEventsQuery } from '../core/readEvents';
+import { liveActivity } from '../surfaces/liveActivity';
 import { registerWidgetBackgroundSync, unregisterWidgetBackgroundSync } from '../sync/backgroundSync';
 import { syncWidget } from '../sync/syncWidget';
 
-const FOREGROUND_REFRESH_MS = 60_000;
+const REFRESH_MS = 60_000;
 
 export function useWidgetSync(): void {
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
@@ -17,6 +18,8 @@ export function useWidgetSync(): void {
       void unregisterWidgetBackgroundSync();
       return;
     }
+
+    void liveActivity.requestPermission?.().then(() => syncWidget());
 
     void syncWidget();
     void registerWidgetBackgroundSync();
@@ -28,8 +31,8 @@ export function useWidgetSync(): void {
       });
 
     const tick = setInterval(() => {
-      if (AppState.currentState === 'active') void syncWidget();
-    }, FOREGROUND_REFRESH_MS);
+      void syncWidget();
+    }, REFRESH_MS);
 
     const onAppState = (status: AppStateStatus) => {
       if (status === 'active') void syncWidget();

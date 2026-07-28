@@ -161,6 +161,17 @@
       "github": "Bekijken op GitHub",
       "reportBug": "Een bug melden"
     },
-    "accountActive": "Actief"
+    "accountActive": "Actief",
+    "notifications": {
+      "title": "Meldingen",
+      "liveActivity": "Live-activiteit",
+      "liveActivityHint": "Toont een blijvende melding tijdens een lopende afspraak.",
+      "permissionDenied": "Meldingen staan uit voor deze app.",
+      "openSettings": "Systeeminstellingen openen"
+    }
+  },
+  "widget": {
+    "liveRemaining": "nog {{count}} min",
+    "liveRemainingShort": "{{count}}min"
   }
 }

@@ -75,7 +75,32 @@
       "expo-localization",
       "expo-status-bar",
       "expo-font",
-      "expo-widgets",
+      [
+        "expo-widgets",
+        {
+          "groupIdentifier": "group.com.soluce.nextcloud-calendar",
+          "widgets": [
+            {
+              "name": "NextcloudCalendarWidget",
+              "displayName": "Nextcloud Calendar",
+              "description": "Your upcoming events",
+              "supportedFamilies": [
+                "systemSmall",
+                "systemMedium",
+                "systemLarge",
+                "accessoryInline",
+                "accessoryCircular",
+                "accessoryRectangular"
+              ]
+            },
+            {
+              "name": "NextcloudCalendarLiveActivity",
+              "displayName": "Ongoing event",
+              "description": "Shows the event currently running"
+            }
+          ]
+        }
+      ],
       [
         "react-native-android-widget",
         {

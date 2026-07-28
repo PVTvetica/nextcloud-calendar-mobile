@@ -39,6 +39,8 @@ export interface LiveEventState {
   endIso: string;
   color: string;
   deepLink: string;
+  location: string;
+  attendees: string[];
 }
 
 export interface WidgetSurface<P> {
@@ -46,6 +48,8 @@ export interface WidgetSurface<P> {
   isSupported(): boolean;
   update(payload: P): Promise<void>;
   clear(): Promise<void>;
+  requestPermission?(): Promise<boolean>;
+  canPromote?(): boolean;
 }
 
 export function eventDeepLink(uid: string): string {

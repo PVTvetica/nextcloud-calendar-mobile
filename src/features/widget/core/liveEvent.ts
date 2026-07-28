@@ -16,6 +16,8 @@ export function selectOngoingEvent(events: CalendarEvent[], now: Date = new Date
     endIso: e.dtend.toISOString(),
     color: e.color,
     deepLink: eventDeepLink(e.uid),
+    location: e.location ?? '',
+    attendees: e.attendees.map((a) => a.displayName || a.email).filter(Boolean),
   };
 }
 
