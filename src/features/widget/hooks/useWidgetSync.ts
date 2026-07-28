@@ -4,6 +4,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { useAccountStore } from '@/stores/accountStore';
 
 import { observeTodayEventsQuery } from '../core/readEvents';
+import { registerWidgetBackgroundSync, unregisterWidgetBackgroundSync } from '../sync/backgroundSync';
 import { syncWidget } from '../sync/syncWidget';
 
 const FOREGROUND_REFRESH_MS = 60_000;
@@ -12,9 +13,13 @@ export function useWidgetSync(): void {
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
 
   useEffect(() => {
-    if (!activeAccountId) return;
+    if (!activeAccountId) {
+      void unregisterWidgetBackgroundSync();
+      return;
+    }
 
     void syncWidget();
+    void registerWidgetBackgroundSync();
 
     const sub = observeTodayEventsQuery(activeAccountId)
       .observe()

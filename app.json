@@ -118,7 +118,8 @@
             }
           ]
         }
-      ]
+      ],
+      "expo-background-task"
     ]
   }
 }

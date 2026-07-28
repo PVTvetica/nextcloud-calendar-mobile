@@ -1,5 +1,6 @@
 export { useWidgetSync } from './hooks/useWidgetSync';
 export { syncWidget as refreshWidgets } from './sync/syncWidget';
+export { runBackgroundWidgetSync, WIDGET_BACKGROUND_TASK } from './sync/backgroundSync';
 export type { AgendaSnapshot, LiveEventState, WidgetSurface } from './core/types';
 
 export function registerWidgetEntry(): void {
