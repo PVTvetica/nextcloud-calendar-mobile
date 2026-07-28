@@ -23,11 +23,10 @@ describe('buildIcs', () => {
     expect(ics).toContain('END:VCALENDAR\r\n');
   });
 
-  it('writes non-recurring timed events in UTC (self-contained, no TZID)', () => {
+  it('writes non-recurring timed events with TZID, like recurring ones', () => {
     const ics = buildIcs({ ...base, timezone: 'Europe/Paris' });
-    expect(ics).toContain('DTSTART:20260601T140000Z\r\n');
-    expect(ics).toContain('DTEND:20260601T150000Z\r\n');
-    expect(ics).not.toContain('TZID');
+    expect(ics).toContain('DTSTART;TZID=Europe/Paris:20260601T160000\r\n');
+    expect(ics).toContain('DTEND;TZID=Europe/Paris:20260601T170000\r\n');
   });
 
   it('recurring events keep their anchor zone via TZID', () => {

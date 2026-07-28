@@ -12,21 +12,37 @@ export interface NcLoginData {
   password: string;
 }
 
-function parseNcLoginUrl(raw: string): NcLoginData | null {
-  if (!raw.startsWith('nc://login/')) return null;
-  const payload = raw.slice('nc://login/'.length);
+function decodeNcValue(value: string): string {
+  try {
+    return decodeURIComponent(value.replace(/\+/g, '%20'));
+  } catch {
+    return value;
+  }
+}
 
-  const userMatch   = payload.match(/(?:^|&)user:([^&]+)/);
-  const passMatch   = payload.match(/(?:^|&)password:([^&]+)/);
+// Nextcloud emits the fields in different orders depending on the source: the app-password
+// QR uses user/password/server, Login Flow v1 uses server/user/password. The quick-login QR
+// uses the "onetime-login" host instead of "login".
+export function parseNcLoginUrl(raw: string): NcLoginData | null {
+  const match = raw.trim().match(/^nc:\/\/(?:onetime-)?login\/(.+)$/i);
+  if (!match) return null;
 
-  const serverMatch = payload.match(/(?:^|&)server:(.+)$/);
+  const fields: Partial<Record<keyof NcLoginData, string>> = {};
 
-  if (!userMatch || !passMatch || !serverMatch) return null;
+  for (const token of match[1].split('&')) {
+    const sep = token.indexOf(':');
+    if (sep <= 0) continue;
+    const key = token.slice(0, sep).toLowerCase();
+    if (key !== 'user' && key !== 'password' && key !== 'server') continue;
+    fields[key] = decodeNcValue(token.slice(sep + 1));
+  }
+
+  if (!fields.user || !fields.password || !fields.server) return null;
 
   return {
-    user:     decodeURIComponent(userMatch[1]),
-    password: decodeURIComponent(passMatch[1]),
-    server:   decodeURIComponent(serverMatch[1]).replace(/\/$/, ''),
+    user:     fields.user,
+    password: fields.password,
+    server:   fields.server.replace(/\/$/, ''),
   };
 }
 
