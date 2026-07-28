@@ -20,9 +20,6 @@ function decodeNcValue(value: string): string {
   }
 }
 
-// Nextcloud emits the fields in different orders depending on the source: the app-password
-// QR uses user/password/server, Login Flow v1 uses server/user/password. The quick-login QR
-// uses the "onetime-login" host instead of "login".
 export function parseNcLoginUrl(raw: string): NcLoginData | null {
   const match = raw.trim().match(/^nc:\/\/(?:onetime-)?login\/(.+)$/i);
   if (!match) return null;
