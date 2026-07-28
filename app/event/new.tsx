@@ -42,9 +42,10 @@ export default function NewEventScreen() {
     );
   }
 
-  const organizerEmail = activeAccount.username.includes('@')
-    ? activeAccount.username
-    : `${activeAccount.username}@${new URL(activeAccount.baseUrl).hostname}`;
+  const organizerEmail = activeAccount.email
+    || (activeAccount.username.includes('@')
+      ? activeAccount.username
+      : `${activeAccount.username}@${new URL(activeAccount.baseUrl).hostname}`);
 
   return (
     <ViewContainer>
