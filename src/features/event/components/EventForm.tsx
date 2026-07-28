@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { TalkToggle } from './TalkToggle';
+import { requestAlertPermission } from '@/features/notifications/scheduleAlerts';
+import { AlertPicker } from './AlertPicker';
 import { RecurrencePicker } from './RecurrencePicker';
 import { Stack, Typography, TextField, DateField, Button, Chip, Toggle, IconButton } from '@/ui/components';
 import type { CalendarMeta, Attendee, CreateEventInput, RecurrenceRule, TalkRoomType } from '@/types';
@@ -23,6 +25,7 @@ interface InitialValues {
   location?: string;
   attendees?: Attendee[];
   rrule?: RecurrenceRule;
+  alarmMinutes?: number;
 }
 
 interface Props {
@@ -70,6 +73,7 @@ export function EventForm({
   const [attendeeInput, setAttendeeInput] = useState('');
   const [attendees, setAttendees] = useState<Attendee[]>(initialValues?.attendees ?? []);
   const [rrule, setRrule] = useState<RecurrenceRule | undefined>(initialValues?.rrule);
+  const [alarmMinutes, setAlarmMinutes] = useState<number | undefined>(initialValues?.alarmMinutes);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [calendarError, setCalendarError] = useState<string | null>(null);
   const [endError, setEndError] = useState<string | null>(null);
@@ -208,10 +212,12 @@ export function EventForm({
     } else if (dtend <= dtstart) {
       setEndError(t('event.errorEndAfterStart')); return;
     }
+    if (alarmMinutes !== undefined) void requestAlertPermission();
+
     onSubmit({
       summary: summary.trim(), calendarId, dtstart, dtend, allDay,
       description, location, attendees, withTalkRoom, talkRoomType,
-      organizerEmail, organizerName, rrule,
+      organizerEmail, organizerName, rrule, alarmMinutes,
     });
   }
 
@@ -317,7 +323,14 @@ export function EventForm({
           />
         )}
 
-        <RecurrencePicker value={rrule} onChange={setRrule} />
+        <Stack direction="horizontal" gap={12} hAlign="stretch">
+          <View style={styles.grow}>
+            <RecurrencePicker value={rrule} onChange={setRrule} />
+          </View>
+          <View style={styles.grow}>
+            <AlertPicker value={alarmMinutes} onChange={setAlarmMinutes} />
+          </View>
+        </Stack>
 
         <View onLayout={(e) => onFieldLayout('location', e)}>
           <TextField

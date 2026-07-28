@@ -130,7 +130,8 @@
     "deleteConfirmMsg": "Möchten Sie dieses Ereignis wirklich löschen?",
     "errorCreateFailed": "Ereignis konnte nicht erstellt werden",
     "errorUpdateFailed": "Ereignis konnte nicht aktualisiert werden",
-    "errorDeleteFailed": "Ereignis konnte nicht gelöscht werden"
+    "errorDeleteFailed": "Ereignis konnte nicht gelöscht werden",
+    "alert": "Erinnerung"
   },
   "settings": {
     "title": "Einstellungen",
@@ -167,7 +168,35 @@
       "liveActivity": "Live-Aktivität",
       "liveActivityHint": "Zeigt während eines laufenden Termins eine dauerhafte Benachrichtigung.",
       "permissionDenied": "Benachrichtigungen sind für diese App deaktiviert.",
-      "openSettings": "Systemeinstellungen öffnen"
+      "openSettings": "Systemeinstellungen öffnen",
+      "channelName": "Terminerinnerungen"
+    },
+    "alerts": {
+      "title": "Erinnerungen",
+      "timed": "Standarderinnerung",
+      "allDay": "Ganztägige Termine",
+      "none": "Keine",
+      "atTime": "Zum Terminbeginn",
+      "before": {
+        "5": "5 Minuten vorher",
+        "10": "10 Minuten vorher",
+        "15": "15 Minuten vorher",
+        "30": "30 Minuten vorher",
+        "60": "1 Stunde vorher",
+        "120": "2 Stunden vorher",
+        "1440": "1 Tag vorher",
+        "2880": "2 Tage vorher",
+        "10080": "1 Woche vorher"
+      },
+      "allDayOpts": {
+        "1": "1 Tag vorher (9:00)",
+        "2": "2 Tage vorher (9:00)",
+        "7": "1 Woche vorher (9:00)",
+        "sameDay": "Am selben Tag (9:00)"
+      },
+      "useDefault": "Standard",
+      "timedHint": "Gilt für Termine ohne eigene Erinnerung.",
+      "allDayHint": "Wird am gewählten Tag um 9:00 ausgelöst."
     }
   },
   "widget": {

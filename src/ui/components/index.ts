@@ -11,6 +11,8 @@ export { default as List } from './List';
 export { default as TextField } from './TextField';
 export { default as DateField } from './DateField';
 export { default as Toggle } from './Toggle';
+export { default as Select } from './Select';
+export type { SelectOption } from './Select';
 export { default as Divider } from './Divider';
 export { default as Spinner } from './Spinner';
 export { default as Avatar } from './Avatar';

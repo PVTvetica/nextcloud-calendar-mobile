@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { useAccountStore } from '@/stores/accountStore';
+import { EVENT_OBSERVED_COLUMNS } from '@/database/observedColumns';
 
 import { observeTodayEventsQuery } from '../core/readEvents';
 import { liveActivity } from '../surfaces/liveActivity';
@@ -25,7 +26,7 @@ export function useWidgetSync(): void {
     void registerWidgetBackgroundSync();
 
     const sub = observeTodayEventsQuery(activeAccountId)
-      .observe()
+      .observeWithColumns(EVENT_OBSERVED_COLUMNS)
       .subscribe(() => {
         void syncWidget();
       });

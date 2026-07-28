@@ -26,4 +26,5 @@ export default class Event extends Model {
   @field('talk_url') talkUrl?: string;
   @field('is_recurring') isRecurring?: boolean;
   @field('rrule') rrule?: string;
+  @field('alarm_minutes') alarmMinutes?: number;
 }

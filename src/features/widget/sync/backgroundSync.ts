@@ -2,6 +2,7 @@ import * as BackgroundTask from 'expo-background-task';
 import * as TaskManager from 'expo-task-manager';
 
 import { syncCalendars, syncEvents } from '@/database/sync';
+import { scheduleEventAlerts } from '@/features/notifications/scheduleAlerts';
 import { getActiveAccountId, loadAccounts } from '@/services/nextcloud/auth';
 
 import { syncWidget } from './syncWidget';
@@ -27,6 +28,7 @@ export async function runBackgroundWidgetSync(now: Date = new Date()): Promise<v
   }
 
   await syncWidget(now);
+  await scheduleEventAlerts(now);
 }
 
 TaskManager.defineTask(WIDGET_BACKGROUND_TASK, async () => {

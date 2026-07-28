@@ -56,13 +56,13 @@ function buildIcsForInput(uid: string, input: CreateEventInput, location: string
         uid, summary: input.summary, description, location,
         dtstart: input.dtstart, dtend: input.dtend,
         organizerEmail: input.organizerEmail, organizerName: input.organizerName,
-        attendees: input.attendees, rrule: input.rrule,
+        attendees: input.attendees, rrule: input.rrule, alarmMinutes: input.alarmMinutes,
       })
     : buildIcs({
         uid, summary: input.summary, description, location,
         dtstart: input.dtstart, dtend: input.dtend,
         organizerEmail: input.organizerEmail, organizerName: input.organizerName,
-        attendees: input.attendees, timezone, rrule: input.rrule,
+        attendees: input.attendees, timezone, rrule: input.rrule, alarmMinutes: input.alarmMinutes,
       });
 }
 
@@ -117,6 +117,7 @@ function eventFromInput(
     talkUrl: TALK_URL_PATTERN.test(location) ? location : undefined,
     isRecurring: !!input.rrule,
     rrule: undefined,
+    alarmMinutes: input.alarmMinutes,
   };
 }
 
@@ -185,6 +186,7 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
         description: input.description ?? event.description,
         location: input.location ?? event.location,
         attendees: input.attendees,
+        alarmMinutes: input.alarmMinutes,
         ...(targetCal && {
           calendarId: targetCal.id,
           color: targetCal.color,

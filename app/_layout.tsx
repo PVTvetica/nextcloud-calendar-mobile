@@ -11,6 +11,7 @@ import { useAppInitialization } from '@/hooks/useAppInitialization';
 import '@/utils/i18n';
 import { useLanguageSync } from '@/hooks/useLanguageSync';
 import { useWidgetSync } from '@/features/widget';
+import { useEventAlerts } from '@/features/notifications/useEventAlerts';
 import { isTablet } from '@/utils/device';
 
 function useOrientationLock() {
@@ -33,6 +34,7 @@ export default function RootLayout() {
   useLanguageSync();
   useOrientationLock();
   useWidgetSync();
+  useEventAlerts();
 
   const onLayoutRootView = useCallback(() => {
     SplashScreen.hideAsync().catch(() => undefined);

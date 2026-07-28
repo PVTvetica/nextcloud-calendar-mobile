@@ -13,6 +13,7 @@ export const EVENT_OBSERVED_COLUMNS = [
   'talk_url',
   'is_recurring',
   'rrule',
+  'alarm_minutes',
 ];
 
 export const CALENDAR_OBSERVED_COLUMNS = [

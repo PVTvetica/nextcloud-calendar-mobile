@@ -90,6 +90,7 @@ export default function EditEventScreen() {
     description: event.description ?? '',
     location: event.location ?? '',
     attendees: event.attendees,
+    alarmMinutes: event.alarmMinutes,
   };
 
   const scopeLabel =

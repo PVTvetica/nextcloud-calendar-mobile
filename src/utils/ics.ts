@@ -1,4 +1,5 @@
 import type { Attendee, RecurrenceRule } from '@/types';
+import { minutesToTrigger } from '@/features/notifications/alerts';
 
 const PRODID = '-//Nextcloud Calendar Mobile//EN';
 
@@ -70,6 +71,17 @@ function textLines(summary: string, description: string, location: string): stri
   ];
 }
 
+function alarmLines(alarmMinutes?: number): string[] {
+  if (alarmMinutes === undefined) return [];
+  return [
+    'BEGIN:VALARM',
+    `TRIGGER:${minutesToTrigger(alarmMinutes)}`,
+    'ACTION:DISPLAY',
+    'DESCRIPTION:Reminder',
+    'END:VALARM',
+  ];
+}
+
 function organizerLine(name: string, email: string): string {
   return `ORGANIZER;CN=${name}:mailto:${email}`;
 }
@@ -107,10 +119,11 @@ export interface BuildIcsParams {
   attendees: Attendee[];
   timezone: string;
   rrule?: RecurrenceRule;
+  alarmMinutes?: number;
 }
 
 export function buildIcs(params: BuildIcsParams): string {
-  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, timezone, rrule } = params;
+  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, timezone, rrule, alarmMinutes } = params;
 
   if (!rrule) {
     return serialize([
@@ -121,6 +134,7 @@ export function buildIcs(params: BuildIcsParams): string {
       ...textLines(summary, description, location),
       organizerLine(organizerName, organizerEmail),
       ...attendeeLines(attendees),
+      ...alarmLines(alarmMinutes),
     ]);
   }
 
@@ -133,13 +147,14 @@ export function buildIcs(params: BuildIcsParams): string {
     rruleLine(rrule),
     organizerLine(organizerName, organizerEmail),
     ...attendeeLines(attendees),
+    ...alarmLines(alarmMinutes),
   ]);
 }
 
 export type BuildAllDayIcsParams = Omit<BuildIcsParams, 'timezone'>;
 
 export function buildAllDayIcs(params: BuildAllDayIcsParams): string {
-  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, rrule } = params;
+  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, rrule, alarmMinutes } = params;
   const endExclusive = new Date(dtend.getFullYear(), dtend.getMonth(), dtend.getDate() + 1);
 
   return serialize([
@@ -151,11 +166,12 @@ export function buildAllDayIcs(params: BuildAllDayIcsParams): string {
     ...(rrule ? [rruleLine(rrule)] : []),
     organizerLine(organizerName, organizerEmail),
     ...attendeeLines(attendees),
+    ...alarmLines(alarmMinutes),
   ]);
 }
 
 export function buildExceptionIcs(params: BuildIcsParams & { recurrenceId: Date }): string {
-  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, timezone, recurrenceId } = params;
+  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, timezone, recurrenceId, alarmMinutes } = params;
 
   return serialize([
     `UID:${uid}`,
@@ -166,6 +182,7 @@ export function buildExceptionIcs(params: BuildIcsParams & { recurrenceId: Date 
     ...textLines(summary, description, location),
     organizerLine(organizerName, organizerEmail),
     ...attendeeLines(attendees),
+    ...alarmLines(alarmMinutes),
   ]);
 }
 

@@ -2,6 +2,7 @@ import ICAL from 'ical.js';
 import type { CalendarEvent, Attendee } from '@/types';
 import { yieldToUI } from '@/utils/scheduling';
 import { isValidTimeZone, zonedWallTimeToUtc } from '@/utils/timezone';
+import { triggerToMinutes } from '@/features/notifications/alerts';
 
 interface ParseCalMeta {
   calendarId: string;
@@ -13,6 +14,14 @@ const TALK_URL_PATTERN = /\/call\//;
 
 const MAX_OCCURRENCES = 1000;
 
+
+function firstAlarmMinutes(vevent: ICAL.Component): number | undefined {
+  const alarm = vevent.getFirstSubcomponent('valarm');
+  const trigger = alarm?.getFirstProperty('trigger');
+  if (!trigger) return undefined;
+  const minutes = triggerToMinutes(trigger.toICALString().replace(/^TRIGGER[^:]*:/i, ''));
+  return minutes ?? undefined;
+}
 
 function eventTzid(vevent: ICAL.Component): string | undefined {
   const raw = vevent.getFirstProperty('dtstart')?.getParameter('tzid');
@@ -70,6 +79,8 @@ export function parseIcsItem(
         ? (organizerProp.getFirstValue() as string).replace(/^mailto:/i, '')
         : undefined;
 
+      const alarmMinutes = firstAlarmMinutes(vevent);
+
       const rruleProp = vevent.getFirstProperty('rrule');
       const isRecurring = !!rruleProp;
       const rruleStr: string | undefined = rruleProp
@@ -91,6 +102,7 @@ export function parseIcsItem(
         talkUrl,
         isRecurring,
         rrule: rruleStr,
+        alarmMinutes,
       };
 
       if (isRecurring && (rangeStart || rangeEnd)) {
