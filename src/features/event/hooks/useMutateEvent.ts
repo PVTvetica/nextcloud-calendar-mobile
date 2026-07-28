@@ -8,6 +8,7 @@ import { createTalkRoom } from '@/services/nextcloud/talk';
 import { describeMutationError } from '@/services/shared/errors';
 import { buildIcs, buildAllDayIcs, buildExceptionIcs, injectExdate, truncateRruleUntil } from '@/utils/ics';
 import { parseIcsObjects, extractDtstartTzid } from '@/utils/caldav-parse';
+import { isValidTimeZone } from '@/utils/timezone';
 import i18n from '@/utils/i18n';
 import {
   insertEvents,
@@ -43,7 +44,9 @@ function useAction<V>(run: (value: V) => Promise<void>): {
 }
 
 function resolveTimezone(account: Account): string {
-  return account.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (account.timezone && isValidTimeZone(account.timezone)) return account.timezone;
+  const deviceTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return isValidTimeZone(deviceTz) ? deviceTz : 'UTC';
 }
 
 function resolveCalendar(calendars: CalendarMeta[], calendarId: string): CalendarMeta | undefined {

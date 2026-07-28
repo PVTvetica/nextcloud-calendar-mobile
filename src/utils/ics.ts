@@ -125,26 +125,13 @@ export interface BuildIcsParams {
 export function buildIcs(params: BuildIcsParams): string {
   const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, timezone, rrule, alarmMinutes } = params;
 
-  if (!rrule) {
-    return serialize([
-      `UID:${uid}`,
-      `DTSTAMP:${utcStamp(new Date())}`,
-      `DTSTART:${utcStamp(dtstart)}`,
-      `DTEND:${utcStamp(dtend)}`,
-      ...textLines(summary, description, location),
-      organizerLine(organizerName, organizerEmail),
-      ...attendeeLines(attendees),
-      ...alarmLines(alarmMinutes),
-    ]);
-  }
-
   return serialize([
     `UID:${uid}`,
     `DTSTAMP:${utcStamp(new Date())}`,
     `DTSTART;TZID=${timezone}:${localStamp(dtstart, timezone)}`,
     `DTEND;TZID=${timezone}:${localStamp(dtend, timezone)}`,
     ...textLines(summary, description, location),
-    rruleLine(rrule),
+    ...(rrule ? [rruleLine(rrule)] : []),
     organizerLine(organizerName, organizerEmail),
     ...attendeeLines(attendees),
     ...alarmLines(alarmMinutes),
