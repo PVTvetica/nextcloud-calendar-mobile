@@ -110,6 +110,7 @@ const config: ExpoConfig = {
             name: 'NextcloudCalendarLiveActivity',
             displayName: 'Ongoing event',
             description: 'Shows the event currently running',
+            supportedFamilies: ['systemSmall', 'systemMedium'],
           },
         ],
       },
