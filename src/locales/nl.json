@@ -200,7 +200,9 @@
     }
   },
   "widget": {
-    "liveRemaining": "nog {{count}} min",
-    "liveRemainingShort": "{{count}}min"
+    "liveRemaining": "nog {{duration}}",
+    "liveRemainingShort": "{{duration}}",
+    "durationHour": "u",
+    "durationMinute": "m"
   }
 }

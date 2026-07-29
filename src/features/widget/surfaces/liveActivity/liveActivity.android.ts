@@ -47,6 +47,8 @@ export const liveActivity: WidgetSurface<LiveEventState> = {
       title: state.title,
       textTemplate: template('widget.liveRemaining'),
       shortTemplate: template('widget.liveRemainingShort'),
+      hourUnit: template('widget.durationHour'),
+      minuteUnit: template('widget.durationMinute'),
       location: state.location,
       attendees: state.attendees,
       startMs: new Date(state.startIso).getTime(),

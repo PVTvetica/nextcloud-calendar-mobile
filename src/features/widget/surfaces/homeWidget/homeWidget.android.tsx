@@ -18,7 +18,7 @@ type Palette = ReturnType<typeof widgetPalette>;
 const WIDGET_NAMES = ['CalendarSmallWidget', 'CalendarMediumWidget', 'CalendarLargeWidget'] as const;
 
 function compactLimit(widgetName: string): number {
-  return widgetName === 'CalendarSmallWidget' ? 1 : 3;
+  return widgetName === 'CalendarSmallWidget' ? 2 : 3;
 }
 
 function EventRow({ event }: { event: AgendaEventItem }) {

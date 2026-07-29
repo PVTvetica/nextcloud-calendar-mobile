@@ -3,8 +3,10 @@ import { HStack, Text, VStack } from '@expo/ui/swift-ui';
 import { background, cornerRadius, font, foregroundStyle, frame, padding } from '@expo/ui/swift-ui/modifiers';
 import { createLiveActivity, type LiveActivity } from 'expo-widgets';
 
+import i18n from '@/utils/i18n';
+
 import type { LiveEventState, WidgetSurface } from '../../core/types';
-import { eventProgress, remainingMinutes } from '../../core/liveEvent';
+import { eventProgress, formatRemaining, remainingMinutes } from '../../core/liveEvent';
 import { onEventColor, widgetRadius, widgetType } from '../../core/theme';
 import { writeLiveEvent } from '../../storage/widgetStore';
 
@@ -13,16 +15,26 @@ const ACTIVITY_NAME = 'NextcloudCalendarLiveActivity';
 interface ActivityProps {
   title: string;
   timeLabel: string;
+  shortLabel: string;
   location: string;
   attendees: string;
   color: string;
   progress: number;
 }
 
+function remainingDuration(state: LiveEventState, now: Date): string {
+  return formatRemaining(remainingMinutes(state, now), {
+    hour: i18n.t('widget.durationHour'),
+    minute: i18n.t('widget.durationMinute'),
+  });
+}
+
 function toProps(state: LiveEventState, now: Date = new Date()): ActivityProps {
+  const duration = remainingDuration(state, now);
   return {
     title: state.title,
-    timeLabel: `${remainingMinutes(state, now)} min`,
+    timeLabel: i18n.t('widget.liveRemaining', { duration }),
+    shortLabel: i18n.t('widget.liveRemainingShort', { duration }),
     location: state.location,
     attendees: state.attendees.join(', '),
     color: state.color,
@@ -66,10 +78,10 @@ const CalendarLiveActivity = (props: ActivityProps) => {
   return {
     banner: <Banner {...props} />,
     compactLeading: (
-      <Text modifiers={[font({ weight: 'semibold', size: widgetType.time })]}>{props.timeLabel}</Text>
+      <Text modifiers={[font({ weight: 'semibold', size: widgetType.time })]}>{props.shortLabel}</Text>
     ),
     compactTrailing: <Text modifiers={[font({ size: widgetType.time })]}>{props.title}</Text>,
-    minimal: <Text modifiers={[font({ size: widgetType.time })]}>{props.timeLabel}</Text>,
+    minimal: <Text modifiers={[font({ size: widgetType.time })]}>{props.shortLabel}</Text>,
     expandedLeading: (
       <VStack modifiers={[padding({ all: 8 })]}>
         <Text modifiers={[font({ weight: 'bold', size: widgetType.title })]}>{props.title}</Text>

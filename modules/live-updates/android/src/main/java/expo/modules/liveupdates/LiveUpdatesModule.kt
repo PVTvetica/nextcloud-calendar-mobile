@@ -28,6 +28,8 @@ class LiveEventRecord : Record {
   @Field val title: String = ""
   @Field val textTemplate: String = ""
   @Field val shortTemplate: String = ""
+  @Field val hourUnit: String = "h"
+  @Field val minuteUnit: String = "m"
 
   @Field val location: String = ""
   @Field val attendees: List<String> = emptyList()
@@ -147,11 +149,22 @@ class LiveUpdatesModule : Module() {
     return if (left <= 0) 0 else Math.ceil(left / 60_000.0).toInt()
   }
 
-  private fun interpolate(template: String, minutes: Int): String =
-    template.replace("{{count}}", minutes.toString())
+  private fun formatRemaining(event: LiveEventRecord, minutes: Int): String {
+    val total = maxOf(0, minutes)
+    val hours = total / 60
+    val mins = total % 60
+    return when {
+      hours == 0 -> "$mins${event.minuteUnit}"
+      mins == 0 -> "$hours${event.hourUnit}"
+      else -> "$hours${event.hourUnit}${mins.toString().padStart(2, '0')}"
+    }
+  }
+
+  private fun interpolate(template: String, event: LiveEventRecord, minutes: Int): String =
+    template.replace("{{duration}}", formatRemaining(event, minutes))
 
   private fun details(event: LiveEventRecord, remaining: Int): String {
-    val lines = mutableListOf(interpolate(event.textTemplate, remaining))
+    val lines = mutableListOf(interpolate(event.textTemplate, event, remaining))
     if (event.location.isNotBlank()) lines.add(event.location)
     if (event.attendees.isNotEmpty()) lines.add(event.attendees.joinToString(", "))
     return if (lines.size > 1) lines.joinToString("\n") else ""
@@ -202,7 +215,7 @@ class LiveUpdatesModule : Module() {
     val builder = Notification.Builder(context, CHANNEL_ID)
       .setSmallIcon(context.applicationInfo.icon)
       .setContentTitle(event.title)
-      .setContentText(interpolate(event.textTemplate, remaining))
+      .setContentText(interpolate(event.textTemplate, event, remaining))
       .setOngoing(true)
       .setOnlyAlertOnce(true)
       .setContentIntent(launchIntent())

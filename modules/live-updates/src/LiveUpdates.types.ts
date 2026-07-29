@@ -9,6 +9,8 @@ export interface LiveUpdateEvent {
   title: string;
   textTemplate: string;
   shortTemplate: string;
+  hourUnit: string;
+  minuteUnit: string;
   location: string;
   attendees: string[];
   startMs: number;

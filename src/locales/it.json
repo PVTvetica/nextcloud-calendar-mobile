@@ -200,7 +200,9 @@
     }
   },
   "widget": {
-    "liveRemaining": "{{count}} min rimanenti",
-    "liveRemainingShort": "{{count}}min"
+    "liveRemaining": "{{duration}} rimanenti",
+    "liveRemainingShort": "{{duration}}",
+    "durationHour": "h",
+    "durationMinute": "m"
   }
 }

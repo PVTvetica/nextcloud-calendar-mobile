@@ -200,7 +200,9 @@
     }
   },
   "widget": {
-    "liveRemaining": "quedan {{count}} min",
-    "liveRemainingShort": "{{count}}min"
+    "liveRemaining": "quedan {{duration}}",
+    "liveRemainingShort": "{{duration}}",
+    "durationHour": "h",
+    "durationMinute": "m"
   }
 }

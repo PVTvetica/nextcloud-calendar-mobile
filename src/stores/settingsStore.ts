@@ -28,7 +28,7 @@ export const useSettingsStore = create<SettingsState>()(
       language: getInitialLanguage(),
       weekStartsOn: 0,
       liveActivityEnabled: true,
-      timedAlert: null,
+      timedAlert: 10,
       allDayAlert: null,
       setTimedAlert: (v) => set({ timedAlert: v }),
       setAllDayAlert: (v) => set({ allDayAlert: v }),
@@ -39,6 +39,14 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'settings-store',
+      version: 1,
+      migrate: (persisted, version) => {
+        const state = persisted as Partial<SettingsState> | undefined;
+        if (version === 0 && state && state.timedAlert == null) {
+          return { ...state, timedAlert: 10 };
+        }
+        return state;
+      },
       storage: createJSONStorage(() =>
         legacyBackedStorage(['themePreference', 'language', 'weekStartsOn'])
       ),

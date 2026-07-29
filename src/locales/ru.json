@@ -200,7 +200,9 @@
     }
   },
   "widget": {
-    "liveRemaining": "осталось {{count}} мин",
-    "liveRemainingShort": "{{count}}мин"
+    "liveRemaining": "осталось {{duration}}",
+    "liveRemainingShort": "{{duration}}",
+    "durationHour": "ч",
+    "durationMinute": "м"
   }
 }

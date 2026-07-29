@@ -1,5 +1,5 @@
 import { buildAgendaSnapshot } from '@/features/widget/core/agendaSnapshot';
-import { selectOngoingEvent, eventProgress, remainingMinutes } from '@/features/widget/core/liveEvent';
+import { selectOngoingEvent, eventProgress, formatRemaining, remainingMinutes } from '@/features/widget/core/liveEvent';
 import type { CalendarEvent } from '@/types';
 
 function ev(partial: Partial<CalendarEvent> & { dtstart: Date; dtend: Date }): CalendarEvent {
@@ -111,5 +111,34 @@ describe('eventProgress / remainingMinutes', () => {
     expect(eventProgress(state, new Date('2026-08-01T11:00:00Z'))).toBe(0);
     expect(eventProgress(state, new Date('2026-08-01T14:00:00Z'))).toBe(1);
     expect(remainingMinutes(state, new Date('2026-08-01T12:45:00Z'))).toBe(15);
+  });
+});
+
+describe('formatRemaining', () => {
+  it('renders hours and minutes without a "min" unit', () => {
+    expect(formatRemaining(206)).toBe('3h26');
+    expect(formatRemaining(94)).toBe('1h34');
+  });
+
+  it('drops the minute part on a whole hour', () => {
+    expect(formatRemaining(120)).toBe('2h');
+  });
+
+  it('renders sub-hour durations in minutes', () => {
+    expect(formatRemaining(47)).toBe('47m');
+    expect(formatRemaining(0)).toBe('0m');
+  });
+
+  it('pads the minute part so 2h05 never reads as 2h5', () => {
+    expect(formatRemaining(125)).toBe('2h05');
+  });
+
+  it('clamps negatives instead of rendering a past duration', () => {
+    expect(formatRemaining(-30)).toBe('0m');
+  });
+
+  it('takes localized unit suffixes', () => {
+    expect(formatRemaining(206, { hour: 'ч', minute: 'м' })).toBe('3ч26');
+    expect(formatRemaining(47, { hour: 'ч', minute: 'м' })).toBe('47м');
   });
 });

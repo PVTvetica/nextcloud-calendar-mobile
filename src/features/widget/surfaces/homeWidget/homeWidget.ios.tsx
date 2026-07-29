@@ -116,7 +116,7 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
   if (family === 'systemLarge') {
     return <LargeWidget snapshot={snapshot} palette={palette} />;
   }
-  return <CompactWidget snapshot={snapshot} palette={palette} limit={family === 'systemSmall' ? 1 : 3} />;
+  return <CompactWidget snapshot={snapshot} palette={palette} limit={family === 'systemSmall' ? 2 : 3} />;
 }
 
 createWidget<{ snapshot: AgendaSnapshot | null }>(WIDGET_NAME, CalendarWidget);

@@ -33,3 +33,19 @@ export function remainingMinutes(state: LiveEventState, now: Date = new Date()):
   const end = new Date(state.endIso).getTime();
   return Math.max(0, Math.round((end - now.getTime()) / 60000));
 }
+
+export interface DurationUnits {
+  hour: string;
+  minute: string;
+}
+
+export const DEFAULT_DURATION_UNITS: DurationUnits = { hour: 'h', minute: 'm' };
+
+export function formatRemaining(minutes: number, units: DurationUnits = DEFAULT_DURATION_UNITS): string {
+  const total = Math.max(0, Math.round(minutes));
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h === 0) return `${m}${units.minute}`;
+  if (m === 0) return `${h}${units.hour}`;
+  return `${h}${units.hour}${String(m).padStart(2, '0')}`;
+}
