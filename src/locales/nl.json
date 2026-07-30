@@ -203,6 +203,7 @@
     "liveRemaining": "nog {{duration}}",
     "liveRemainingShort": "{{duration}}",
     "durationHour": "u",
-    "durationMinute": "m"
+    "durationMinute": "m",
+    "emptyAgenda": "Geen aankomende afspraken"
   }
 }

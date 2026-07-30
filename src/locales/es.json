@@ -203,6 +203,7 @@
     "liveRemaining": "quedan {{duration}}",
     "liveRemainingShort": "{{duration}}",
     "durationHour": "h",
-    "durationMinute": "m"
+    "durationMinute": "m",
+    "emptyAgenda": "Ningún evento próximo"
   }
 }

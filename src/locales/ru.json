@@ -203,6 +203,7 @@
     "liveRemaining": "осталось {{duration}}",
     "liveRemainingShort": "{{duration}}",
     "durationHour": "ч",
-    "durationMinute": "м"
+    "durationMinute": "м",
+    "emptyAgenda": "Нет предстоящих событий"
   }
 }

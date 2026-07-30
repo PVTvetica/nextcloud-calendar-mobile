@@ -91,6 +91,20 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
     );
   }
 
+  function EventRow({ event }: { event: AgendaEventItem }) {
+    return (
+      <Link destination={event.deepLink}>
+        <HStack alignment="center" modifiers={[frame({ maxWidth: Infinity, alignment: 'leading' })]}>
+          <RoundedRectangle cornerRadius={2} modifiers={[foregroundStyle(event.color), frame({ width: 4, height: 30 })]} />
+          <VStack alignment="leading" modifiers={[frame({ maxWidth: Infinity, alignment: 'leading' }), padding({ leading: 8 })]}>
+            <Text modifiers={[font({ weight: 'medium', size: WIDGET_TYPE.body }), foregroundStyle(palette.text)]}>{event.title}</Text>
+            <Text modifiers={[font({ size: WIDGET_TYPE.time }), foregroundStyle(palette.textSecondary)]}>{event.timeLabel}</Text>
+          </VStack>
+        </HStack>
+      </Link>
+    );
+  }
+
   function EmptyState({ snapshot, palette }: { snapshot: AgendaSnapshot | null; palette: typeof LIGHT_PALETTE }) {
     return <Text modifiers={[font({ size: WIDGET_TYPE.caption }), foregroundStyle(palette.textTertiary)]}>{emptyLabel(snapshot)}</Text>;
   }
@@ -138,23 +152,9 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
     );
   }
 
-  function EventRow({ event }: { event: AgendaEventItem }) {
-    return (
-      <Link destination={event.deepLink}>
-        <HStack alignment="center" modifiers={[frame({ maxWidth: Infinity, alignment: 'leading' })]}>
-          <RoundedRectangle cornerRadius={2} modifiers={[foregroundStyle(event.color), frame({ width: 4, height: 30 })]} />
-          <VStack alignment="leading" modifiers={[frame({ maxWidth: Infinity, alignment: 'leading' }), padding({ leading: 8 })]}>
-            <Text modifiers={[font({ weight: 'medium', size: WIDGET_TYPE.body }), foregroundStyle(palette.text)]}>{event.title}</Text>
-            <Text modifiers={[font({ size: WIDGET_TYPE.time }), foregroundStyle(palette.textSecondary)]}>{event.timeLabel}</Text>
-          </VStack>
-        </HStack>
-      </Link>
-    );
-  }
-
   function SmallWidget({ snapshot, palette }: { snapshot: AgendaSnapshot | null; palette: typeof LIGHT_PALETTE }) {
     const header = agendaHeader(snapshot);
-    const events = compactEvents(snapshot, 3);
+    const events = compactEvents(snapshot, 2);
     const cells = [];
     cells.push(
       <VStack key="hdr" alignment="leading" modifiers={[padding({ bottom: 2 })]}>
@@ -189,7 +189,7 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
           {events.length === 0 ? (
             <EmptyState snapshot={snapshot} palette={palette} />
           ) : (
-            events.map((event) => <EventCard key={`${event.uid}-${event.startIso}`} event={event} />)
+            events.map((event) => <EventRow key={`${event.uid}-${event.startIso}`} event={event} />)
           )}
         </VStack>
       </HStack>

@@ -203,6 +203,7 @@
     "liveRemaining": "noch {{duration}}",
     "liveRemainingShort": "{{duration}}",
     "durationHour": "h",
-    "durationMinute": "m"
+    "durationMinute": "m",
+    "emptyAgenda": "Keine anstehenden Termine"
   }
 }

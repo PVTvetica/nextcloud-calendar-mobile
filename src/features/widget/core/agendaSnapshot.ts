@@ -1,4 +1,5 @@
 import type { CalendarEvent } from '@/types';
+import i18n from '@/utils/i18n';
 import { type AgendaDaySection, type AgendaEventItem, type AgendaSnapshot, eventDeepLink } from './types';
 
 export interface BuildAgendaOptions {
@@ -66,7 +67,7 @@ export function buildAgendaSnapshot(
 
   const relativeLabel = todays.length > 0
     ? new Intl.DateTimeFormat(locale, { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long' }).format(now)
-    : 'No upcoming event';
+    : i18n.t('widget.emptyAgenda');
 
   const byKey = new Map<string, CalendarEvent[]>();
   for (const e of events) {

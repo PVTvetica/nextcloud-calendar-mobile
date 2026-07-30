@@ -4,10 +4,10 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { useAccountStore } from '@/stores/accountStore';
 import { EVENT_OBSERVED_COLUMNS } from '@/database/observedColumns';
 
-import { observeTodayEventsQuery } from '../core/readEvents';
+import { observeAgendaEventsQuery } from '../core/readEvents';
 import { liveActivity } from '../surfaces/liveActivity';
 import { registerWidgetBackgroundSync, unregisterWidgetBackgroundSync } from '../sync/backgroundSync';
-import { syncWidget } from '../sync/syncWidget';
+import { AGENDA_DAYS, syncWidget } from '../sync/syncWidget';
 
 const REFRESH_MS = 60_000;
 
@@ -25,7 +25,7 @@ export function useWidgetSync(): void {
     void syncWidget();
     void registerWidgetBackgroundSync();
 
-    const sub = observeTodayEventsQuery(activeAccountId)
+    const sub = observeAgendaEventsQuery(activeAccountId, AGENDA_DAYS)
       .observeWithColumns(EVENT_OBSERVED_COLUMNS)
       .subscribe(() => {
         void syncWidget();
