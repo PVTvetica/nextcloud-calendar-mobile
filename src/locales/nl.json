@@ -40,7 +40,8 @@
       "required": "Alle velden zijn verplicht.",
       "invalidCreds": "Ongeldige gegevens. Controleer je app-wachtwoord.",
       "serverNotFound": "Geen Nextcloud-server gevonden op dit adres. Controleer de URL, bijvoorbeeld https://cloud.voorbeeld.com",
-      "connect": "Kan geen verbinding maken: {{msg}}"
+      "connect": "Kan geen verbinding maken: {{msg}}",
+      "qrOneTimeExpired": "Deze eenmalige inlogcode is al gebruikt of is verlopen. Genereer een nieuwe QR-code in Nextcloud en scan die opnieuw."
     },
     "qrCameraDenied": "Cameratoegang is geweigerd. Schakel het in bij je apparaatinstellingen om de QR-code te scannen.",
     "qrOpenSettings": "Instellingen openen",

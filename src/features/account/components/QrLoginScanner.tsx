@@ -6,42 +6,10 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'expo-router';
 
-export interface NcLoginData {
-  server: string;
-  user: string;
-  password: string;
-}
+import { parseNcLoginUrl } from '../utils/ncLoginUrl';
+import type { NcLoginData } from '../utils/ncLoginUrl';
 
-function decodeNcValue(value: string): string {
-  try {
-    return decodeURIComponent(value.replace(/\+/g, '%20'));
-  } catch {
-    return value;
-  }
-}
-
-export function parseNcLoginUrl(raw: string): NcLoginData | null {
-  const match = raw.trim().match(/^nc:\/\/(?:onetime-)?login\/(.+)$/i);
-  if (!match) return null;
-
-  const fields: Partial<Record<keyof NcLoginData, string>> = {};
-
-  for (const token of match[1].split('&')) {
-    const sep = token.indexOf(':');
-    if (sep <= 0) continue;
-    const key = token.slice(0, sep).toLowerCase();
-    if (key !== 'user' && key !== 'password' && key !== 'server') continue;
-    fields[key] = decodeNcValue(token.slice(sep + 1));
-  }
-
-  if (!fields.user || !fields.password || !fields.server) return null;
-
-  return {
-    user:     fields.user,
-    password: fields.password,
-    server:   fields.server.replace(/\/$/, ''),
-  };
-}
+export type { NcLoginData };
 
 interface Props {
   visible: boolean;

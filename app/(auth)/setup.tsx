@@ -8,7 +8,7 @@ import { validateCredentials } from '@/services/nextcloud/caldav';
 import { HttpError, describeMutationError } from '@/services/shared/errors';
 import { refreshAccounts } from '@/hooks/useAccounts';
 import { saveAccount, setActiveAccountId } from '@/services/nextcloud/auth';
-import { fetchUserInfo } from '@/services/nextcloud/nextcloud';
+import { fetchUserInfo, exchangeOneTimeToken } from '@/services/nextcloud/nextcloud';
 import { useAccountStore } from '@/stores/accountStore';
 import { QrLoginScanner } from '@/features/account/components/QrLoginScanner';
 import type { NcLoginData } from '@/features/account/components/QrLoginScanner';
@@ -94,12 +94,39 @@ export default function SetupScreen() {
     connectWith({ baseUrl, username, appPassword, displayName });
   }
 
-  function handleQrScanned(data: NcLoginData) {
+  async function handleQrScanned(data: NcLoginData) {
     setShowScanner(false);
     setBaseUrl(data.server);
     setUsername(data.user);
-    setAppPassword(data.password);
-    connectWith({ baseUrl: data.server, username: data.user, appPassword: data.password, displayName: '' });
+
+    if (!data.oneTime) {
+      setAppPassword(data.password);
+      connectWith({ baseUrl: data.server, username: data.user, appPassword: data.password, displayName: '' });
+      return;
+    }
+
+    setError(null);
+    setLoading(true);
+    let appPassword: string;
+    try {
+      appPassword = await exchangeOneTimeToken({
+        baseUrl: data.server,
+        username: data.user,
+        oneTimeToken: data.password,
+      });
+    } catch (e: unknown) {
+      setLoading(false);
+      const status = e instanceof HttpError ? e.status : undefined;
+      setError(
+        status === 401 || status === 403
+          ? t('setup.errors.qrOneTimeExpired')
+          : describeMutationError(e)
+      );
+      return;
+    }
+    setLoading(false);
+    setAppPassword(appPassword);
+    connectWith({ baseUrl: data.server, username: data.user, appPassword, displayName: '' });
   }
 
   return (

@@ -40,7 +40,8 @@
       "required": "Alle Felder sind erforderlich.",
       "invalidCreds": "Ungültige Anmeldedaten. Überprüfen Sie Ihr App-Passwort.",
       "serverNotFound": "Unter dieser Adresse wurde kein Nextcloud-Server gefunden. Überprüfen Sie die URL, zum Beispiel https://cloud.beispiel.com",
-      "connect": "Verbindung fehlgeschlagen: {{msg}}"
+      "connect": "Verbindung fehlgeschlagen: {{msg}}",
+      "qrOneTimeExpired": "Dieser Einmal-Anmeldecode wurde bereits verwendet oder ist abgelaufen. Erstelle in Nextcloud einen neuen QR-Code und scanne ihn erneut."
     },
     "qrCameraDenied": "Kamerazugriff wurde verweigert. Aktivieren Sie ihn in den Geräteeinstellungen, um den QR-Code zu scannen.",
     "qrOpenSettings": "Einstellungen öffnen",

@@ -1,7 +1,38 @@
 import type { Account, ServerCapabilities } from '@/types';
+import { httpErrorFrom } from '../shared/errors';
 
 function basicAuth(account: Pick<Account, 'username' | 'appPassword'>): string {
   return 'Basic ' + btoa(`${account.username}:${account.appPassword}`);
+}
+
+/**
+ * Trades a `nc://onetime-login` single-use token for a permanent app password.
+ *
+ * The server invalidates a one-time token on its first authenticated request and
+ * rejects it on every route other than `/core/getapppassword-onetime`, so this must
+ * be the very first call made with it — and it must be attempted only once.
+ */
+export async function exchangeOneTimeToken(params: {
+  baseUrl: string;
+  username: string;
+  oneTimeToken: string;
+}): Promise<string> {
+  const url = `${params.baseUrl}/ocs/v2.php/core/getapppassword-onetime`;
+  const res = await fetch(url, {
+    headers: {
+      Authorization: 'Basic ' + btoa(`${params.username}:${params.oneTimeToken}`),
+      'OCS-APIRequest': 'true',
+      Accept: 'application/json',
+    },
+  });
+  if (!res.ok) throw httpErrorFrom(res, 'exchangeOneTimeToken');
+
+  const json = await res.json();
+  const appPassword = json?.ocs?.data?.apppassword;
+  if (typeof appPassword !== 'string' || !appPassword) {
+    throw new Error('exchangeOneTimeToken: response carried no apppassword');
+  }
+  return appPassword;
 }
 
 export async function fetchUserInfo(

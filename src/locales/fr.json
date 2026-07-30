@@ -40,7 +40,8 @@
       "required": "Tous les champs sont obligatoires.",
       "invalidCreds": "Identifiants invalides. Vérifiez votre mot de passe d'application.",
       "serverNotFound": "Aucun serveur Nextcloud trouvé à cette adresse. Vérifiez l'URL, par exemple https://cloud.exemple.com",
-      "connect": "Connexion impossible : {{msg}}"
+      "connect": "Connexion impossible : {{msg}}",
+      "qrOneTimeExpired": "Ce code de connexion à usage unique a déjà été utilisé ou a expiré. Générez un nouveau QR code dans Nextcloud et rescannez-le."
     },
     "qrCameraDenied": "L'accès à la caméra est refusé. Activez-le dans les réglages de l'appareil pour scanner le code QR.",
     "qrOpenSettings": "Ouvrir les réglages",

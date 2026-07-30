@@ -40,7 +40,8 @@
       "required": "Tutti i campi sono obbligatori.",
       "invalidCreds": "Credenziali non valide. Controlla la password dell'app.",
       "serverNotFound": "Nessun server Nextcloud trovato a questo indirizzo. Controlla l'URL, ad esempio https://cloud.esempio.com",
-      "connect": "Impossibile connettersi: {{msg}}"
+      "connect": "Impossibile connettersi: {{msg}}",
+      "qrOneTimeExpired": "Questo codice di accesso monouso è già stato usato o è scaduto. Genera un nuovo codice QR in Nextcloud e scansionalo di nuovo."
     },
     "qrCameraDenied": "L'accesso alla fotocamera è negato. Attivalo nelle impostazioni del dispositivo per scansionare il codice QR.",
     "qrOpenSettings": "Apri impostazioni",
