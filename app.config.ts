@@ -31,8 +31,6 @@ const config: ExpoConfig = {
       ITSAppUsesNonExemptEncryption: false,
     },
     entitlements: {
-      // Shared container between the app and the widget extension; the MMKV store
-      // in src/features/widget/storage uses this same identifier.
       'com.apple.security.application-groups': ['group.com.soluce.nextcloud-calendar'],
     },
   },
@@ -91,12 +89,14 @@ const config: ExpoConfig = {
     [
       'expo-widgets',
       {
+        bundleIdentifier: "com.soluce.nextcloud-calendar.ExpoWidgetsTarget",
         groupIdentifier: 'group.com.soluce.nextcloud-calendar',
         widgets: [
           {
             name: 'NextcloudCalendarWidget',
             displayName: 'Nextcloud Calendar',
             description: 'Your upcoming events',
+            contentMarginsDisabled: true,
             supportedFamilies: [
               'systemSmall',
               'systemMedium',
@@ -105,12 +105,6 @@ const config: ExpoConfig = {
               'accessoryCircular',
               'accessoryRectangular',
             ],
-          },
-          {
-            name: 'NextcloudCalendarLiveActivity',
-            displayName: 'Ongoing event',
-            description: 'Shows the event currently running',
-            supportedFamilies: ['systemSmall', 'systemMedium'],
           },
         ],
       },

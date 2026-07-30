@@ -50,7 +50,6 @@ export function EventForm({
 }: Props) {
   const theme = useTheme();
   const { t } = useTranslation();
-  // Tablet: lay Start and End side by side; phone: stacked.
   const twoColDates = useWindowDimensions().width >= 600;
 
   const [summary, setSummary] = useState(initialValues?.summary ?? '');
@@ -114,9 +113,6 @@ export function EventForm({
     }
   }
 
-  // On the VERY FIRST pick, seed the counterpart: start -> end = start + 1h,
-  // end -> start = end - 1h (all-day: same day). After that no forced duration —
-  // the user can make longer slots — but the end can never land before the start.
   const seeded = useRef(!!initialValues);
 
   function applyStart(d: Date) {
@@ -323,11 +319,15 @@ export function EventForm({
           />
         )}
 
-        <Stack direction="horizontal" gap={12} hAlign="stretch">
-          <View style={styles.grow}>
+        <Stack
+          direction={twoColDates ? 'horizontal' : 'vertical'}
+          gap={twoColDates ? 12 : 16}
+          hAlign="stretch"
+        >
+          <View style={twoColDates ? styles.grow : undefined}>
             <RecurrencePicker value={rrule} onChange={setRrule} />
           </View>
-          <View style={styles.grow}>
+          <View style={twoColDates ? styles.grow : undefined}>
             <AlertPicker value={alarmMinutes} onChange={setAlarmMinutes} />
           </View>
         </Stack>

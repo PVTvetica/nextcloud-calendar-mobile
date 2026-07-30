@@ -232,7 +232,7 @@ class LiveUpdatesModule : Module() {
     }
 
     if (Build.VERSION.SDK_INT >= LIVE_UPDATES_API) {
-      builder.setShortCriticalText(interpolate(event.shortTemplate, remaining))
+      builder.setShortCriticalText(interpolate(event.shortTemplate, event, remaining))
       requestPromotion(builder)
     }
 
