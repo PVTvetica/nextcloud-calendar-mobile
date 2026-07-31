@@ -36,9 +36,6 @@ async function runSync(now: Date): Promise<void> {
 }
 
 export async function syncWidget(now: Date = new Date()): Promise<void> {
-  // Coalesce concurrent calls but always run once more if a change arrived mid-run,
-  // otherwise the last event mutation (e.g. the final delete) can be dropped and the
-  // widget keeps showing a stale event.
   if (running) {
     pending = true;
     return;

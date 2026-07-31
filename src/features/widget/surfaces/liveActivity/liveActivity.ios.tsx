@@ -12,6 +12,7 @@ const ACTIVITY_NAME = 'NextcloudCalendarLiveActivity';
 interface ActivityProps {
   title: string;
   timeRange: string;
+  startLabel: string;
   location: string;
   color: string;
   startMs: number;
@@ -22,6 +23,7 @@ function toProps(state: LiveEventState): ActivityProps {
   return {
     title: state.title,
     timeRange: `${dayjs(state.startIso).format('LT')} – ${dayjs(state.endIso).format('LT')}`,
+    startLabel: dayjs(state.startIso).format('LT'),
     location: state.location,
     color: state.color,
     startMs: new Date(state.startIso).getTime(),
@@ -113,7 +115,7 @@ const CalendarLiveActivity = (props: ActivityProps) => {
     banner: <Banner />,
     compactLeading: <CountdownRing size={22} ring={props.color} />,
     compactTrailing: (
-      <Text modifiers={[font({ weight: 'semibold', size: TYPE.time }), foregroundStyle(props.color)]}>{props.title}</Text>
+      <Text modifiers={[font({ weight: 'semibold', size: TYPE.time }), foregroundStyle(props.color)]}>{props.startLabel}</Text>
     ),
     minimal: <CountdownRing size={18} ring={props.color} />,
     expandedLeading: (

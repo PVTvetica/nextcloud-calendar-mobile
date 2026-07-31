@@ -1,6 +1,6 @@
 import React from 'react';
 import { HStack, Link, RoundedRectangle, Text, VStack } from '@expo/ui/swift-ui';
-import { background, cornerRadius, font, foregroundStyle, frame, padding } from '@expo/ui/swift-ui/modifiers';
+import { background, containerBackground, cornerRadius, font, foregroundStyle, frame, padding } from '@expo/ui/swift-ui/modifiers';
 import type { WidgetEnvironment } from 'expo-widgets';
 import { createWidget } from 'expo-widgets';
 
@@ -121,7 +121,7 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
       }
     }
     return (
-      <VStack alignment="leading" spacing={WIDGET_SPACING.sm} modifiers={[frame({ maxWidth: Infinity, maxHeight: Infinity, alignment: 'top' }), background(palette.background), padding({ all: WIDGET_SPACING.md })]}>
+      <VStack alignment="leading" spacing={WIDGET_SPACING.sm} modifiers={[frame({ maxWidth: Infinity, maxHeight: Infinity, alignment: 'top' }), padding({ all: WIDGET_SPACING.md }), containerBackground(palette.background, 'widget')]}>
         {cells.length === 0 ? (
           <EmptyState snapshot={snapshot} palette={palette} />
         ) : cells}
@@ -170,7 +170,7 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
       }
     }
     return (
-      <VStack alignment="leading" spacing={WIDGET_SPACING.sm} modifiers={[frame({ maxWidth: Infinity, maxHeight: Infinity, alignment: 'top' }), background(palette.background), padding({ all: WIDGET_SPACING.md })]}>
+      <VStack alignment="leading" spacing={WIDGET_SPACING.sm} modifiers={[frame({ maxWidth: Infinity, maxHeight: Infinity, alignment: 'top' }), padding({ all: WIDGET_SPACING.md }), containerBackground(palette.background, 'widget')]}>
         {cells}
       </VStack>
     );
@@ -180,7 +180,7 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
     const header = agendaHeader(snapshot);
     const events = compactEvents(snapshot, 3);
     return (
-      <HStack alignment="top" modifiers={[frame({ maxWidth: Infinity, maxHeight: Infinity }), background(palette.background), padding({ all: WIDGET_SPACING.md })]}>
+      <HStack alignment="top" modifiers={[frame({ maxWidth: Infinity, maxHeight: Infinity }), padding({ all: WIDGET_SPACING.md }), containerBackground(palette.background, 'widget')]}>
         <VStack alignment="leading" modifiers={[frame({ width: 52 })]}>
           <Text modifiers={[font({ weight: 'semibold', size: WIDGET_TYPE.caption }), foregroundStyle(palette.primary)]}>{header.dayLabel}</Text>
           <Text modifiers={[font({ weight: 'bold', size: WIDGET_TYPE.heading }), foregroundStyle(palette.text)]}>{header.dayNumber}</Text>
