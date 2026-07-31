@@ -40,7 +40,8 @@
       "required": "Alle velden zijn verplicht.",
       "invalidCreds": "Ongeldige gegevens. Controleer je app-wachtwoord.",
       "serverNotFound": "Geen Nextcloud-server gevonden op dit adres. Controleer de URL, bijvoorbeeld https://cloud.voorbeeld.com",
-      "connect": "Kan geen verbinding maken: {{msg}}"
+      "connect": "Kan geen verbinding maken: {{msg}}",
+      "qrOneTimeExpired": "Deze eenmalige inlogcode is al gebruikt of is verlopen. Genereer een nieuwe QR-code in Nextcloud en scan die opnieuw."
     },
     "qrCameraDenied": "Cameratoegang is geweigerd. Schakel het in bij je apparaatinstellingen om de QR-code te scannen.",
     "qrOpenSettings": "Instellingen openen",
@@ -130,7 +131,8 @@
     "deleteConfirmMsg": "Weet je zeker dat je deze afspraak wilt verwijderen?",
     "errorCreateFailed": "Aanmaken van afspraak mislukt",
     "errorUpdateFailed": "Bijwerken van afspraak mislukt",
-    "errorDeleteFailed": "Verwijderen van afspraak mislukt"
+    "errorDeleteFailed": "Verwijderen van afspraak mislukt",
+    "alert": "Melding"
   },
   "settings": {
     "title": "Instellingen",
@@ -161,6 +163,48 @@
       "github": "Bekijken op GitHub",
       "reportBug": "Een bug melden"
     },
-    "accountActive": "Actief"
+    "accountActive": "Actief",
+    "notifications": {
+      "title": "Meldingen",
+      "liveActivity": "Live-activiteit",
+      "liveActivityHint": "Toont een blijvende melding tijdens een lopende afspraak.",
+      "permissionDenied": "Meldingen staan uit voor deze app.",
+      "openSettings": "Systeeminstellingen openen",
+      "channelName": "Afspraakmeldingen"
+    },
+    "alerts": {
+      "title": "Meldingen",
+      "timed": "Standaardmelding",
+      "allDay": "Hele dag",
+      "none": "Geen",
+      "atTime": "Op het tijdstip",
+      "before": {
+        "5": "5 minuten ervoor",
+        "10": "10 minuten ervoor",
+        "15": "15 minuten ervoor",
+        "30": "30 minuten ervoor",
+        "60": "1 uur ervoor",
+        "120": "2 uur ervoor",
+        "1440": "1 dag ervoor",
+        "2880": "2 dagen ervoor",
+        "10080": "1 week ervoor"
+      },
+      "allDayOpts": {
+        "1": "1 dag ervoor (9:00)",
+        "2": "2 dagen ervoor (9:00)",
+        "7": "1 week ervoor (9:00)",
+        "sameDay": "Op de dag zelf (9:00)"
+      },
+      "useDefault": "Standaard",
+      "timedHint": "Geldt voor afspraken zonder eigen melding.",
+      "allDayHint": "Gaat af om 9:00 op de gekozen dag."
+    }
+  },
+  "widget": {
+    "liveRemaining": "nog {{duration}}",
+    "liveRemainingShort": "{{duration}}",
+    "durationHour": "u",
+    "durationMinute": "m",
+    "emptyAgenda": "Geen aankomende afspraken"
   }
 }

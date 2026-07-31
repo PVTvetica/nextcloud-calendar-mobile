@@ -58,6 +58,7 @@ export type CalendarEvent = {
   talkUrl?: string;
   isRecurring: boolean;
   rrule?: string;
+  alarmMinutes?: number;
 };
 
 export type CreateEventInput = {
@@ -74,6 +75,7 @@ export type CreateEventInput = {
   organizerEmail: string;
   organizerName: string;
   rrule?: RecurrenceRule;
+  alarmMinutes?: number;
 };
 
 export type ServerCapabilities = {

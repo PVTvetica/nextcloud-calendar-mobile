@@ -1,4 +1,5 @@
-import { fetchUserInfo } from '../../src/services/nextcloud/nextcloud';
+import { fetchUserInfo, exchangeOneTimeToken } from '../../src/services/nextcloud/nextcloud';
+import { HttpError } from '../../src/services/shared/errors';
 import type { Account } from '../../src/types';
 
 const account: Account = {
@@ -62,5 +63,55 @@ describe('fetchUserInfo', () => {
     });
     const result = await fetchUserInfo(account);
     expect(result).toEqual({ timezone: '', email: '' });
+  });
+});
+
+describe('exchangeOneTimeToken', () => {
+  const params = {
+    baseUrl: 'https://cloud.example.com',
+    username: 'john',
+    oneTimeToken: 'one-time-abc',
+  };
+
+  it('trades the one-time token for a permanent app password', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ ocs: { data: { apppassword: 'perm-xyz' } } }),
+    });
+
+    await expect(exchangeOneTimeToken(params)).resolves.toBe('perm-xyz');
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://cloud.example.com/ocs/v2.php/core/getapppassword-onetime',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Basic ' + btoa('john:one-time-abc'),
+          'OCS-APIRequest': 'true',
+        }),
+      })
+    );
+  });
+
+  it('throws HttpError when the token is already used or expired', async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 401,
+      headers: { get: () => null },
+      json: async () => ({}),
+    });
+
+    await expect(exchangeOneTimeToken(params)).rejects.toBeInstanceOf(HttpError);
+  });
+
+  it('throws when the response carries no app password', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ ocs: { data: {} } }),
+    });
+
+    await expect(exchangeOneTimeToken(params)).rejects.toThrow(/apppassword/i);
   });
 });

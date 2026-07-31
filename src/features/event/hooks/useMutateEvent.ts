@@ -8,6 +8,7 @@ import { createTalkRoom } from '@/services/nextcloud/talk';
 import { describeMutationError } from '@/services/shared/errors';
 import { buildIcs, buildAllDayIcs, buildExceptionIcs, injectExdate, truncateRruleUntil } from '@/utils/ics';
 import { parseIcsObjects, extractDtstartTzid } from '@/utils/caldav-parse';
+import { isValidTimeZone } from '@/utils/timezone';
 import i18n from '@/utils/i18n';
 import {
   insertEvents,
@@ -43,7 +44,9 @@ function useAction<V>(run: (value: V) => Promise<void>): {
 }
 
 function resolveTimezone(account: Account): string {
-  return account.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (account.timezone && isValidTimeZone(account.timezone)) return account.timezone;
+  const deviceTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return isValidTimeZone(deviceTz) ? deviceTz : 'UTC';
 }
 
 function resolveCalendar(calendars: CalendarMeta[], calendarId: string): CalendarMeta | undefined {
@@ -56,13 +59,13 @@ function buildIcsForInput(uid: string, input: CreateEventInput, location: string
         uid, summary: input.summary, description, location,
         dtstart: input.dtstart, dtend: input.dtend,
         organizerEmail: input.organizerEmail, organizerName: input.organizerName,
-        attendees: input.attendees, rrule: input.rrule,
+        attendees: input.attendees, rrule: input.rrule, alarmMinutes: input.alarmMinutes,
       })
     : buildIcs({
         uid, summary: input.summary, description, location,
         dtstart: input.dtstart, dtend: input.dtend,
         organizerEmail: input.organizerEmail, organizerName: input.organizerName,
-        attendees: input.attendees, timezone, rrule: input.rrule,
+        attendees: input.attendees, timezone, rrule: input.rrule, alarmMinutes: input.alarmMinutes,
       });
 }
 
@@ -117,6 +120,7 @@ function eventFromInput(
     talkUrl: TALK_URL_PATTERN.test(location) ? location : undefined,
     isRecurring: !!input.rrule,
     rrule: undefined,
+    alarmMinutes: input.alarmMinutes,
   };
 }
 
@@ -185,6 +189,7 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
         description: input.description ?? event.description,
         location: input.location ?? event.location,
         attendees: input.attendees,
+        alarmMinutes: input.alarmMinutes,
         ...(targetCal && {
           calendarId: targetCal.id,
           color: targetCal.color,

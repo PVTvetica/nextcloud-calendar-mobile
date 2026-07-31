@@ -12,7 +12,12 @@ function calUrl(account: Account, path = ''): string {
 }
 
 function extractSlug(url: string): string {
-  return url.replace(/\/$/, '').split('/').pop() ?? '';
+  const slug = url.replace(/\/$/, '').split('/').pop() ?? '';
+  try {
+    return decodeURIComponent(slug);
+  } catch {
+    return slug;
+  }
 }
 
 const NAMED_XML_ENTITIES: Record<string, string> = {
@@ -36,6 +41,15 @@ export function decodeXmlEntities(input: string): string {
   });
 }
 
+function extractPropHref(xml: string, localName: string): string | undefined {
+  const prop = new RegExp(
+    `<[A-Za-z0-9_.-]*:?${localName}(?:\\s[^>]*)?>([\\s\\S]*?)</[A-Za-z0-9_.-]*:?${localName}\\s*>`,
+    'i',
+  ).exec(xml)?.[1];
+  const href = prop && /<[A-Za-z0-9_.-]*:?href(?:\s[^>]*)?>([\s\S]*?)</i.exec(prop)?.[1];
+  return href ? decodeXmlEntities(href).trim() : undefined;
+}
+
 function splitResponses(xml: string): string[] {
   const chunks: string[] = [];
   const re = /<d:response[^>]*>([\s\S]*?)<\/d:response>/g;
@@ -54,6 +68,7 @@ async function davFetch(
   try {
     const res = await fetch(url, {
       ...options,
+      credentials: 'omit',
       headers: {
         Authorization: basicAuth(account),
         ...options.headers,
@@ -73,12 +88,21 @@ export async function validateCredentials(params: {
   username: string;
   appPassword: string;
 }): Promise<{ davUserId: string }> {
-  const url = `${params.baseUrl}/remote.php/dav/principals/users/${encodeURIComponent(params.username)}/`;
-  const res = await davFetch(url, params, {
+  const res = await davFetch(`${params.baseUrl}/remote.php/dav/`, params, {
     method: 'PROPFIND',
     headers: { Depth: '0', 'Content-Type': 'application/xml' },
+    body: '<?xml version="1.0" encoding="utf-8"?>' +
+    '<d:propfind xmlns:d="DAV:"><d:prop><d:current-user-principal/></d:prop></d:propfind>',
   });
   if (res.status !== 207 && !res.ok) throw httpErrorFrom(res, 'validateCredentials');
+
+  const principalPath = extractPropHref(await res.text(), 'current-user-principal');
+  const davUserId = principalPath ? extractSlug(principalPath) : '';
+  if (davUserId) return { davUserId };
+
+  const principalUrl = `${params.baseUrl}/remote.php/dav/principals/users/${encodeURIComponent(params.username)}/`;
+  const fallback = await davFetch(principalUrl, params, { method: 'PROPFIND', headers: { Depth: '0', 'Content-Type': 'application/xml' } });
+  if (fallback.status !== 207 && !fallback.ok) throw httpErrorFrom(fallback, 'validateCredentials');
   return { davUserId: params.username };
 }
 
@@ -107,7 +131,6 @@ export async function syncCollection(
     body,
   });
 
-  // 507 Insufficient Storage / 403 / 409 => token no longer valid: caller retries full.
   if (res.status === 507 || res.status === 403 || res.status === 409) {
     return { changed: [], deleted: [], newToken: '', reset: true };
   }
@@ -121,7 +144,6 @@ export async function syncCollection(
     const hrefMatch = chunk.match(/<d:href>([^<]+)<\/d:href>/);
     if (!hrefMatch) continue;
     const abs = `${account.baseUrl}${hrefMatch[1]}`;
-    // A response-level 404 status means the resource was removed.
     if (/<d:status>[^<]*\b404\b/.test(chunk)) deleted.push(abs);
     else changed.push(abs);
   }
@@ -273,12 +295,6 @@ export async function fetchEvents(
   }, start, end);
 }
 
-/**
- * Fetch events across several calendars for a window. Throws if ANY calendar
- * fails, so a low-network blip can't replace good cached events with a partial
- * (or empty) result. The caller's query keeps its last good data via
- * keepPreviousData and heals on retry / reconnect. See {@link settleAllOrThrow}.
- */
 export function fetchEventsForCalendars(
   account: Account,
   calendars: CalendarMeta[],
@@ -290,7 +306,6 @@ export function fetchEventsForCalendars(
   );
 }
 
-/** Fetch the raw ICS text of a single event resource. */
 export async function fetchEventIcs(account: Account, href: string): Promise<string> {
   const res = await davFetch(href, account, {
     method: 'GET',

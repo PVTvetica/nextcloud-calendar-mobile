@@ -3,6 +3,15 @@ import { schemaMigrations, addColumns } from '@nozbe/watermelondb/Schema/migrati
 export const migrations = schemaMigrations({
   migrations: [
     {
+      toVersion: 3,
+      steps: [
+        addColumns({
+          table: 'events',
+          columns: [{ name: 'alarm_minutes', type: 'number', isOptional: true }],
+        }),
+      ],
+    },
+    {
       toVersion: 2,
       steps: [
         addColumns({

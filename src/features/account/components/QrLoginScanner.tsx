@@ -6,29 +6,10 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'expo-router';
 
-export interface NcLoginData {
-  server: string;
-  user: string;
-  password: string;
-}
+import { parseNcLoginUrl } from '../utils/ncLoginUrl';
+import type { NcLoginData } from '../utils/ncLoginUrl';
 
-function parseNcLoginUrl(raw: string): NcLoginData | null {
-  if (!raw.startsWith('nc://login/')) return null;
-  const payload = raw.slice('nc://login/'.length);
-
-  const userMatch   = payload.match(/(?:^|&)user:([^&]+)/);
-  const passMatch   = payload.match(/(?:^|&)password:([^&]+)/);
-
-  const serverMatch = payload.match(/(?:^|&)server:(.+)$/);
-
-  if (!userMatch || !passMatch || !serverMatch) return null;
-
-  return {
-    user:     decodeURIComponent(userMatch[1]),
-    password: decodeURIComponent(passMatch[1]),
-    server:   decodeURIComponent(serverMatch[1]).replace(/\/$/, ''),
-  };
-}
+export type { NcLoginData };
 
 interface Props {
   visible: boolean;

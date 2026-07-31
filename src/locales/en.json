@@ -40,7 +40,8 @@
       "required": "All fields are required.",
       "invalidCreds": "Invalid credentials. Check your app password.",
       "serverNotFound": "No Nextcloud server found at this address. Check the URL, for example https://cloud.example.com",
-      "connect": "Could not connect: {{msg}}"
+      "connect": "Could not connect: {{msg}}",
+      "qrOneTimeExpired": "This one-time login code was already used or has expired. Generate a new QR code in Nextcloud and scan it again."
     },
     "qrCameraDenied": "Camera access is denied. Enable it in your device settings to scan the QR code.",
     "qrOpenSettings": "Open Settings",
@@ -130,7 +131,8 @@
     "deleteConfirmMsg": "Are you sure you want to delete this event?",
     "errorCreateFailed": "Failed to create event",
     "errorUpdateFailed": "Failed to update event",
-    "errorDeleteFailed": "Failed to delete event"
+    "errorDeleteFailed": "Failed to delete event",
+    "alert": "Alert"
   },
   "settings": {
     "title": "Settings",
@@ -161,6 +163,48 @@
       "github": "View on GitHub",
       "reportBug": "Report a Bug"
     },
-    "accountActive": "Active"
+    "accountActive": "Active",
+    "notifications": {
+      "title": "Notifications",
+      "liveActivity": "Live activity",
+      "liveActivityHint": "Shows an ongoing notification while an event is running.",
+      "permissionDenied": "Notifications are turned off for this app.",
+      "openSettings": "Open system settings",
+      "channelName": "Event alerts"
+    },
+    "alerts": {
+      "title": "Alerts",
+      "timed": "Default alert",
+      "allDay": "All-day events",
+      "none": "None",
+      "atTime": "At time of event",
+      "before": {
+        "5": "5 minutes before",
+        "10": "10 minutes before",
+        "15": "15 minutes before",
+        "30": "30 minutes before",
+        "60": "1 hour before",
+        "120": "2 hours before",
+        "1440": "1 day before",
+        "2880": "2 days before",
+        "10080": "1 week before"
+      },
+      "allDayOpts": {
+        "1": "1 day before (9:00)",
+        "2": "2 days before (9:00)",
+        "7": "1 week before (9:00)",
+        "sameDay": "On the day (9:00)"
+      },
+      "useDefault": "Default",
+      "timedHint": "Used by events that carry no alert of their own.",
+      "allDayHint": "Fires at 9:00 on the chosen day."
+    }
+  },
+  "widget": {
+    "liveRemaining": "{{duration}} left",
+    "liveRemainingShort": "{{duration}}",
+    "durationHour": "h",
+    "durationMinute": "m",
+    "emptyAgenda": "No upcoming event"
   }
 }

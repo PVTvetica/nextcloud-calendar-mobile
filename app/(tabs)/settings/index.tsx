@@ -14,6 +14,7 @@ import { useAccountStore } from '@/stores/accountStore';
 import { useCalendarStore } from '@/stores/calendarStore';
 import { useSettingsStore, type ThemePreference } from '@/stores/settingsStore';
 import { AccountCard } from '@/features/account/components/AccountCard';
+import { NotificationSettings } from '@/features/settings/components/NotificationSettings';
 import { LanguageSheet } from '@/components/LanguageSheet';
 import {
   ViewContainer, Stack, Typography, Chip, Button, Icon, IconButton, Spinner, AnimatedPressable, Accordion, Dialog,
@@ -34,6 +35,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const [aboutVisible, setAboutVisible] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [accountsOpen, setAccountsOpen] = useState(true);
   const appVersion = Constants.expoConfig?.version ?? '—';
   const { t } = useTranslation();
@@ -54,6 +56,7 @@ export default function SettingsScreen() {
   useFocusEffect(
     useCallback(() => () => {
       setAppearanceOpen(false);
+      setNotificationsOpen(false);
       setAccountsOpen(true);
     }, [])
   );
@@ -190,6 +193,14 @@ export default function SettingsScreen() {
                 onPress={() => setHourRowHeight(DEFAULT_ZOOM)}
               />
             </Stack>
+          </Accordion>
+
+          <Accordion
+            title={t('settings.notifications.title')}
+            open={notificationsOpen}
+            onToggle={() => setNotificationsOpen((o) => !o)}
+          >
+            <NotificationSettings />
           </Accordion>
 
           <Accordion title={t('settings.accounts')} open={accountsOpen} onToggle={() => setAccountsOpen((o) => !o)}>

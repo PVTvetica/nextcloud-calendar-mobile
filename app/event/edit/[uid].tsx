@@ -77,9 +77,10 @@ export default function EditEventScreen() {
     );
   }
 
-  const organizerEmail = activeAccount.username.includes('@')
-    ? activeAccount.username
-    : `${activeAccount.username}@${new URL(activeAccount.baseUrl).hostname}`;
+  const organizerEmail = activeAccount.email
+    || (activeAccount.username.includes('@')
+      ? activeAccount.username
+      : `${activeAccount.username}@${new URL(activeAccount.baseUrl).hostname}`);
 
   const initialValues = {
     summary: event.summary,
@@ -90,6 +91,7 @@ export default function EditEventScreen() {
     description: event.description ?? '',
     location: event.location ?? '',
     attendees: event.attendees,
+    alarmMinutes: event.alarmMinutes,
   };
 
   const scopeLabel =

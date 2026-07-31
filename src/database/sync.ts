@@ -59,6 +59,7 @@ export function writeEvent(row: Event, ev: CalendarEvent): void {
   row.talkUrl = ev.talkUrl ?? undefined;
   row.isRecurring = ev.isRecurring;
   row.rrule = ev.rrule ?? undefined;
+  row.alarmMinutes = ev.alarmMinutes ?? undefined;
 }
 
 function calendarUnchanged(row: Calendar, c: CalendarMeta): boolean {

@@ -40,7 +40,8 @@
       "required": "Todos os campos são obrigatórios.",
       "invalidCreds": "Credenciais inválidas. Verifique a palavra-passe da aplicação.",
       "serverNotFound": "Nenhum servidor Nextcloud encontrado neste endereço. Verifique o URL, por exemplo https://cloud.exemplo.com",
-      "connect": "Não foi possível ligar: {{msg}}"
+      "connect": "Não foi possível ligar: {{msg}}",
+      "qrOneTimeExpired": "Este código de início de sessão de utilização única já foi usado ou expirou. Gere um novo código QR no Nextcloud e digitalize-o novamente."
     },
     "qrCameraDenied": "O acesso à câmara foi negado. Ative-o nas definições do dispositivo para ler o código QR.",
     "qrOpenSettings": "Abrir definições",
@@ -130,7 +131,8 @@
     "deleteConfirmMsg": "Tem a certeza de que pretende eliminar este evento?",
     "errorCreateFailed": "Falha ao criar o evento",
     "errorUpdateFailed": "Falha ao atualizar o evento",
-    "errorDeleteFailed": "Falha ao eliminar o evento"
+    "errorDeleteFailed": "Falha ao eliminar o evento",
+    "alert": "Alerta"
   },
   "settings": {
     "title": "Definições",
@@ -161,6 +163,48 @@
       "github": "Ver no GitHub",
       "reportBug": "Reportar um erro"
     },
-    "accountActive": "Ativa"
+    "accountActive": "Ativa",
+    "notifications": {
+      "title": "Notificações",
+      "liveActivity": "Atividade em direto",
+      "liveActivityHint": "Mostra uma notificação persistente enquanto um evento decorre.",
+      "permissionDenied": "As notificações estão desativadas para esta app.",
+      "openSettings": "Abrir definições do sistema",
+      "channelName": "Alertas de eventos"
+    },
+    "alerts": {
+      "title": "Alertas",
+      "timed": "Alerta predefinido",
+      "allDay": "Eventos de dia inteiro",
+      "none": "Nenhum",
+      "atTime": "À hora do evento",
+      "before": {
+        "5": "5 minutos antes",
+        "10": "10 minutos antes",
+        "15": "15 minutos antes",
+        "30": "30 minutos antes",
+        "60": "1 hora antes",
+        "120": "2 horas antes",
+        "1440": "1 dia antes",
+        "2880": "2 dias antes",
+        "10080": "1 semana antes"
+      },
+      "allDayOpts": {
+        "1": "1 dia antes (9:00)",
+        "2": "2 dias antes (9:00)",
+        "7": "1 semana antes (9:00)",
+        "sameDay": "No próprio dia (9:00)"
+      },
+      "useDefault": "Predefinido",
+      "timedHint": "Aplica-se a eventos sem alerta próprio.",
+      "allDayHint": "Dispara às 9:00 do dia escolhido."
+    }
+  },
+  "widget": {
+    "liveRemaining": "faltam {{duration}}",
+    "liveRemainingShort": "{{duration}}",
+    "durationHour": "h",
+    "durationMinute": "m",
+    "emptyAgenda": "Nenhum evento próximo"
   }
 }

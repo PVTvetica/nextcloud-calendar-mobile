@@ -30,6 +30,9 @@ const config: ExpoConfig = {
       LSApplicationQueriesSchemes: ['nextcloudtalk'],
       ITSAppUsesNonExemptEncryption: false,
     },
+    entitlements: {
+      'com.apple.security.application-groups': ['group.com.soluce.nextcloud-calendar'],
+    },
   },
 
   android: {
@@ -81,6 +84,74 @@ const config: ExpoConfig = {
     'expo-localization',
     'expo-status-bar',
     'expo-font',
+    'expo-notifications',
+    'expo-background-task',
+    [
+      'expo-widgets',
+      {
+        bundleIdentifier: "com.soluce.nextcloud-calendar.ExpoWidgetsTarget",
+        groupIdentifier: 'group.com.soluce.nextcloud-calendar',
+        widgets: [
+          {
+            name: 'NextcloudCalendarWidget',
+            displayName: 'Nextcloud Calendar',
+            description: 'Your upcoming events',
+            contentMarginsDisabled: true,
+            supportedFamilies: [
+              'systemSmall',
+              'systemMedium',
+              'systemLarge',
+              'accessoryInline',
+              'accessoryCircular',
+              'accessoryRectangular',
+            ],
+          },
+        ],
+      },
+    ],
+    [
+      'react-native-android-widget',
+      {
+        widgets: [
+          {
+            name: 'CalendarSmallWidget',
+            label: 'Nextcloud Calendar',
+            minWidth: '110dp',
+            minHeight: '110dp',
+            targetCellWidth: 2,
+            targetCellHeight: 2,
+            description: 'Shows the next upcoming event',
+            previewImage: './assets/icon.png',
+            updatePeriodMillis: 1800000,
+            resizeMode: 'horizontal|vertical',
+          },
+          {
+            name: 'CalendarMediumWidget',
+            label: 'Nextcloud Calendar',
+            minWidth: '250dp',
+            minHeight: '110dp',
+            targetCellWidth: 4,
+            targetCellHeight: 2,
+            description: 'Shows up to three upcoming events',
+            previewImage: './assets/icon.png',
+            updatePeriodMillis: 1800000,
+            resizeMode: 'horizontal|vertical',
+          },
+          {
+            name: 'CalendarLargeWidget',
+            label: 'Nextcloud Calendar',
+            minWidth: '250dp',
+            minHeight: '250dp',
+            targetCellWidth: 4,
+            targetCellHeight: 4,
+            description: 'Multi-day agenda grouped by day',
+            previewImage: './assets/icon.png',
+            updatePeriodMillis: 1800000,
+            resizeMode: 'horizontal|vertical',
+          },
+        ],
+      },
+    ],
   ],
 };
 

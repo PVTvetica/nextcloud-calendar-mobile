@@ -30,5 +30,6 @@ export function mapEventToShared(event: Event): CalendarEvent {
     talkUrl: event.talkUrl ?? undefined,
     isRecurring: !!event.isRecurring,
     rrule: event.rrule ?? undefined,
+    alarmMinutes: event.alarmMinutes ?? undefined,
   };
 }
