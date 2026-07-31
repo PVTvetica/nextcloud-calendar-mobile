@@ -5,13 +5,6 @@ function basicAuth(account: Pick<Account, 'username' | 'appPassword'>): string {
   return 'Basic ' + btoa(`${account.username}:${account.appPassword}`);
 }
 
-/**
- * Trades a `nc://onetime-login` single-use token for a permanent app password.
- *
- * The server invalidates a one-time token on its first authenticated request and
- * rejects it on every route other than `/core/getapppassword-onetime`, so this must
- * be the very first call made with it — and it must be attempted only once.
- */
 export async function exchangeOneTimeToken(params: {
   baseUrl: string;
   username: string;
@@ -19,6 +12,7 @@ export async function exchangeOneTimeToken(params: {
 }): Promise<string> {
   const url = `${params.baseUrl}/ocs/v2.php/core/getapppassword-onetime`;
   const res = await fetch(url, {
+    credentials: 'omit',
     headers: {
       Authorization: 'Basic ' + btoa(`${params.username}:${params.oneTimeToken}`),
       'OCS-APIRequest': 'true',
@@ -41,6 +35,7 @@ export async function fetchUserInfo(
   try {
     const url = `${account.baseUrl}/ocs/v2.php/cloud/users/${encodeURIComponent(account.davUserId)}`;
     const res = await fetch(url, {
+      credentials: 'omit',
       headers: {
         Authorization: basicAuth(account),
         'OCS-APIRequest': 'true',
@@ -65,6 +60,7 @@ export async function fetchCapabilities(
   try {
     const url = `${account.baseUrl}/ocs/v2.php/cloud/capabilities`;
     const res = await fetch(url, {
+      credentials: 'omit',
       headers: {
         Authorization: basicAuth(account),
         'OCS-APIRequest': 'true',

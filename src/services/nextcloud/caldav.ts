@@ -68,6 +68,7 @@ async function davFetch(
   try {
     const res = await fetch(url, {
       ...options,
+      credentials: 'omit',
       headers: {
         Authorization: basicAuth(account),
         ...options.headers,

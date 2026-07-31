@@ -95,11 +95,11 @@ export default function CalendarScreen() {
   const navGuard = useRef(createNavigationGuard()).current;
 
   const handlePressEvent = useCallback(
-    (event: any) => { navGuard(() => router.push(`/event/${event._event.uid}`)); },
+    (event: any) => { navGuard(() => router.push(`/event/${encodeURIComponent(event._event.uid)}`)); },
     [router, navGuard]
   );
   const handlePressEventFromMonth = useCallback(
-    (event: CalendarEvent) => { navGuard(() => router.push(`/event/${event.uid}`)); },
+    (event: CalendarEvent) => { navGuard(() => router.push(`/event/${encodeURIComponent(event.uid)}`)); },
     [router, navGuard]
   );
   const handlePressCell = useCallback(

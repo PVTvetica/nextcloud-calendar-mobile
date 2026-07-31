@@ -128,6 +128,29 @@ describe('parseIcsObjects', () => {
     const events = parseIcsObjects([{ ics: sampleIcs, href: '/cal/s.ics' }, { ics: allDayIcs, href: '/cal/a.ics' }], calMeta);
     expect(events).toHaveLength(2);
   });
+
+  it('recovers events from a feed with broken (unfolded) multi-line DESCRIPTION', () => {
+    // DESCRIPTION carries raw HTML with literal newlines and NO leading-space
+    // folding — the shape that makes ical.js throw and drop the whole calendar.
+    const brokenIcs = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:broken-fold-1
+SUMMARY:Soirée théâtre
+DTSTART:20260601T180000Z
+DTEND:20260601T200000Z
+DESCRIPTION:<p>Programme du soir</p>
+Que n'ai-je donc tant vécu que pour cette infamie !</p>
+<a href="https://example.com/info">Détails</a>
+LOCATION:Toulouse
+END:VEVENT
+END:VCALENDAR`;
+    const events = parseIcsObjects([{ ics: brokenIcs, href: '/cal/broken.ics' }], calMeta);
+    expect(events).toHaveLength(1);
+    expect(events[0].uid).toBe('broken-fold-1');
+    expect(events[0].summary).toBe('Soirée théâtre');
+    expect(events[0].location).toBe('Toulouse');
+  });
 });
 
 describe('recurring expansion — old series', () => {

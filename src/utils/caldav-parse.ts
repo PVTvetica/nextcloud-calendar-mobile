@@ -43,6 +43,30 @@ function resolveInstant(t: ICAL.Time, tzid: string | undefined, isEnd = false): 
   return t.toJSDate();
 }
 
+function repairIcsFolding(ics: string): string {
+  const isPropertyStart = (line: string) =>
+    /^(BEGIN|END):/i.test(line) || /^[A-Za-z][A-Za-z0-9-]*[;:]/.test(line);
+
+  const out: string[] = [];
+  for (const line of ics.split(/\r\n|\r|\n/)) {
+    if ((line.startsWith(' ') || line.startsWith('\t')) && out.length) {
+      out[out.length - 1] += line.slice(1);
+    } else if (out.length && !isPropertyStart(line)) {
+      out[out.length - 1] += line;
+    } else {
+      out.push(line);
+    }
+  }
+  return out.join('\r\n');
+}
+
+function parseIcsToJcal(ics: string): unknown {
+  try {
+    return ICAL.parse(ics);
+  } catch {
+    return ICAL.parse(repairIcsFolding(ics));
+  }
+}
 
 export function parseIcsItem(
   item: { ics: string; href: string },
@@ -54,7 +78,7 @@ export function parseIcsItem(
   const { ics, href } = item;
 
   try {
-    const jcal = ICAL.parse(ics);
+    const jcal = parseIcsToJcal(ics);
     const comp = new ICAL.Component(jcal);
     const vevents = comp.getAllSubcomponents('vevent');
 

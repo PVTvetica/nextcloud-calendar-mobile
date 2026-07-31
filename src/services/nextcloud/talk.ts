@@ -23,6 +23,7 @@ export async function createTalkRoom(
 
   const response = await fetch(endpoint, {
     method: 'POST',
+    credentials: 'omit',
     headers: {
       'OCS-APIREQUEST': 'true',
       'Content-Type': 'application/json',
