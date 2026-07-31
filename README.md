@@ -9,8 +9,8 @@
 
 A mobile calendar client for Nextcloud, built with React Native & Expo.
 
-[![React Native](https://img.shields.io/badge/React%20Native-0.83-61DAFB?logo=react&logoColor=white)](https://reactnative.dev)
-[![Expo](https://img.shields.io/badge/Expo-55-000020?logo=expo&logoColor=white)](https://expo.dev)
+[![React Native](https://img.shields.io/badge/React%20Native-0.86-61DAFB?logo=react&logoColor=white)](https://reactnative.dev)
+[![Expo](https://img.shields.io/badge/Expo-57-000020?logo=expo&logoColor=white)](https://expo.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![CalDAV](https://img.shields.io/badge/Protocol-CalDAV-4A90D9)](https://tools.ietf.org/html/rfc4791)
 [![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey?)](https://expo.dev/eas)
@@ -21,7 +21,7 @@ A mobile calendar client for Nextcloud, built with React Native & Expo.
 
 ## Overview
 
-**Nextcloud Calendar Mobile** brings your Nextcloud calendars natively to iOS and Android. It connects directly to your Nextcloud instance via the CalDAV protocol, supporting multiple accounts, rich event management, and deep Nextcloud integration, including Talk room creation per event.
+**Nextcloud Calendar Mobile** brings your Nextcloud calendars natively to iOS and Android. It connects directly to your Nextcloud instance via the CalDAV protocol, supporting multiple accounts, rich event management, home-screen widgets, iOS Live Activities, and deep Nextcloud integration, including Talk room creation per event.
 
 ---
 
@@ -88,6 +88,14 @@ Create, view, and edit calendar events with support for:
 
 ### Nextcloud Talk Integration
 Optionally attach a Nextcloud Talk room to any event at creation time, the Talk link is stored in the event and surfaced in the event detail view.
+
+### Home Screen Widgets & Live Activities
+Keep your agenda glanceable without opening the app:
+- **iOS home widgets**, small, medium, and large sizes showing your upcoming agenda, plus lock-screen accessory widgets
+- **Android home widget**, upcoming events on your home screen
+- **iOS Live Activity**, the next or ongoing event with a live countdown, shown on the Lock Screen and in the Dynamic Island
+
+Widgets are kept up to date through the app's background sync, and tapping an event deep-links straight into its detail view.
 
 ### Theming & Personalization
 - Light, dark, and system-auto theme modes
