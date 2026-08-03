@@ -1,5 +1,5 @@
 import { buildAgendaSnapshot } from '@/features/widget/core/agendaSnapshot';
-import { selectOngoingEvent, eventProgress, formatRemaining, remainingMinutes } from '@/features/widget/core/liveEvent';
+import { selectOngoingEvent, eventProgress, formatRemaining, nextLiveBoundary, remainingMinutes } from '@/features/widget/core/liveEvent';
 import type { CalendarEvent } from '@/types';
 
 function ev(partial: Partial<CalendarEvent> & { dtstart: Date; dtend: Date }): CalendarEvent {
@@ -96,6 +96,46 @@ describe('selectOngoingEvent', () => {
       ev({ uid: 'past', dtstart: new Date('2026-08-01T08:00:00Z'), dtend: new Date('2026-08-01T09:00:00Z') }),
     ];
     expect(selectOngoingEvent(events, now)).toBeNull();
+  });
+});
+
+describe('nextLiveBoundary', () => {
+  const now = new Date('2026-08-01T12:30:00Z');
+
+  it('returns the end of the ongoing event when it comes before the next start', () => {
+    const events = [
+      ev({ uid: 'ongoing', dtstart: new Date('2026-08-01T12:00:00Z'), dtend: new Date('2026-08-01T13:00:00Z') }),
+      ev({ uid: 'later', dtstart: new Date('2026-08-01T14:00:00Z'), dtend: new Date('2026-08-01T15:00:00Z') }),
+    ];
+    expect(nextLiveBoundary(events, now)).toEqual(new Date('2026-08-01T13:00:00Z'));
+  });
+
+  it('returns the next start when nothing is ongoing', () => {
+    const events = [
+      ev({ uid: 'past', dtstart: new Date('2026-08-01T08:00:00Z'), dtend: new Date('2026-08-01T09:00:00Z') }),
+      ev({ uid: 'soon', dtstart: new Date('2026-08-01T12:45:00Z'), dtend: new Date('2026-08-01T13:00:00Z') }),
+    ];
+    expect(nextLiveBoundary(events, now)).toEqual(new Date('2026-08-01T12:45:00Z'));
+  });
+
+  it('prefers an imminent start over the end of a longer overlapping event', () => {
+    const events = [
+      ev({ uid: 'long', dtstart: new Date('2026-08-01T12:00:00Z'), dtend: new Date('2026-08-01T18:00:00Z') }),
+      ev({ uid: 'nested', dtstart: new Date('2026-08-01T12:40:00Z'), dtend: new Date('2026-08-01T13:00:00Z') }),
+    ];
+    expect(nextLiveBoundary(events, now)).toEqual(new Date('2026-08-01T12:40:00Z'));
+  });
+
+  it('ignores all-day events and past boundaries', () => {
+    const events = [
+      ev({ uid: 'allday', allDay: true, dtstart: new Date('2026-08-01T00:00:00Z'), dtend: new Date('2026-08-02T00:00:00Z') }),
+      ev({ uid: 'past', dtstart: new Date('2026-08-01T08:00:00Z'), dtend: new Date('2026-08-01T09:00:00Z') }),
+    ];
+    expect(nextLiveBoundary(events, now)).toBeNull();
+  });
+
+  it('returns null on an empty agenda', () => {
+    expect(nextLiveBoundary([], now)).toBeNull();
   });
 });
 

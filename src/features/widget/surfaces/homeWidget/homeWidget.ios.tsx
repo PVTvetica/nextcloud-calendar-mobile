@@ -220,6 +220,12 @@ export const homeWidget: WidgetSurface<AgendaSnapshot> = {
   update: async (snapshot) => {
     widget.updateSnapshot({ snapshot });
   },
+  updateTimeline: async (entries) => {
+    if (entries.length === 0) return;
+    widget.updateTimeline(
+      entries.map((entry) => ({ date: new Date(entry.atIso), props: { snapshot: entry.snapshot } })),
+    );
+  },
   clear: async () => {
     widget.updateSnapshot({ snapshot: null });
   },

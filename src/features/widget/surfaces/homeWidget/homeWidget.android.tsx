@@ -11,7 +11,10 @@ import {
 import type { AgendaEventItem, AgendaSnapshot, WidgetSurface } from '../../core/types';
 import { type AgendaGroup, agendaGroups, agendaHeader, agendaPalette, compactEvents, emptyLabel } from '../../core/agendaView';
 import { onEventColor, widgetPalette, widgetRadius, widgetSpacing, widgetType } from '../../core/theme';
-import { readAgendaSnapshot, writeAgendaSnapshot } from '../../storage/widgetStore';
+import { selectSnapshotAt } from '../../core/agendaTimeline';
+import {
+  readAgendaSnapshot, readAgendaTimeline, writeAgendaSnapshot, writeAgendaTimeline,
+} from '../../storage/widgetStore';
 
 type Palette = ReturnType<typeof widgetPalette>;
 
@@ -133,13 +136,20 @@ function AndroidWidget({ widgetName, snapshot }: { widgetName: string; snapshot:
 }
 
 export const widgetTaskHandler = async (props: WidgetTaskHandlerProps) => {
-  const snapshot = readAgendaSnapshot();
+  const timeline = readAgendaTimeline();
+  const snapshot = timeline.length > 0 ? selectSnapshotAt(timeline) : readAgendaSnapshot();
   props.renderWidget(<AndroidWidget widgetName={props.widgetInfo.widgetName} snapshot={snapshot} />);
 };
 
 export const homeWidget: WidgetSurface<AgendaSnapshot> = {
   id: 'homeWidget',
   isSupported: () => true,
+  updateTimeline: async (entries) => {
+    if (entries.length === 0) return;
+    writeAgendaTimeline(entries);
+    const snapshot = selectSnapshotAt(entries);
+    if (snapshot) await homeWidget.update(snapshot);
+  },
   update: async (snapshot) => {
     writeAgendaSnapshot(snapshot);
     await Promise.all(

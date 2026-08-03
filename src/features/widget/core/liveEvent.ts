@@ -21,6 +21,20 @@ export function selectOngoingEvent(events: CalendarEvent[], now: Date = new Date
   };
 }
 
+export function nextLiveBoundary(events: CalendarEvent[], now: Date = new Date()): Date | null {
+  const t = now.getTime();
+  let next: number | null = null;
+
+  for (const e of events) {
+    if (e.allDay) continue;
+    for (const edge of [e.dtstart.getTime(), e.dtend.getTime()]) {
+      if (edge > t && (next === null || edge < next)) next = edge;
+    }
+  }
+
+  return next === null ? null : new Date(next);
+}
+
 export function eventProgress(state: LiveEventState, now: Date = new Date()): number {
   const start = new Date(state.startIso).getTime();
   const end = new Date(state.endIso).getTime();

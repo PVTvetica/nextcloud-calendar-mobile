@@ -29,6 +29,7 @@ function applyPatch(row: Event, patch: Partial<CalendarEvent>): void {
   if (patch.calendarId !== undefined) row.calendarId = patch.calendarId;
   if (patch.color !== undefined) row.color = patch.color;
   if (patch.href !== undefined) row.href = patch.href;
+  if (patch.alarmMinutes !== undefined) row.alarmMinutes = patch.alarmMinutes;
 }
 
 export async function insertEvents(list: CalendarEvent[]): Promise<void> {

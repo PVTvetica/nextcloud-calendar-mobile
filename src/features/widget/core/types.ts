@@ -43,6 +43,11 @@ export interface LiveEventState {
   attendees: string[];
 }
 
+export interface AgendaTimelineEntry {
+  atIso: string;
+  snapshot: AgendaSnapshot;
+}
+
 export interface WidgetSurface<P> {
   readonly id: 'homeWidget' | 'liveActivity';
   isSupported(): boolean;
@@ -50,6 +55,7 @@ export interface WidgetSurface<P> {
   clear(): Promise<void>;
   requestPermission?(): Promise<boolean>;
   canPromote?(): boolean;
+  updateTimeline?(entries: AgendaTimelineEntry[]): Promise<void>;
 }
 
 export function eventDeepLink(uid: string): string {
