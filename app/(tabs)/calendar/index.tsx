@@ -107,6 +107,13 @@ export default function CalendarScreen() {
     [router, navGuard]
   );
 
+  const handleCreateEvent = useCallback(() => {
+    const base = viewMode === 'schedule' ? agendaVisibleDate : date;
+    const now = new Date();
+    const start = dayjs(base).hour(now.getHours()).minute(now.getMinutes()).second(0).millisecond(0);
+    navGuard(() => router.push({ pathname: '/event/new', params: { date: start.toISOString() } }));
+  }, [viewMode, agendaVisibleDate, date, router, navGuard]);
+
   const monthSwipeGesture = useMemo(
     () =>
       Gesture.Pan()
@@ -222,7 +229,7 @@ export default function CalendarScreen() {
       {showFullOverlay && <CalendarLoadingOverlay label={t('calendar.loadingCalendar')} />}
       {showSmallLoader && <Spinner size="small" color="secondary" style={styles.smallLoader} />}
 
-      <CalendarFab onPress={() => navGuard(() => router.push('/event/new'))} />
+      <CalendarFab onPress={handleCreateEvent} />
 
       <CalendarDrawer
         open={drawer.drawerOpen}

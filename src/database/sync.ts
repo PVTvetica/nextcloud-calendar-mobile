@@ -14,6 +14,7 @@ import { expansionHorizon, needsHorizonReset } from '@/features/calendar/utils/h
 import { getDatabaseInstance } from './DatabaseProvider';
 import Calendar from './models/Calendar';
 import Event from './models/Event';
+import { currentMutationEpoch } from './mutationEpoch';
 import { safeWrite } from './utils/safeTransaction';
 
 export function eventKey(accountId: string, calendarId: string, uid: string): string {
@@ -127,7 +128,12 @@ export async function syncEvents(
   end: Date,
   deleteMissing = true,
 ): Promise<void> {
+  const epoch = currentMutationEpoch();
   const remote = await fetchEventsForCalendars(account, calendars, start, end);
+  if (currentMutationEpoch() !== epoch) {
+    if (__DEV__) console.warn('[syncEvents] local mutation during fetch, dropping stale snapshot');
+    return;
+  }
   const db = getDatabaseInstance();
   const events = db.get<Event>('events');
   const startMs = start.getTime();
@@ -184,6 +190,7 @@ export async function syncCalendarDelta(account: Account, calendar: CalendarMeta
 
   const now = new Date();
   const horizon = expansionHorizon(now);
+  const epoch = currentMutationEpoch();
 
   const row = (await calendars.query(Q.where('url', calendar.url)).fetch())[0];
   const storedToken = row?.syncToken;
@@ -203,6 +210,10 @@ export async function syncCalendarDelta(account: Account, calendar: CalendarMeta
   const fetchedHrefs = new Set(fetched.map((e) => e.href));
 
   if (fullSync && result.changed.length > 0 && fetched.length === 0) {
+    return;
+  }
+  if (currentMutationEpoch() !== epoch) {
+    if (__DEV__) console.warn('[syncCalendarDelta] local mutation during fetch, dropping stale snapshot');
     return;
   }
 

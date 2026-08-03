@@ -104,6 +104,24 @@ describe('eventDayKeys', () => {
       allDay: false, dtstart: new Date(2026, 5, 15, 9, 0), dtend: new Date(2026, 5, 15, 10, 0),
     }))).toEqual(['2026-06-15']);
   });
+
+  it('spans both days for a timed event running overnight', () => {
+    expect(eventDayKeys(make({
+      allDay: false, dtstart: new Date(2026, 5, 15, 22, 0), dtend: new Date(2026, 5, 16, 9, 0),
+    }))).toEqual(['2026-06-15', '2026-06-16']);
+  });
+
+  it('keeps a timed event ending exactly at midnight on its start day', () => {
+    expect(eventDayKeys(make({
+      allDay: false, dtstart: new Date(2026, 5, 15, 22, 0), dtend: new Date(2026, 5, 16, 0, 0),
+    }))).toEqual(['2026-06-15']);
+  });
+
+  it('spans every day of a multi-day timed event', () => {
+    expect(eventDayKeys(make({
+      allDay: false, dtstart: new Date(2026, 5, 15, 22, 0), dtend: new Date(2026, 5, 18, 9, 0),
+    }))).toEqual(['2026-06-15', '2026-06-16', '2026-06-17', '2026-06-18']);
+  });
 });
 
 describe('MonthDayView', () => {

@@ -5,7 +5,7 @@ import { readUpcomingEvents } from '@/features/widget/core/readEvents';
 import { useSettingsStore } from '@/stores/settingsStore';
 import i18n from '@/utils/i18n';
 
-import { alertTime } from './alerts';
+import { alertBody, alertTime } from './alerts';
 
 const CHANNEL_ID = 'event-alerts';
 const HORIZON_DAYS = 30;
@@ -66,7 +66,7 @@ export async function scheduleEventAlerts(now: Date = new Date()): Promise<void>
         await Notifications.scheduleNotificationAsync({
           content: {
             title: event.summary,
-            body: event.location || undefined,
+            body: alertBody(event, at),
             data: { uid: event.uid },
           },
           trigger: {

@@ -1,4 +1,10 @@
+import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+
 import type { CalendarEvent } from '@/types';
+import i18n from '@/utils/i18n';
+
+dayjs.extend(localizedFormat);
 
 export type TimedAlert = 0 | 5 | 10 | 15 | 30 | 60 | 120 | 1440 | 2880 | 10080 | null;
 
@@ -57,4 +63,39 @@ export function alertTime(
   }
   if (timed === null) return null;
   return new Date(event.dtstart.getTime() - timed * 60_000);
+}
+
+function startOfLocalDay(d: Date): number {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+export function alertLeadLabel(
+  event: Pick<CalendarEvent, 'dtstart' | 'allDay'>,
+  at: Date,
+): string {
+  if (event.allDay) {
+    const days = Math.round(
+      (startOfLocalDay(event.dtstart) - startOfLocalDay(at)) / 86_400_000,
+    );
+    if (days <= 0) return i18n.t('settings.notifications.today');
+    if (days === 1) return i18n.t('settings.notifications.tomorrow');
+    return i18n.t('settings.notifications.inDays', { n: days });
+  }
+
+  const minutes = Math.round((event.dtstart.getTime() - at.getTime()) / 60_000);
+  if (minutes <= 0) return i18n.t('settings.notifications.now');
+  if (minutes < 60) return i18n.t('settings.notifications.inMinutes', { n: minutes });
+  if (minutes < 1440) return i18n.t('settings.notifications.inHours', { n: Math.round(minutes / 60) });
+  return i18n.t('settings.notifications.inDays', { n: Math.round(minutes / 1440) });
+}
+
+export function alertBody(
+  event: Pick<CalendarEvent, 'dtstart' | 'allDay' | 'location'>,
+  at: Date,
+): string {
+  const parts = event.allDay
+    ? [alertLeadLabel(event, at)]
+    : [dayjs(event.dtstart).locale(i18n.language).format('LT'), alertLeadLabel(event, at)];
+  if (event.location) parts.push(event.location);
+  return parts.join(' · ');
 }

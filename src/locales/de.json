@@ -165,6 +165,12 @@
     },
     "accountActive": "Aktiv",
     "notifications": {
+      "inMinutes": "in {{n}} Min.",
+      "inHours": "in {{n}} Std.",
+      "inDays": "in {{n}} T.",
+      "now": "Beginnt jetzt",
+      "today": "Heute",
+      "tomorrow": "Morgen",
       "title": "Benachrichtigungen",
       "liveActivity": "Live-Aktivität",
       "liveActivityHint": "Zeigt während eines laufenden Termins eine dauerhafte Benachrichtigung.",

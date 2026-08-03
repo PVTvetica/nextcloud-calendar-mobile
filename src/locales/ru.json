@@ -165,6 +165,12 @@
     },
     "accountActive": "Активный",
     "notifications": {
+      "inMinutes": "через {{n}} мин",
+      "inHours": "через {{n}} ч",
+      "inDays": "через {{n}} дн",
+      "now": "Начинается сейчас",
+      "today": "Сегодня",
+      "tomorrow": "Завтра",
       "title": "Уведомления",
       "liveActivity": "Живая активность",
       "liveActivityHint": "Показывает постоянное уведомление во время события.",

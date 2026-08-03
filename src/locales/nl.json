@@ -165,6 +165,12 @@
     },
     "accountActive": "Actief",
     "notifications": {
+      "inMinutes": "over {{n}} min",
+      "inHours": "over {{n}} u",
+      "inDays": "over {{n}} d",
+      "now": "Begint nu",
+      "today": "Vandaag",
+      "tomorrow": "Morgen",
       "title": "Meldingen",
       "liveActivity": "Live-activiteit",
       "liveActivityHint": "Toont een blijvende melding tijdens een lopende afspraak.",

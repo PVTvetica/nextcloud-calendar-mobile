@@ -5,6 +5,7 @@ import type { CalendarEvent } from '@/types';
 import { getDatabaseInstance } from './DatabaseProvider';
 import { mapEventToShared } from './mappers/event';
 import Event from './models/Event';
+import { bumpMutationEpoch } from './mutationEpoch';
 import { eventKey, prepareCreateEvent, writeEvent } from './sync';
 import { safeWrite } from './utils/safeTransaction';
 
@@ -32,6 +33,7 @@ function applyPatch(row: Event, patch: Partial<CalendarEvent>): void {
 
 export async function insertEvents(list: CalendarEvent[]): Promise<void> {
   if (list.length === 0) return;
+  bumpMutationEpoch();
   const db = getDatabaseInstance();
   await safeWrite(db, async () => {
     const uids = list.map((ev) => ev.uid);
@@ -59,6 +61,7 @@ export async function patchByUid(
   uid: string,
   patch: Partial<CalendarEvent>,
 ): Promise<void> {
+  bumpMutationEpoch();
   const db = getDatabaseInstance();
   await safeWrite(db, async () => {
     const rows = await events()
@@ -77,6 +80,7 @@ export async function removeWhere(
   accountId: string,
   predicate: (e: CalendarEvent) => boolean,
 ): Promise<CalendarEvent[]> {
+  bumpMutationEpoch();
   const db = getDatabaseInstance();
   let removed: CalendarEvent[] = [];
   await safeWrite(db, async () => {
@@ -93,6 +97,7 @@ export async function restoreSeries(
   baseUid: string,
   snapshot: CalendarEvent[],
 ): Promise<void> {
+  bumpMutationEpoch();
   const db = getDatabaseInstance();
   await safeWrite(db, async () => {
     const rows = await events().query(Q.where('account_id', accountId)).fetch();
