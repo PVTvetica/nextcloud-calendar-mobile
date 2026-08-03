@@ -1,4 +1,6 @@
-import { useCalendarStore } from '../../src/stores/calendarStore';
+import {
+  inWidgetFor, isCalendarVisible, notifiesFor, useCalendarStore,
+} from '../../src/stores/calendarStore';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -61,5 +63,31 @@ describe('calendarStore', () => {
   it('sets hour row height', () => {
     useCalendarStore.getState().setHourRowHeight(80);
     expect(useCalendarStore.getState().hourRowHeight).toBe(80);
+  });
+});
+
+describe('calendar preference rules', () => {
+  it('treats an unknown calendar as visible, notifying and on the widgets', () => {
+    expect(isCalendarVisible('new', [])).toBe(true);
+    expect(notifiesFor('new', [], [])).toBe(true);
+    expect(inWidgetFor('new', [], [])).toBe(true);
+  });
+
+  it('silences and de-widgets a hidden calendar whatever its own flags say', () => {
+    expect(notifiesFor('cal-1', ['cal-1'], [])).toBe(false);
+    expect(inWidgetFor('cal-1', ['cal-1'], [])).toBe(false);
+  });
+
+  it('honours the notification opt-out on a visible calendar', () => {
+    expect(notifiesFor('cal-1', [], ['cal-1'])).toBe(false);
+  });
+
+  it('honours the widget opt-out on a visible calendar', () => {
+    expect(inWidgetFor('cal-1', [], ['cal-1'])).toBe(false);
+  });
+
+  it('keeps the two opt-outs independent of each other', () => {
+    expect(notifiesFor('cal-1', [], ['cal-2'])).toBe(true);
+    expect(inWidgetFor('cal-2', [], ['cal-1'])).toBe(true);
   });
 });

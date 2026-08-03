@@ -11,7 +11,8 @@
     "errorNotFound": "Dieses Element existiert nicht mehr auf dem Server.",
     "errorServer": "Der Server ist vorübergehend nicht verfügbar. Bitte später erneut versuchen.",
     "errorRateLimited": "Zu viele Anfragen. Bitte warten Sie kurz und versuchen Sie es erneut.",
-    "errorRateLimitedRetry": "Zu viele Anfragen. Bitte in {{seconds}} s erneut versuchen."
+    "errorRateLimitedRetry": "Zu viele Anfragen. Bitte in {{seconds}} s erneut versuchen.",
+    "back": "Zurück"
   },
   "tabs": {
     "calendar": "Kalender",
@@ -220,7 +221,44 @@
       "alerts": "Hinweise",
       "app": "Anwendung"
     },
-    "calendar": "Kalender"
+    "calendar": "Kalender",
+    "accessibility": {
+      "title": "Bedienungshilfen",
+      "haptics": "Haptisches Feedback",
+      "hapticsHint": "Kurz vibrieren, wenn Sie eine Taste antippen.",
+      "reduceMotion": "Bewegung reduzieren",
+      "reduceMotionHint": "Den Verkleinerungseffekt beim Drücken eines Elements abschalten.",
+      "scaleCalendarText": "Tageszahlen skalieren",
+      "scaleCalendarTextHint": "Das Tagesabzeichen im Monatsraster ist ein fester Kreis und ignoriert daher standardmäßig die Systemschriftgröße. Der Rest der App folgt ihr bereits."
+    },
+    "account": {
+      "title": "Konto",
+      "notFound": "Konto nicht gefunden.",
+      "profile": "Profil",
+      "displayName": "Anzeigename",
+      "email": "E-Mail",
+      "emailHint": "Wird als Organisator der von Ihnen erstellten Termine verwendet.",
+      "server": "Server",
+      "serverUrl": "Serveradresse",
+      "username": "Benutzername",
+      "connection": "Verbindung",
+      "reconnectHint": "Geben Sie ein neues App-Passwort ein, wenn das alte widerrufen wurde.",
+      "appPassword": "App-Passwort",
+      "scanQr": "QR-Code scannen",
+      "reconnect": "Neu verbinden",
+      "save": "Speichern",
+      "saved": "Änderungen gespeichert.",
+      "reconnected": "Konto neu verbunden.",
+      "useThisAccount": "Dieses Konto verwenden",
+      "delete": "Konto entfernen",
+      "errors": {
+        "required": "Dieses Feld ist erforderlich.",
+        "invalidEmail": "Ungültige E-Mail-Adresse.",
+        "accountMismatch": "Dieser QR-Code gehört zu einem anderen Konto."
+      },
+      "connectionLost": "Die Verbindung zu diesem Server ist abgelaufen. Verbinden Sie sich neu, um weiter zu synchronisieren.",
+      "use": "Verwenden"
+    }
   },
   "widget": {
     "liveRemaining": "noch {{duration}}",

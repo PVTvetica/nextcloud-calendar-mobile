@@ -1,4 +1,4 @@
-import React, { useRef, useState, type ReactNode } from 'react';
+import React, { useCallback, useRef, useState, type ReactNode } from 'react';
 import { View, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { ChevronUp, ChevronDown, Check } from 'lucide-react-native';
 import { useTheme } from 'expo-router';
@@ -12,6 +12,7 @@ export interface SelectOption<T> {
   label: string;
   leading?: (size: number) => ReactNode;
   hint?: string;
+  description?: string;
 }
 
 interface SelectProps<T> {
@@ -23,6 +24,8 @@ interface SelectProps<T> {
   busy?: boolean;
   accessibilityLabel?: string;
   disabled?: boolean;
+  trigger?: ReactNode;
+  footer?: (close: () => void) => ReactNode;
 }
 
 const ROW_HEIGHT = 58;
@@ -34,6 +37,7 @@ type Anchor = { x: number; y: number; width: number; height: number };
 
 function Select<T>({
   value, options, onChange, variant = 'row', icon, busy, accessibilityLabel, disabled,
+  trigger, footer,
 }: SelectProps<T>) {
   const { colors } = useTheme();
   const [open, setOpen] = useState(false);
@@ -43,9 +47,20 @@ function Select<T>({
 
   const active = options.find((o) => o.value === value) ?? options[0];
 
+  const measureAnchor = useCallback(() => {
+    triggerRef.current?.measureInWindow?.((x, y, width, height) => {
+      setAnchor({ x, y, width, height });
+    });
+  }, []);
+
   function toggle() {
-    triggerRef.current?.measureInWindow?.((x, y, width, height) => setAnchor({ x, y, width, height }));
-    setOpen((v) => !v);
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    setAnchor(null);
+    measureAnchor();
+    setOpen(true);
   }
 
   function select(next: T) {
@@ -57,7 +72,7 @@ function Select<T>({
   let dropdownPos: Record<string, number>;
   if (!a) {
     dropdownPos = { top: 120, left: 16, right: 16 };
-  } else if (variant === 'icon') {
+  } else if (variant === 'icon' && !trigger) {
     dropdownPos = { top: a.y + a.height + 8, left: Math.max(8, a.x + a.width - ICON_DROPDOWN_WIDTH), width: ICON_DROPDOWN_WIDTH };
   } else {
     const openUp = a.y + a.height + MAX_LIST_HEIGHT + 8 > screenH;
@@ -69,7 +84,18 @@ function Select<T>({
   return (
     <View>
       <View ref={triggerRef} collapsable={false}>
-        {variant === 'icon' ? (
+        {trigger ? (
+          <AnimatedPressable
+            animated={false}
+            accessibilityRole="button"
+            accessibilityLabel={accessibilityLabel}
+            accessibilityState={{ expanded: open, disabled }}
+            disabled={disabled}
+            onPress={toggle}
+          >
+            {trigger}
+          </AnimatedPressable>
+        ) : variant === 'icon' ? (
           <AnimatedPressable
             accessibilityRole="button"
             accessibilityLabel={accessibilityLabel}
@@ -92,13 +118,22 @@ function Select<T>({
             onPress={toggle}
           >
             {active?.leading?.(26)}
-            <Typography variant="body1" color="text" nowrap style={active?.leading ? styles.name : undefined}>
-              {active?.label ?? ''}
-            </Typography>
-            {active?.hint ? (
-              <Typography color={colors.textTertiary} weight="400" style={styles.hint}>{active.hint}</Typography>
-            ) : null}
-            <View style={styles.spacer} />
+            {active?.description ? (
+              <View style={[styles.stack, active.leading ? styles.stackIndent : undefined]}>
+                <Typography variant="body1" color="text" nowrap>{active.label}</Typography>
+                <Typography variant="caption" color="secondary" nowrap>{active.description}</Typography>
+              </View>
+            ) : (
+              <>
+                <Typography variant="body1" color="text" nowrap style={active?.leading ? styles.name : undefined}>
+                  {active?.label ?? ''}
+                </Typography>
+                {active?.hint ? (
+                  <Typography color={colors.textTertiary} weight="400" style={styles.hint}>{active.hint}</Typography>
+                ) : null}
+                <View style={styles.spacer} />
+              </>
+            )}
             {busy
               ? <Spinner size="small" />
               : open
@@ -124,17 +159,31 @@ function Select<T>({
                 onPress={() => select(option.value)}
               >
                 {option.leading?.(30)}
-                <Typography variant="body1" color="text" style={option.leading ? styles.name : undefined}>
-                  {option.label}
-                </Typography>
-                {option.hint ? (
-                  <Typography color={colors.textTertiary} weight="400" style={styles.hint}>{option.hint}</Typography>
-                ) : null}
-                <View style={styles.spacer} />
+                {option.description ? (
+                  <View style={[styles.stack, option.leading ? styles.stackIndent : undefined]}>
+                    <Typography variant="body1" color="text" nowrap>{option.label}</Typography>
+                    <Typography variant="caption" color="secondary" nowrap>{option.description}</Typography>
+                  </View>
+                ) : (
+                  <>
+                    <Typography variant="body1" color="text" style={option.leading ? styles.name : undefined}>
+                      {option.label}
+                    </Typography>
+                    {option.hint ? (
+                      <Typography color={colors.textTertiary} weight="400" style={styles.hint}>{option.hint}</Typography>
+                    ) : null}
+                    <View style={styles.spacer} />
+                  </>
+                )}
                 {option.value === value && <Check size={20} color={colors.primary} />}
               </AnimatedPressable>
             ))}
           </ScrollView>
+          {footer ? (
+            <View style={[styles.footer, { borderTopColor: colors.border }]}>
+              {footer(() => setOpen(false))}
+            </View>
+          ) : null}
         </View>
       </Modal>
     </View>
@@ -167,6 +216,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
+  footer: { borderTopWidth: StyleSheet.hairlineWidth },
+  stack: { flex: 1, gap: 2, minWidth: 0 },
+  stackIndent: { marginLeft: 14 },
   name: { fontSize: 16, marginLeft: 14 },
   hint: { fontSize: 15, marginLeft: 6 },
   spacer: { flex: 1 },

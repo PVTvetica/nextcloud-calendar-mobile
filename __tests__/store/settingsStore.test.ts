@@ -38,3 +38,12 @@ describe('settingsStore', () => {
     expect(useSettingsStore.getState().themePreference).toBe('dark');
   });
 });
+
+describe('accessibility defaults', () => {
+  it('ships haptics on, motion normal and calendar text unscaled', () => {
+    const s = useSettingsStore.getState();
+    expect(s.hapticsEnabled).toBe(true);
+    expect(s.reduceMotion).toBe(false);
+    expect(s.scaleCalendarText).toBe(false);
+  });
+});

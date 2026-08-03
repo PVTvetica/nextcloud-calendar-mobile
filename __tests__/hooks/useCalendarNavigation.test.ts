@@ -15,28 +15,28 @@ describe('useCalendarNavigation', () => {
   beforeEach(() => { jest.useFakeTimers(); });
   afterEach(() => { jest.useRealTimers(); });
 
-  it('swipe updates date immediately but debounces fetchDate to the last value', () => {
+  it('paging updates date immediately but debounces fetchDate to the last value', () => {
     const { result } = renderHook(() => useCalendarNavigation());
     const d1 = new Date('2026-03-10T00:00:00Z');
     const d2 = new Date('2026-03-17T00:00:00Z');
 
-    act(() => { result.current.onSwipeEndHandlers.week(d1); });
+    act(() => { result.current.onChangeDate(d1); });
     expect(result.current.date).toEqual(d1);
     expect(result.current.fetchDate).not.toEqual(d1);
 
-    act(() => { result.current.onSwipeEndHandlers.week(d2); });
+    act(() => { result.current.onChangeDate(d2); });
     expect(result.current.date).toEqual(d2);
 
     act(() => { jest.advanceTimersByTime(300); });
     expect(result.current.fetchDate).toEqual(d2);
   });
 
-  it('setDate updates fetchDate immediately and cancels a pending swipe', () => {
+  it('setDate updates fetchDate immediately and cancels a pending page change', () => {
     const { result } = renderHook(() => useCalendarNavigation());
     const swiped = new Date('2026-04-01T00:00:00Z');
     const tapped = new Date('2026-05-15T00:00:00Z');
 
-    act(() => { result.current.onSwipeEndHandlers.week(swiped); });
+    act(() => { result.current.onChangeDate(swiped); });
     act(() => { result.current.setDate(tapped); });
     expect(result.current.fetchDate).toEqual(tapped);
 

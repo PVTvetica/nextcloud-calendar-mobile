@@ -1,11 +1,8 @@
-import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { deleteAccount, setActiveAccountId, clearActiveAccountId } from '@/services/nextcloud/auth';
-import { useAccounts, refreshAccounts } from '@/hooks/useAccounts';
-import { ClearDatabaseForAccount } from '@/database/DatabaseProvider';
-import { storage } from '@/storage';
+import { setActiveAccountId } from '@/services/nextcloud/auth';
+import { useAccounts } from '@/hooks/useAccounts';
 import { useAccountStore } from '@/stores/accountStore';
 import { AccountCard } from '@/features/account/components/AccountCard';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
@@ -23,32 +20,6 @@ export default function AccountSettingsScreen() {
     setStoreId(id);
   }
 
-  function handleDelete(id: string, displayName: string) {
-    Alert.alert(t('settings.removeTitle'), t('settings.removeMsg', { name: displayName }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.remove'), style: 'destructive',
-        onPress: async () => {
-          await deleteAccount(id);
-          await ClearDatabaseForAccount(id).catch(() => undefined);
-          storage.remove(`avatar:${id}`);
-          const remaining = await refreshAccounts();
-          if (activeAccountId === id) {
-            const next = remaining[0]?.id ?? null;
-            if (next) {
-              await setActiveAccountId(next);
-              setStoreId(next);
-            } else {
-              await clearActiveAccountId();
-              setStoreId(null);
-              router.replace('/(auth)/setup');
-            }
-          }
-        },
-      },
-    ]);
-  }
-
   return (
     <SettingsPage title={t('settings.accounts')}>
       {accounts.map((account) => (
@@ -57,7 +28,7 @@ export default function AccountSettingsScreen() {
           account={account}
           isActive={account.id === activeAccountId}
           onSetActive={() => handleSetActive(account.id)}
-          onDelete={() => handleDelete(account.id, account.displayName)}
+          onOpen={() => router.push(`/(tabs)/settings/account/${account.id}`)}
         />
       ))}
       <Stack padding={[16, 8]}>

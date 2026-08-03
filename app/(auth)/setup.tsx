@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import * as Crypto from 'expo-crypto';
-import { View, StyleSheet, KeyboardAvoidingView, ScrollView } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, KeyboardAvoidingView, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { QrCode, Eye, EyeOff } from 'lucide-react-native';
 import { useRouter, useTheme } from 'expo-router';
 import { validateCredentials } from '@/services/nextcloud/caldav';
 import { HttpError, describeMutationError } from '@/services/shared/errors';
-import { refreshAccounts } from '@/hooks/useAccounts';
+import { refreshAccounts, useAccounts } from '@/hooks/useAccounts';
 import { saveAccount, setActiveAccountId } from '@/services/nextcloud/auth';
 import { fetchUserInfo, exchangeOneTimeToken } from '@/services/nextcloud/nextcloud';
 import { useAccountStore } from '@/stores/accountStore';
@@ -16,15 +16,19 @@ import type { Account } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { LanguageSheet } from '@/components/LanguageSheet';
 import {
-  ViewContainer, Stack, Typography, Button, TextField, Divider, IconButton,
+  ViewContainer, Stack, Typography, Button, TextField, Divider, IconButton, ScreenHeader,
 } from '@/ui/components';
 
 export default function SetupScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
   const setStoreId = useAccountStore((s) => s.setActiveAccountId);
   const { t } = useTranslation();
+
+  // Same condition app/index.tsx uses to send a launch here rather than to the
+  // calendar: with no account this screen is the first run and has nothing to
+  // go back to, so the button would strand the user.
+  const canGoBack = useAccounts().length > 0;
 
   const [baseUrl, setBaseUrl] = useState('');
   const [username, setUsername] = useState('');
@@ -132,6 +136,10 @@ export default function SetupScreen() {
   return (
     <ViewContainer centered>
       <SafeAreaView style={styles.flex}>
+      <ScreenHeader
+        onBack={canGoBack ? () => router.back() : undefined}
+        right={<LanguageSheet variant="icon" />}
+      />
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Stack gap={8}>
@@ -216,9 +224,6 @@ export default function SetupScreen() {
         </Stack>
       </KeyboardAvoidingView>
 
-      <View style={[styles.langCorner, { top: insets.top + 8 }]}>
-        <LanguageSheet variant="icon" />
-      </View>
       </SafeAreaView>
 
       <QrLoginScanner
@@ -232,7 +237,6 @@ export default function SetupScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  content: { padding: 24 },
+  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },
   section: { marginTop: 28 },
-  langCorner: { position: 'absolute', right: 16, zIndex: 10 },
 });

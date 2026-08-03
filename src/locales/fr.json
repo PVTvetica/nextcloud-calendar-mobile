@@ -11,7 +11,8 @@
     "errorNotFound": "Cet élément n'existe plus sur le serveur.",
     "errorServer": "Le serveur est temporairement indisponible. Réessayez plus tard.",
     "errorRateLimited": "Trop de requêtes. Patientez un instant puis réessayez.",
-    "errorRateLimitedRetry": "Trop de requêtes. Réessayez dans {{seconds}} s."
+    "errorRateLimitedRetry": "Trop de requêtes. Réessayez dans {{seconds}} s.",
+    "back": "Retour"
   },
   "tabs": {
     "calendar": "Calendrier",
@@ -220,7 +221,44 @@
       "alerts": "Alertes",
       "app": "Application"
     },
-    "calendar": "Calendrier"
+    "calendar": "Calendrier",
+    "accessibility": {
+      "title": "Accessibilité",
+      "haptics": "Retour haptique",
+      "hapticsHint": "Vibrer brièvement à l'appui sur un bouton.",
+      "reduceMotion": "Réduire les animations",
+      "reduceMotionHint": "Désactiver l'effet de rétrécissement à l'appui sur une commande.",
+      "scaleCalendarText": "Agrandir les numéros de jour",
+      "scaleCalendarTextHint": "La pastille du jour de la grille du mois est un cercle fixe : elle ignore la taille de texte du système par défaut. Le reste de l'app la suit déjà."
+    },
+    "account": {
+      "title": "Compte",
+      "notFound": "Compte introuvable.",
+      "profile": "Profil",
+      "displayName": "Nom d'affichage",
+      "email": "E-mail",
+      "emailHint": "Utilisé comme organisateur des événements que vous créez.",
+      "server": "Serveur",
+      "serverUrl": "Adresse du serveur",
+      "username": "Nom d'utilisateur",
+      "connection": "Connexion",
+      "reconnectHint": "Ressaisissez un mot de passe d'application si l'ancien a été révoqué.",
+      "appPassword": "Mot de passe d'application",
+      "scanQr": "Scanner un QR code",
+      "reconnect": "Reconnecter",
+      "save": "Enregistrer",
+      "saved": "Modifications enregistrées.",
+      "reconnected": "Compte reconnecté.",
+      "useThisAccount": "Utiliser ce compte",
+      "delete": "Supprimer le compte",
+      "errors": {
+        "required": "Ce champ est obligatoire.",
+        "invalidEmail": "Adresse e-mail invalide.",
+        "accountMismatch": "Ce QR code correspond à un autre compte."
+      },
+      "connectionLost": "La connexion à ce serveur a expiré. Reconnectez-vous pour continuer à synchroniser.",
+      "use": "Utiliser"
+    }
   },
   "widget": {
     "liveRemaining": "il reste {{duration}}",

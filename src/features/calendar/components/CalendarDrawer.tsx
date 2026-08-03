@@ -2,10 +2,11 @@ import { Animated, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronsUpDown, Settings } from 'lucide-react-native';
 import { useTheme } from 'expo-router';
 
 import { AvatarImage } from '@/components/AvatarImage';
+import { AccountSwitcher } from '@/features/account/components/AccountSwitcher';
 import { Item, List, SectionHeader, Stack, Typography } from '@/ui/components';
 import type { Account, CalendarMeta } from '@/types';
 
@@ -67,23 +68,33 @@ export function CalendarDrawer({
         ]}
       >
         <View style={styles.header}>
-          <List>
-            <Item
-              onPress={onNavigateSettings}
-              leading={activeAccount ? <AvatarImage account={activeAccount} size={40} /> : undefined}
-              title={
-                <Typography variant="body1" numberOfLines={1} ellipsizeMode="tail">
-                  {activeAccount?.displayName ?? activeAccount?.username ?? '—'}
-                </Typography>
-              }
-              description={
-                <Typography variant="caption" color="secondary" numberOfLines={1} ellipsizeMode="middle">
-                  {activeAccount?.username ?? ''}
-                </Typography>
-              }
-              trailing={<ChevronRight size={20} color={colors.textTertiary} />}
-            />
-          </List>
+          <AccountSwitcher
+            trigger={
+              <List>
+                <Item
+                  leading={activeAccount ? <AvatarImage account={activeAccount} size={40} /> : undefined}
+                  title={
+                    <Typography variant="body1" numberOfLines={1} ellipsizeMode="tail">
+                      {activeAccount?.displayName ?? activeAccount?.username ?? '—'}
+                    </Typography>
+                  }
+                  description={
+                    <Typography variant="caption" color="secondary" numberOfLines={1} ellipsizeMode="middle">
+                      {activeAccount?.username ?? ''}
+                    </Typography>
+                  }
+                  trailing={<ChevronsUpDown size={20} color={colors.textTertiary} />}
+                />
+              </List>
+            }
+            footer={(close) => (
+              <Item
+                onPress={() => { close(); onNavigateSettings(); }}
+                leading={<Settings size={20} color={colors.textSecondary} />}
+                title={t('settings.title')}
+              />
+            )}
+          />
         </View>
 
         <ScrollView

@@ -6,7 +6,8 @@ import dayjs from 'dayjs';
 const render = (ui: React.ReactElement, opts?: Parameters<typeof rtlRender>[1]) =>
   rtlRender(ui, { wrapper: ThemeWrapper, ...opts });
 import 'dayjs/locale/fr';
-import { MonthDayView, buildMonthGrid, eventDayKeys } from '@/features/calendar/components/MonthDayView';
+import { buildMonthGrid } from '@super-calendar/native';
+import { MonthDayView, eventDayKeys } from '@/features/calendar/components/MonthDayView';
 import type { CalendarEvent } from '../../src/types';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -36,17 +37,14 @@ function view(date: Date) {
   );
 }
 
-describe('buildMonthGrid', () => {
-  afterEach(() => {
-    dayjs.locale('en');
-  });
+describe('month grid wiring', () => {
+  const june = new Date(2026, 5, 1);
 
   function expectColumnsMatchWeekdays(weekStartsOn: 0 | 1) {
-    const grid = buildMonthGrid(2026, 5, weekStartsOn);
-    for (const week of grid) {
-      week.forEach((cell, col) => {
-        if (cell === null) return;
-        expect(cell.day()).toBe((weekStartsOn + col) % 7);
+    const { weeks } = buildMonthGrid(june, { weekStartsOn });
+    for (const week of weeks) {
+      week.days.forEach((day, col) => {
+        expect(day.date.getDay()).toBe((weekStartsOn + col) % 7);
       });
     }
   }
@@ -59,21 +57,19 @@ describe('buildMonthGrid', () => {
     expectColumnsMatchWeekdays(1);
   });
 
-  it('stays aligned under a Monday-start locale (fr)', () => {
-    dayjs.locale('fr');
-    expectColumnsMatchWeekdays(0);
-    expectColumnsMatchWeekdays(1);
+  it('places June 1, 2026 (a Monday) under the Monday column', () => {
+    for (const weekStartsOn of [0, 1] as const) {
+      const { weeks } = buildMonthGrid(june, { weekStartsOn });
+      const isJune1 = (d: { date: Date }) => d.date.getDate() === 1 && d.date.getMonth() === 5;
+      const row = weeks.find((w) => w.days.some(isJune1))!;
+      expect((weekStartsOn + row.days.findIndex(isJune1)) % 7).toBe(1);
+    }
   });
 
-  it('places June 1, 2026 (a Monday) under the Monday column', () => {
-    dayjs.locale('fr');
-    const isJune1 = (d: dayjs.Dayjs | null) => d !== null && d.date() === 1 && d.month() === 5;
-    for (const weekStartsOn of [0, 1] as const) {
-      const grid = buildMonthGrid(2026, 5, weekStartsOn);
-      const firstRow = grid.find((week) => week.some(isJune1))!;
-      const col = firstRow.findIndex(isJune1);
-      expect((weekStartsOn + col) % 7).toBe(1);
-    }
+  it('gives every weekday header a distinct date to key on', () => {
+    const { weekdays } = buildMonthGrid(june, { weekStartsOn: 1, weekdayFormat: 'narrow' });
+    const keys = weekdays.map((d) => d.date.toISOString());
+    expect(new Set(keys).size).toBe(weekdays.length);
   });
 });
 

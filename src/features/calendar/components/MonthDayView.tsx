@@ -7,8 +7,10 @@ import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'expo-router';
+import { useMonthGrid } from '@super-calendar/native';
 import { useSettingsStore } from '@/stores/settingsStore';
 import type { CalendarEvent } from '@/types';
+import { calendarLocale } from '../utils/calendar';
 
 dayjs.extend(localizedFormat);
 
@@ -21,29 +23,6 @@ interface Props {
   onPressCell: (d: Date) => void;
 }
 
-export function buildMonthGrid(year: number, month: number, weekStartsOn: 0 | 1): (dayjs.Dayjs | null)[][] {
-  const firstOfMonth = dayjs(new Date(year, month, 1));
-
-  const offset = (firstOfMonth.day() - weekStartsOn + 7) % 7;
-
-  const rows: (dayjs.Dayjs | null)[][] = [];
-  let cursor = firstOfMonth.subtract(offset, 'day');
-  for (let row = 0; row < 6; row++) {
-    const week: (dayjs.Dayjs | null)[] = [];
-    for (let col = 0; col < 7; col++) {
-      week.push(cursor.month() === month ? cursor : null);
-      cursor = cursor.add(1, 'day');
-    }
-    const allNull = week.every((d) => d === null);
-    if (allNull) break;
-    rows.push(week);
-    if (cursor.month() !== month && row >= 3) break;
-  }
-  return rows;
-}
-
-// Last day the event occupies. All-day events store an inclusive end day; timed events
-// end on an instant, and one landing exactly on midnight belongs to the day before.
 function lastDayOf(e: CalendarEvent): dayjs.Dayjs {
   const start = dayjs(e.dtstart);
   const end = dayjs(e.dtend);
@@ -75,14 +54,19 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
   const theme = useTheme();
   const { t } = useTranslation();
   const language = useSettingsStore((s) => s.language);
+  const scaleCalendarText = useSettingsStore((s) => s.scaleCalendarText);
   const { height } = useWindowDimensions();
 
   const selected = useMemo(() => dayjs(date), [date]);
+  const locale = useMemo(() => calendarLocale(language), [language]);
 
-  const year = dayjs(date).year();
-  const month = dayjs(date).month();
-
-  const grid = useMemo(() => buildMonthGrid(year, month, weekStartsOn), [year, month, weekStartsOn]);
+  const selectedDates = useMemo(() => [date], [date]);
+  const { weeks, weekdays } = useMonthGrid(date, {
+    weekStartsOn,
+    selectedDates,
+    locale,
+    weekdayFormat: 'narrow',
+  });
 
   const dotMap = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -105,20 +89,9 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
       .sort((a, b) => a.dtstart.getTime() - b.dtstart.getTime());
   }, [events, selected]);
 
-  const today = dayjs();
-
-  const handleDayPress = useCallback((d: dayjs.Dayjs) => {
-    onSelectDate(d.toDate());
+  const handleDayPress = useCallback((d: Date) => {
+    onSelectDate(d);
   }, [onSelectDate]);
-
-  const dayHeaders = useMemo(() => {
-    const headers: string[] = [];
-    for (let i = 0; i < 7; i++) {
-      const dow = (weekStartsOn + i) % 7;
-      headers.push(dayjs().day(dow).locale(language).format('dd'));
-    }
-    return headers;
-  }, [weekStartsOn, language]);
 
   const gridHeight = height * 0.44;
 
@@ -126,46 +99,49 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={[styles.grid, { height: gridHeight, borderBottomColor: theme.colors.border }]}>
         <View style={styles.dowRow}>
-          {dayHeaders.map((d, i) => (
-            <Text key={i} style={[styles.dowLabel, { color: theme.colors.textTertiary }]}>{d}</Text>
+          {weekdays.map((d) => (
+            <Text
+              key={d.date.toISOString()}
+              style={[styles.dowLabel, { color: theme.colors.textTertiary }]}
+            >
+              {d.label}
+            </Text>
           ))}
         </View>
 
-        {grid.map((week, wi) => (
-          <View key={wi} style={styles.weekRow}>
-            {week.map((d, di) => {
-              if (d === null) {
-                return <View key={di} style={styles.dayCell} />;
+        {weeks.map((week) => (
+          <View key={week.id} style={styles.weekRow}>
+            {week.days.map((day) => {
+              if (!day.isCurrentMonth) {
+                return <View key={day.id} style={styles.dayCell} />;
               }
-              const key = d.format('YYYY-MM-DD');
-              const isToday = d.isSame(today, 'day');
-              const isSelected = d.isSame(selected, 'day');
+              const key = dayjs(day.date).format('YYYY-MM-DD');
               const dots = Array.from(dotMap.get(key) ?? []).slice(0, 3);
 
               return (
                 <TouchableOpacity
-                  key={di}
+                  key={day.id}
                   style={styles.dayCell}
-                  onPress={() => handleDayPress(d)}
-                  onLongPress={() => onPressCell(d.toDate())}
+                  onPress={() => handleDayPress(day.date)}
+                  onLongPress={() => onPressCell(day.date)}
                 >
                   <View style={[
                     styles.dayCircle,
-                    { backgroundColor: isSelected ? theme.colors.primary : 'transparent' },
-                    { borderWidth: isToday && !isSelected ? 1.5 : 0, borderColor: theme.colors.primary },
+                    { backgroundColor: day.isSelected ? theme.colors.primary : 'transparent' },
+                    { borderWidth: day.isToday && !day.isSelected ? 1.5 : 0, borderColor: theme.colors.primary },
                   ]}>
                     <Text
                       numberOfLines={1}
-                      allowFontScaling={false}
+                      allowFontScaling={scaleCalendarText}
                       style={[
                         styles.dayNumber,
-                        { color: isSelected
+                        { color: day.isSelected
                           ? theme.colors.primaryText
-                          : isToday
+                          : day.isToday
                             ? theme.colors.primary
-                            : theme.colors.text, fontWeight: isSelected || isToday ? '700' : '400' },
+                            : theme.colors.text, fontWeight: day.isSelected || day.isToday ? '700' : '400' },
                       ]}>
-                      {d.date()}
+                      {day.label}
                     </Text>
                   </View>
                   <View style={styles.dotsRow}>

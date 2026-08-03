@@ -24,10 +24,13 @@
   "dependencies": {
     "@expo/metro-runtime": "~57.0.6",
     "@expo/vector-icons": "^15.1.1",
+    "@legendapp/list": "^3.3.3",
     "@morrowdigital/watermelondb-expo-plugin": "^2.3.3",
     "@nozbe/watermelondb": "^0.28.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "9.1.0",
+    "@super-calendar/native": "^2.8.1",
+    "date-fns": "^4.4.0",
     "dayjs": "^1.11.20",
     "expo": "^57.0.0",
     "expo-background-task": "~57.0.6",
@@ -39,6 +42,7 @@
     "expo-crypto": "~57.0.1",
     "expo-dev-client": "~57.0.9",
     "expo-font": "~57.0.1",
+    "expo-glass-effect": "~57.0.1",
     "expo-haptics": "~57.0.1",
     "expo-linking": "~57.0.3",
     "expo-localization": "~57.0.1",
@@ -60,7 +64,6 @@
     "react-i18next": "^17.0.8",
     "react-native": "0.86.0",
     "react-native-android-widget": "^0.21.0",
-    "react-native-big-calendar": "5.0.0-beta.12",
     "react-native-country-flag": "^2.0.2",
     "react-native-gesture-handler": "~2.32.0",
     "react-native-infinite-pager": "^0.3.18",
@@ -105,7 +108,7 @@
       "^lucide-react-native$": "<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js"
     },
     "transformIgnorePatterns": [
-      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|standard-navigation|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|lucide-react-native|ical\\.js)"
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|standard-navigation|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|lucide-react-native|@super-calendar/.*|@legendapp/.*|ical\\.js)"
     ]
   },
   "private": true,

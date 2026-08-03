@@ -11,7 +11,8 @@
     "errorNotFound": "This item no longer exists on the server.",
     "errorServer": "The server is temporarily unavailable. Please try again later.",
     "errorRateLimited": "Too many requests. Please wait a moment and try again.",
-    "errorRateLimitedRetry": "Too many requests. Please try again in {{seconds}}s."
+    "errorRateLimitedRetry": "Too many requests. Please try again in {{seconds}}s.",
+    "back": "Back"
   },
   "tabs": {
     "calendar": "Calendar",
@@ -220,7 +221,44 @@
       "alerts": "Alerts",
       "app": "Application"
     },
-    "calendar": "Calendar"
+    "calendar": "Calendar",
+    "accessibility": {
+      "title": "Accessibility",
+      "haptics": "Haptic feedback",
+      "hapticsHint": "Vibrate briefly when you tap a button.",
+      "reduceMotion": "Reduce motion",
+      "reduceMotionHint": "Turn off the shrink effect when you press a control.",
+      "scaleCalendarText": "Scale day numbers",
+      "scaleCalendarTextHint": "The month grid's day badge is a fixed circle, so it ignores the system text size by default. The rest of the app already follows it."
+    },
+    "account": {
+      "title": "Account",
+      "notFound": "Account not found.",
+      "profile": "Profile",
+      "displayName": "Display name",
+      "email": "Email",
+      "emailHint": "Used as the organiser of the events you create.",
+      "server": "Server",
+      "serverUrl": "Server address",
+      "username": "Username",
+      "connection": "Connection",
+      "reconnectHint": "Enter a new app password if the old one was revoked.",
+      "appPassword": "App password",
+      "scanQr": "Scan a QR code",
+      "reconnect": "Reconnect",
+      "save": "Save",
+      "saved": "Changes saved.",
+      "reconnected": "Account reconnected.",
+      "useThisAccount": "Use this account",
+      "delete": "Remove account",
+      "errors": {
+        "required": "This field is required.",
+        "invalidEmail": "Invalid email address.",
+        "accountMismatch": "This QR code belongs to a different account."
+      },
+      "connectionLost": "The connection to this server has expired. Reconnect to keep syncing.",
+      "use": "Use"
+    }
   },
   "widget": {
     "liveRemaining": "{{duration}} left",

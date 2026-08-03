@@ -5,8 +5,7 @@ import { database } from '@/database';
 import Event from '@/database/models/Event';
 import { mapEventToShared } from '@/database/mappers/event';
 import { useAccountStore } from '@/stores/accountStore';
-import { useCalendarStore } from '@/stores/calendarStore';
-import { inWidgetFor, notifiesFor } from '@/features/calendar/utils/calendarPrefs';
+import { inWidgetFor, notifiesFor, useCalendarStore } from '@/stores/calendarStore';
 import { normalizeEvents } from '@/utils/normalizeEvent';
 
 function startOfDay(d: Date): number {

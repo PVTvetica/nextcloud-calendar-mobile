@@ -1,7 +1,8 @@
 import React from 'react';
 import { useTheme } from 'expo-router';
-import type { AccessibilityProps } from 'react-native';
+import { StyleSheet, type AccessibilityProps } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import AnimatedPressable from './AnimatedPressable';
 
 type Variant = 'ghost' | 'filled' | 'plain';
@@ -11,17 +12,22 @@ interface IconButtonProps extends AccessibilityProps {
   size?: number;
   variant?: Variant;
   round?: boolean;
+  glass?: boolean;
   disabled?: boolean;
   children?: React.ReactNode;
   hapticFeedback?: Haptics.ImpactFeedbackStyle | null;
 }
 
+const LIQUID_GLASS = isLiquidGlassAvailable();
+
 function IconButton({
-  onPress, size = 44, variant = 'ghost', round = false, disabled = false, children,
+  onPress, size = 44, variant = 'ghost', round = false, glass = false, disabled = false, children,
   hapticFeedback = Haptics.ImpactFeedbackStyle.Light,
   ...accessibility
 }: IconButtonProps) {
   const { colors, radius } = useTheme();
+  const onGlass = glass && LIQUID_GLASS;
+  const borderRadius = round ? size / 2 : radius.md;
 
   return (
     <AnimatedPressable
@@ -33,15 +39,22 @@ function IconButton({
       style={{
         width: size,
         height: size,
-        borderRadius: round ? size / 2 : radius.md,
+        borderRadius,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: variant === 'plain' ? 'transparent' : colors.surface,
-        borderWidth: variant === 'plain' ? 0 : 1.5,
+        backgroundColor: onGlass || variant === 'plain' ? 'transparent' : colors.surface,
+        borderWidth: onGlass || variant === 'plain' ? 0 : 1.5,
         borderColor: colors.border,
         opacity: disabled ? 0.4 : 1,
       }}
     >
+      {onGlass && (
+        <GlassView
+          glassEffectStyle="regular"
+          isInteractive
+          style={[StyleSheet.absoluteFill, { borderRadius }]}
+        />
+      )}
       {children}
     </AnimatedPressable>
   );

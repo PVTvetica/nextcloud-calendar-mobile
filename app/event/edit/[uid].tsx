@@ -11,6 +11,7 @@ import { useAccounts } from '@/hooks/useAccounts';
 import { useUpdateEvent } from '@/features/event/hooks/useMutateEvent';
 import { useAccountStore } from '@/stores/accountStore';
 import { EventForm } from '@/features/event/components/EventForm';
+import { accountOrganizerEmail } from '@/features/event/organizer';
 import {
   ViewContainer, Stack, Typography, Button, Spinner, ScreenHeader,
 } from '@/ui/components';
@@ -77,10 +78,7 @@ export default function EditEventScreen() {
     );
   }
 
-  const organizerEmail = activeAccount.email
-    || (activeAccount.username.includes('@')
-      ? activeAccount.username
-      : `${activeAccount.username}@${new URL(activeAccount.baseUrl).hostname}`);
+  const organizerEmail = accountOrganizerEmail(activeAccount);
 
   const initialValues = {
     summary: event.summary,

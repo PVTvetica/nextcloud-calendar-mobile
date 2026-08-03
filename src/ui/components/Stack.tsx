@@ -2,6 +2,7 @@ import React from 'react';
 import { FlexAlignType, StyleProp, StyleSheet, ViewProps, ViewStyle, DimensionValue } from 'react-native';
 import Reanimated, { LinearTransition } from 'react-native-reanimated';
 import { useTheme } from 'expo-router';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 
 type Direction = 'vertical' | 'horizontal';
@@ -68,6 +69,7 @@ function Stack({
   ...rest
 }: StackProps) {
   const { colors, radius: rTokens } = useTheme();
+  const reduceMotion = useSettingsStore((s) => s.reduceMotion);
 
   const resolvedHAlign = hAlign ?? (direction === 'vertical' ? 'stretch' : 'start');
 
@@ -126,7 +128,7 @@ function Stack({
     <Reanimated.View
       {...rest}
       style={[dynamic, style]}
-      layout={animated ? LinearTransition : undefined}
+      layout={animated && !reduceMotion ? LinearTransition : undefined}
     >
       {children}
     </Reanimated.View>

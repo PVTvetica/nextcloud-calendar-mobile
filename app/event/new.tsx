@@ -8,6 +8,7 @@ import { useCalendars } from '@/hooks/useCalendars';
 import { useCreateEvent } from '@/features/event/hooks/useMutateEvent';
 import { useAccountStore } from '@/stores/accountStore';
 import { EventForm } from '@/features/event/components/EventForm';
+import { accountOrganizerEmail } from '@/features/event/organizer';
 import { ViewContainer, Stack, Typography, Button, ScreenHeader } from '@/ui/components';
 import type { CreateEventInput } from '@/types';
 
@@ -42,10 +43,7 @@ export default function NewEventScreen() {
     );
   }
 
-  const organizerEmail = activeAccount.email
-    || (activeAccount.username.includes('@')
-      ? activeAccount.username
-      : `${activeAccount.username}@${new URL(activeAccount.baseUrl).hostname}`);
+  const organizerEmail = accountOrganizerEmail(activeAccount);
 
   return (
     <ViewContainer>

@@ -11,7 +11,8 @@
     "errorNotFound": "Este elemento ya no existe en el servidor.",
     "errorServer": "El servidor no está disponible temporalmente. Inténtalo más tarde.",
     "errorRateLimited": "Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.",
-    "errorRateLimitedRetry": "Demasiadas solicitudes. Inténtalo de nuevo en {{seconds}} s."
+    "errorRateLimitedRetry": "Demasiadas solicitudes. Inténtalo de nuevo en {{seconds}} s.",
+    "back": "Atrás"
   },
   "tabs": {
     "calendar": "Calendario",
@@ -220,7 +221,44 @@
       "alerts": "Alertas",
       "app": "Aplicación"
     },
-    "calendar": "Calendario"
+    "calendar": "Calendario",
+    "accessibility": {
+      "title": "Accesibilidad",
+      "haptics": "Respuesta háptica",
+      "hapticsHint": "Vibrar brevemente al pulsar un botón.",
+      "reduceMotion": "Reducir el movimiento",
+      "reduceMotionHint": "Desactivar el efecto de reducción al pulsar un control.",
+      "scaleCalendarText": "Escalar los números de día",
+      "scaleCalendarTextHint": "La insignia del día en la cuadrícula del mes es un círculo fijo, por lo que ignora el tamaño de texto del sistema por defecto. El resto de la app ya lo sigue."
+    },
+    "account": {
+      "title": "Cuenta",
+      "notFound": "Cuenta no encontrada.",
+      "profile": "Perfil",
+      "displayName": "Nombre visible",
+      "email": "Correo electrónico",
+      "emailHint": "Se usa como organizador de los eventos que creas.",
+      "server": "Servidor",
+      "serverUrl": "Dirección del servidor",
+      "username": "Nombre de usuario",
+      "connection": "Conexión",
+      "reconnectHint": "Introduce una nueva contraseña de aplicación si la anterior fue revocada.",
+      "appPassword": "Contraseña de aplicación",
+      "scanQr": "Escanear un código QR",
+      "reconnect": "Reconectar",
+      "save": "Guardar",
+      "saved": "Cambios guardados.",
+      "reconnected": "Cuenta reconectada.",
+      "useThisAccount": "Usar esta cuenta",
+      "delete": "Eliminar cuenta",
+      "errors": {
+        "required": "Este campo es obligatorio.",
+        "invalidEmail": "Dirección de correo no válida.",
+        "accountMismatch": "Este código QR pertenece a otra cuenta."
+      },
+      "connectionLost": "La conexión con este servidor ha caducado. Vuelve a conectarte para seguir sincronizando.",
+      "use": "Usar"
+    }
   },
   "widget": {
     "liveRemaining": "quedan {{duration}}",

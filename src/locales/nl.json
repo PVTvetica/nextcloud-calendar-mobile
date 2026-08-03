@@ -11,7 +11,8 @@
     "errorNotFound": "Dit item bestaat niet meer op de server.",
     "errorServer": "De server is tijdelijk niet beschikbaar. Probeer het later opnieuw.",
     "errorRateLimited": "Te veel verzoeken. Wacht even en probeer het opnieuw.",
-    "errorRateLimitedRetry": "Te veel verzoeken. Probeer het opnieuw over {{seconds}}s."
+    "errorRateLimitedRetry": "Te veel verzoeken. Probeer het opnieuw over {{seconds}}s.",
+    "back": "Terug"
   },
   "tabs": {
     "calendar": "Agenda",
@@ -220,7 +221,44 @@
       "alerts": "Meldingen",
       "app": "Applicatie"
     },
-    "calendar": "Agenda"
+    "calendar": "Agenda",
+    "accessibility": {
+      "title": "Toegankelijkheid",
+      "haptics": "Haptische feedback",
+      "hapticsHint": "Kort trillen wanneer je op een knop tikt.",
+      "reduceMotion": "Beweging verminderen",
+      "reduceMotionHint": "Het verkleiningseffect bij het indrukken van een knop uitschakelen.",
+      "scaleCalendarText": "Dagnummers schalen",
+      "scaleCalendarTextHint": "De dagbadge in het maandraster is een vaste cirkel en negeert daarom standaard de systeemtekstgrootte. De rest van de app volgt die al."
+    },
+    "account": {
+      "title": "Account",
+      "notFound": "Account niet gevonden.",
+      "profile": "Profiel",
+      "displayName": "Weergavenaam",
+      "email": "E-mail",
+      "emailHint": "Wordt gebruikt als organisator van de afspraken die je aanmaakt.",
+      "server": "Server",
+      "serverUrl": "Serveradres",
+      "username": "Gebruikersnaam",
+      "connection": "Verbinding",
+      "reconnectHint": "Voer een nieuw app-wachtwoord in als het oude is ingetrokken.",
+      "appPassword": "App-wachtwoord",
+      "scanQr": "QR-code scannen",
+      "reconnect": "Opnieuw verbinden",
+      "save": "Opslaan",
+      "saved": "Wijzigingen opgeslagen.",
+      "reconnected": "Account opnieuw verbonden.",
+      "useThisAccount": "Dit account gebruiken",
+      "delete": "Account verwijderen",
+      "errors": {
+        "required": "Dit veld is verplicht.",
+        "invalidEmail": "Ongeldig e-mailadres.",
+        "accountMismatch": "Deze QR-code hoort bij een ander account."
+      },
+      "connectionLost": "De verbinding met deze server is verlopen. Maak opnieuw verbinding om te blijven synchroniseren.",
+      "use": "Gebruiken"
+    }
   },
   "widget": {
     "liveRemaining": "nog {{duration}}",

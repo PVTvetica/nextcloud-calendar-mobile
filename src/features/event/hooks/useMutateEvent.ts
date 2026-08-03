@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Alert } from 'react-native';
 import * as Crypto from 'expo-crypto';
 import dayjs from 'dayjs';
@@ -9,6 +9,7 @@ import { describeMutationError } from '@/services/shared/errors';
 import { buildIcs, buildAllDayIcs, buildExceptionIcs, injectExdate, truncateRruleUntil } from '@/utils/ics';
 import { parseIcsObjects, extractDtstartTzid } from '@/utils/caldav-parse';
 import { isValidTimeZone } from '@/utils/timezone';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import i18n from '@/utils/i18n';
 import {
   insertEvents,
@@ -21,27 +22,6 @@ import {
 import type { Account, CalendarMeta, CalendarEvent, CreateEventInput, RecurrenceEditScope } from '@/types';
 
 const TALK_URL_PATTERN = /\/call\//;
-
-function useAction<V>(run: (value: V) => Promise<void>): {
-  mutate: (value: V) => void;
-  mutateAsync: (value: V) => Promise<void>;
-  isPending: boolean;
-} {
-  const [isPending, setIsPending] = useState(false);
-  const mutateAsync = useCallback(
-    async (value: V) => {
-      setIsPending(true);
-      try {
-        await run(value);
-      } finally {
-        setIsPending(false);
-      }
-    },
-    [run],
-  );
-  const mutate = useCallback((value: V) => { void mutateAsync(value); }, [mutateAsync]);
-  return { mutate, mutateAsync, isPending };
-}
 
 function resolveTimezone(account: Account): string {
   if (account.timezone && isValidTimeZone(account.timezone)) return account.timezone;
@@ -143,7 +123,7 @@ function expandOccurrences(
 }
 
 export function useCreateEvent(account: Account, calendars: CalendarMeta[]) {
-  return useAction<CreateEventInput>(
+  return useAsyncAction<CreateEventInput>(
     useCallback(async (input: CreateEventInput) => {
       const calendar = resolveCalendar(calendars, input.calendarId);
       if (!calendar) return;
@@ -173,7 +153,7 @@ export function useCreateEvent(account: Account, calendars: CalendarMeta[]) {
 }
 
 export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
-  return useAction<{ event: CalendarEvent; input: CreateEventInput; scope?: RecurrenceEditScope }>(
+  return useAsyncAction<{ event: CalendarEvent; input: CreateEventInput; scope?: RecurrenceEditScope }>(
     useCallback(async ({ event, input, scope = 'all' }) => {
       const base = seriesBaseUid(event.uid);
       const snapshot = await snapshotByBase(account.id, base);
@@ -247,7 +227,7 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
 }
 
 export function useDeleteEvent(account: Account) {
-  return useAction<{ event: CalendarEvent; scope?: RecurrenceEditScope }>(
+  return useAsyncAction<{ event: CalendarEvent; scope?: RecurrenceEditScope }>(
     useCallback(async ({ event, scope = 'all' }) => {
       const base = seriesBaseUid(event.uid);
       let removed: CalendarEvent[];

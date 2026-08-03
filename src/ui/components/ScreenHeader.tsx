@@ -17,7 +17,7 @@ function ScreenHeader({ title, onBack, left, right }: ScreenHeaderProps) {
   const { colors } = useTheme();
 
   const leftSlot = onBack ? (
-    <IconButton variant="ghost" round size={40} onPress={onBack} accessibilityRole="button">
+    <IconButton variant="ghost" round glass size={40} onPress={onBack} accessibilityRole="button">
       <ChevronLeft size={22} color={colors.text} />
     </IconButton>
   ) : (

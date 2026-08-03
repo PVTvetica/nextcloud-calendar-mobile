@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Linking, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
-import * as Haptics from 'expo-haptics';
+import { haptic } from '@/utils/haptics';
 import { Pencil, Clock, CalendarDays, MapPin, Video, Repeat, Trash2, Copy, Check } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
 import dayjs from 'dayjs';
@@ -13,6 +13,7 @@ import { useEventByUid } from '@/database/useEventByUid';
 import { useCalendars } from '@/hooks/useCalendars';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useDeleteEvent } from '@/features/event/hooks/useMutateEvent';
+import { canEditEvent } from '@/features/event/organizer';
 import { useAccountStore } from '@/stores/accountStore';
 import {
   ViewContainer, Stack, Typography, Button, Chip, Icon, List, Item,
@@ -98,7 +99,7 @@ export default function EventDetailScreen() {
 
   const calendar = calendars.find((c) => c.id === event?.calendarId);
   const deleteMutation = useDeleteEvent(activeAccount!);
-  const canEdit = !calendar?.isReadOnly && !calendar?.isSubscribed;
+  const canEdit = !!event && canEditEvent(event, calendar, activeAccount);
   const eventsLoading = !synced && event === undefined;
 
   const [copied, setCopied] = useState(false);
@@ -108,7 +109,7 @@ export default function EventDetailScreen() {
   const handleCopyLocation = useCallback(async () => {
     if (!event?.location) return;
     await Clipboard.setStringAsync(event.location);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    haptic();
     setCopied(true);
     clearTimeout(copyResetRef.current);
     copyResetRef.current = setTimeout(() => setCopied(false), 1500);

@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
-  Bell, CalendarDays, ChevronRight, Info, LayoutGrid, Palette, UserRound,
+  Accessibility, Bell, CalendarDays, ChevronRight, Info, LayoutGrid, Palette, UserRound,
 } from 'lucide-react-native';
 
 import { useAccountStore } from '@/stores/accountStore';
@@ -36,7 +36,11 @@ export default function SettingsScreen() {
         >
           <List>
             <Item
-              onPress={() => router.push('/(tabs)/settings/accounts')}
+              onPress={() => router.push(
+                activeAccount
+                  ? `/(tabs)/settings/account/${activeAccount.id}`
+                  : '/(tabs)/settings/accounts',
+              )}
               leading={activeAccount ? <AvatarImage account={activeAccount} size={44} /> : undefined}
               title={
                 <Typography variant="body1" numberOfLines={1} ellipsizeMode="tail">
@@ -64,6 +68,11 @@ export default function SettingsScreen() {
                 title={t('settings.calendar')}
                 icon={<CalendarDays />}
                 onPress={() => router.push('/(tabs)/settings/calendar')}
+              />
+              <SettingsLink
+                title={t('settings.accessibility.title')}
+                icon={<Accessibility />}
+                onPress={() => router.push('/(tabs)/settings/accessibility')}
               />
             </List>
           </Stack>
