@@ -32,15 +32,24 @@ async function runSync(now: Date): Promise<Date | null> {
   const scheme = Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
 
   if (homeWidget.isSupported()) {
-    try {
-      const options = { locale, scheme, days: AGENDA_DAYS, maxPerSection: 10 } as const;
-      if (homeWidget.updateTimeline) {
-        await homeWidget.updateTimeline(buildAgendaTimeline(events, { ...options, now }));
-      } else {
-        await homeWidget.update(buildAgendaSnapshot(events, { ...options, now }));
+    const options = { locale, scheme, days: AGENDA_DAYS, maxPerSection: 10, now } as const;
+
+    let timelineFailed = !homeWidget.updateTimeline;
+    if (homeWidget.updateTimeline) {
+      try {
+        await homeWidget.updateTimeline(buildAgendaTimeline(events, options));
+      } catch (error) {
+        reportStep('home widget timeline update', error);
+        timelineFailed = true;
       }
-    } catch (error) {
-      reportStep('home widget update', error);
+    }
+
+    if (timelineFailed) {
+      try {
+        await homeWidget.update(buildAgendaSnapshot(events, options));
+      } catch (error) {
+        reportStep('home widget snapshot update', error);
+      }
     }
   }
 
