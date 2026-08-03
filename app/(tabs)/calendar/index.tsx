@@ -20,6 +20,7 @@ import { useCalendarNavigation } from '@/features/calendar/hooks/useCalendarNavi
 import { useCalendarData } from '@/features/calendar/hooks/useCalendarData';
 import { useCalendarLayout } from '@/features/calendar/hooks/useCalendarLayout';
 import { useCalendarDrawer } from '@/features/calendar/hooks/useCalendarDrawer';
+import { useCalendarPrefs } from '@/features/calendar/hooks/useCalendarPrefs';
 import { useZoom } from '@/features/calendar/hooks/useZoom';
 import { CalendarTopBar } from '@/features/calendar/components/CalendarTopBar';
 import { TimeGridView } from '@/features/calendar/components/TimeGridView';
@@ -61,8 +62,7 @@ export default function CalendarScreen() {
 
   const weekStartsOn = useSettingsStore((s) => s.weekStartsOn);
   const language = useSettingsStore((s) => s.language);
-  const hiddenCalendarIds = useCalendarStore((s) => s.hiddenCalendarIds);
-  const toggleCalendarVisibility = useCalendarStore((s) => s.toggleCalendarVisibility);
+  const calendarPrefs = useCalendarPrefs();
 
   const nav = useCalendarNavigation();
   const { viewMode, date, fetchDate, agendaVisibleDate, navigateMonth, goToday } = nav;
@@ -235,11 +235,14 @@ export default function CalendarScreen() {
         open={drawer.drawerOpen}
         drawerAnim={drawer.drawerAnim}
         overlayAnim={drawer.overlayAnim}
+        drawerWidth={drawer.drawerWidth}
         insets={insets}
         activeAccount={activeAccount}
         calendars={calendars}
-        hiddenCalendarIds={hiddenCalendarIds}
-        toggleCalendarVisibility={toggleCalendarVisibility}
+        hiddenCalendarIds={calendarPrefs.hiddenCalendarIds}
+        notifDisabledCalendarIds={calendarPrefs.notifDisabledCalendarIds}
+        toggleCalendarVisibility={calendarPrefs.setVisibility}
+        toggleCalendarNotifications={calendarPrefs.setNotifications}
         onClose={drawer.closeDrawer}
         onNavigateSettings={() => { drawer.closeDrawer(); router.push('/(tabs)/settings'); }}
       />

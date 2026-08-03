@@ -65,7 +65,10 @@
     "offlineBanner": "Offline — opgeslagen afspraken worden getoond",
     "noEvents": "Geen afspraken",
     "allDay": "Hele dag",
-    "noTitle": "(Geen titel)"
+    "noTitle": "(Geen titel)",
+    "drawerNoCalendars": "Geen agenda",
+    "calendarNotifications": "Meldingen van {{name}}",
+    "calendarVisibility": "{{name}} tonen"
   },
   "event": {
     "titleLabel": "Titel *",
@@ -161,7 +164,8 @@
       "name": "Nextcloud Agenda",
       "description": "Een open-source mobiele agenda-app voor Nextcloud.",
       "github": "Bekijken op GitHub",
-      "reportBug": "Een bug melden"
+      "reportBug": "Een bug melden",
+      "title": "Over"
     },
     "accountActive": "Actief",
     "notifications": {
@@ -204,7 +208,19 @@
       "useDefault": "Standaard",
       "timedHint": "Geldt voor afspraken zonder eigen melding.",
       "allDayHint": "Gaat af om 9:00 op de gekozen dag."
-    }
+    },
+    "widgets": {
+      "title": "Widgets",
+      "calendars": "Agenda's in widgets",
+      "calendarsHint": "Kies welke agenda's op de widgets van het beginscherm en in de live-activiteit verschijnen.",
+      "calendarHidden": "Verborgen in de agenda"
+    },
+    "sections": {
+      "general": "Algemeen",
+      "alerts": "Meldingen",
+      "app": "Applicatie"
+    },
+    "calendar": "Agenda"
   },
   "widget": {
     "liveRemaining": "nog {{duration}}",

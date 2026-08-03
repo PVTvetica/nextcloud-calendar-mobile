@@ -65,7 +65,10 @@
     "offlineBanner": "Offline — gespeicherte Ereignisse werden angezeigt",
     "noEvents": "Keine Ereignisse",
     "allDay": "Ganztägig",
-    "noTitle": "(Kein Titel)"
+    "noTitle": "(Kein Titel)",
+    "drawerNoCalendars": "Kein Kalender",
+    "calendarNotifications": "Benachrichtigungen für {{name}}",
+    "calendarVisibility": "{{name}} anzeigen"
   },
   "event": {
     "titleLabel": "Titel *",
@@ -161,7 +164,8 @@
       "name": "Nextcloud Calendar",
       "description": "Eine quelloffene mobile Kalender-App für Nextcloud.",
       "github": "Auf GitHub ansehen",
-      "reportBug": "Fehler melden"
+      "reportBug": "Fehler melden",
+      "title": "Über"
     },
     "accountActive": "Aktiv",
     "notifications": {
@@ -204,7 +208,19 @@
       "useDefault": "Standard",
       "timedHint": "Gilt für Termine ohne eigene Erinnerung.",
       "allDayHint": "Wird am gewählten Tag um 9:00 ausgelöst."
-    }
+    },
+    "widgets": {
+      "title": "Widgets",
+      "calendars": "Kalender in Widgets",
+      "calendarsHint": "Wählen Sie, welche Kalender in den Widgets auf dem Startbildschirm und in der Live-Aktivität erscheinen.",
+      "calendarHidden": "Im Kalender ausgeblendet"
+    },
+    "sections": {
+      "general": "Allgemein",
+      "alerts": "Hinweise",
+      "app": "Anwendung"
+    },
+    "calendar": "Kalender"
   },
   "widget": {
     "liveRemaining": "noch {{duration}}",

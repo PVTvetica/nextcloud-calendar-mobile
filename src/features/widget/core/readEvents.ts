@@ -6,6 +6,7 @@ import Event from '@/database/models/Event';
 import { mapEventToShared } from '@/database/mappers/event';
 import { useAccountStore } from '@/stores/accountStore';
 import { useCalendarStore } from '@/stores/calendarStore';
+import { inWidgetFor, notifiesFor } from '@/features/calendar/utils/calendarPrefs';
 import { normalizeEvents } from '@/utils/normalizeEvent';
 
 function startOfDay(d: Date): number {
@@ -26,17 +27,28 @@ function eventsInRangeQuery(accountId: string, rangeStart: number, rangeEnd: num
     );
 }
 
-export async function readUpcomingEvents(days: number, now: Date = new Date()): Promise<CalendarEvent[]> {
+export type EventAudience = 'widget' | 'alerts';
+
+export async function readUpcomingEvents(
+  days: number,
+  now: Date = new Date(),
+  audience: EventAudience = 'widget',
+): Promise<CalendarEvent[]> {
   const accountId = useAccountStore.getState().activeAccountId;
   if (!accountId) return [];
 
-  const hidden = useCalendarStore.getState().hiddenCalendarIds;
+  const { hiddenCalendarIds, notifDisabledCalendarIds, widgetDisabledCalendarIds } =
+    useCalendarStore.getState();
+  const allows = audience === 'alerts'
+    ? (id: string) => notifiesFor(id, hiddenCalendarIds, notifDisabledCalendarIds)
+    : (id: string) => inWidgetFor(id, hiddenCalendarIds, widgetDisabledCalendarIds);
+
   const rows = await eventsInRangeQuery(accountId, startOfDay(now), endOfDayAfter(now, days)).fetch();
 
   return normalizeEvents(
     rows
       .map(mapEventToShared)
-      .filter((e) => !hidden.includes(e.calendarId)),
+      .filter((e) => allows(e.calendarId)),
   );
 }
 

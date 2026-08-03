@@ -65,7 +65,10 @@
     "offlineBanner": "Офлайн — показаны сохранённые события",
     "noEvents": "Нет событий",
     "allDay": "Весь день",
-    "noTitle": "(Без названия)"
+    "noTitle": "(Без названия)",
+    "drawerNoCalendars": "Нет календарей",
+    "calendarNotifications": "Уведомления календаря «{{name}}»",
+    "calendarVisibility": "Показывать «{{name}}»"
   },
   "event": {
     "titleLabel": "Название *",
@@ -161,7 +164,8 @@
       "name": "Nextcloud Calendar",
       "description": "Календарное мобильное приложение с открытым кодом для Nextcloud.",
       "github": "Открыть на GitHub",
-      "reportBug": "Сообщить об ошибке"
+      "reportBug": "Сообщить об ошибке",
+      "title": "О приложении"
     },
     "accountActive": "Активный",
     "notifications": {
@@ -204,7 +208,19 @@
       "useDefault": "По умолчанию",
       "timedHint": "Применяется к событиям без собственного напоминания.",
       "allDayHint": "Срабатывает в 9:00 выбранного дня."
-    }
+    },
+    "widgets": {
+      "title": "Виджеты",
+      "calendars": "Календари в виджетах",
+      "calendarsHint": "Выберите, какие календари показывать в виджетах на главном экране и в живой активности.",
+      "calendarHidden": "Скрыт из календаря"
+    },
+    "sections": {
+      "general": "Основное",
+      "alerts": "Оповещения",
+      "app": "Приложение"
+    },
+    "calendar": "Календарь"
   },
   "widget": {
     "liveRemaining": "осталось {{duration}}",

@@ -53,7 +53,7 @@ export async function scheduleEventAlerts(now: Date = new Date()): Promise<void>
 
       await ensureChannel();
 
-      const events = await readUpcomingEvents(HORIZON_DAYS, now);
+      const events = await readUpcomingEvents(HORIZON_DAYS, now, 'alerts');
 
       const due = events
         .map((event) => ({ event, at: alertTime(event, timedAlert, allDayAlert) }))

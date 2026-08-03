@@ -6,45 +6,56 @@ import SettingsScreen from '../../app/(tabs)/settings/index';
 import { useSettingsStore } from '../../src/stores/settingsStore';
 import i18n from '../../src/utils/i18n';
 
+const mockPush = jest.fn();
+
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
-jest.mock('expo-router', () => ({ ...jest.requireActual('expo-router'), useRouter: () => ({ replace: jest.fn(), push: jest.fn() }), useFocusEffect: () => {} }));
+jest.mock('expo-router', () => ({
+  ...jest.requireActual('expo-router'),
+  useRouter: () => ({ replace: jest.fn(), push: mockPush, back: jest.fn() }),
+  useFocusEffect: () => {},
+}));
 jest.mock('expo-router/js-tabs', () => ({ useBottomTabBarHeight: () => 0 }));
 
 function wrapper({ children }: { children: React.ReactNode }) {
   return React.createElement(ThemeProvider, { value: lightTheme, children });
 }
 
-describe('SettingsScreen i18n', () => {
+describe('SettingsScreen', () => {
   beforeEach(async () => {
+    mockPush.mockClear();
     await i18n.changeLanguage('en');
     useSettingsStore.setState({ language: 'en' });
   });
 
-  it('renders the title and the collapsible section headers', () => {
-    const { getByText, queryByText } = render(<SettingsScreen />, { wrapper });
+  it('lists every settings section as a row', () => {
+    const { getByText } = render(<SettingsScreen />, { wrapper });
     expect(getByText('Settings')).toBeTruthy();
     expect(getByText('Appearance')).toBeTruthy();
+    expect(getByText('Calendar')).toBeTruthy();
+    expect(getByText('Notifications')).toBeTruthy();
+    expect(getByText('Widgets')).toBeTruthy();
     expect(getByText('Accounts')).toBeTruthy();
+    expect(getByText('About')).toBeTruthy();
+  });
+
+  it('keeps sub-page content off the index', () => {
+    const { queryByText } = render(<SettingsScreen />, { wrapper });
+    expect(queryByText('Theme')).toBeNull();
+    expect(queryByText('Week Starts On')).toBeNull();
     expect(queryByText('Language')).toBeNull();
   });
 
-  it('expands Appearance, opens the dropdown and lists all four languages', () => {
-    const { getByText, queryByText } = render(<SettingsScreen />, { wrapper });
-    expect(queryByText('Deutsch')).toBeNull();
-    fireEvent.press(getByText('Appearance'));
-    fireEvent.press(getByText('English'));
-    expect(getByText('Deutsch')).toBeTruthy();
-    expect(getByText('Français')).toBeTruthy();
-    expect(getByText('Español')).toBeTruthy();
-  });
-
-  it('selecting a language from the dropdown updates the store', () => {
+  it.each([
+    ['Appearance', '/(tabs)/settings/appearance'],
+    ['Calendar', '/(tabs)/settings/calendar'],
+    ['Notifications', '/(tabs)/settings/notifications'],
+    ['Widgets', '/(tabs)/settings/widgets'],
+    ['About', '/(tabs)/settings/about'],
+  ])('navigates to the %s page', (label, route) => {
     const { getByText } = render(<SettingsScreen />, { wrapper });
-    fireEvent.press(getByText('Appearance'));
-    fireEvent.press(getByText('English'));
-    fireEvent.press(getByText('Deutsch'));
-    expect(useSettingsStore.getState().language).toBe('de');
+    fireEvent.press(getByText(label));
+    expect(mockPush).toHaveBeenCalledWith(route);
   });
 });

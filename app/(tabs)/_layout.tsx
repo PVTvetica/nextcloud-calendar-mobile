@@ -26,7 +26,7 @@ const TAB_ITEMS: TabItem[] = [
     Icon: Calendar,
   },
   {
-    name: 'settings/index',
+    name: 'settings',
     labelKey: 'tabs.settings',
     sf: { default: 'gearshape', selected: 'gearshape.fill' },
     md: { default: 'settings', selected: 'settings' },

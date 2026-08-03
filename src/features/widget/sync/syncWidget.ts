@@ -15,7 +15,7 @@ let pending = false;
 
 async function runSync(now: Date): Promise<void> {
   try {
-    const events = await readUpcomingEvents(AGENDA_DAYS, now);
+    const events = await readUpcomingEvents(AGENDA_DAYS, now, 'widget');
     const locale = useSettingsStore.getState().language;
     const scheme = Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
 

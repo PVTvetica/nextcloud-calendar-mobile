@@ -10,6 +10,8 @@ describe('calendarStore', () => {
       viewMode: 'week',
       selectedDate: null,
       hiddenCalendarIds: [],
+      notifDisabledCalendarIds: [],
+      widgetDisabledCalendarIds: [],
       hourRowHeight: 60,
     });
   });
@@ -34,6 +36,26 @@ describe('calendarStore', () => {
     useCalendarStore.setState({ hiddenCalendarIds: ['cal-1'] });
     useCalendarStore.getState().toggleCalendarVisibility('cal-1');
     expect(useCalendarStore.getState().hiddenCalendarIds).not.toContain('cal-1');
+  });
+
+  it('toggles calendar notifications off and back on', () => {
+    useCalendarStore.getState().toggleCalendarNotifications('cal-1');
+    expect(useCalendarStore.getState().notifDisabledCalendarIds).toContain('cal-1');
+    useCalendarStore.getState().toggleCalendarNotifications('cal-1');
+    expect(useCalendarStore.getState().notifDisabledCalendarIds).not.toContain('cal-1');
+  });
+
+  it('toggles calendar widget presence off and back on', () => {
+    useCalendarStore.getState().toggleCalendarWidget('cal-1');
+    expect(useCalendarStore.getState().widgetDisabledCalendarIds).toContain('cal-1');
+    useCalendarStore.getState().toggleCalendarWidget('cal-1');
+    expect(useCalendarStore.getState().widgetDisabledCalendarIds).not.toContain('cal-1');
+  });
+
+  it('keeps the three per-calendar deny-lists independent', () => {
+    useCalendarStore.getState().toggleCalendarNotifications('cal-1');
+    expect(useCalendarStore.getState().hiddenCalendarIds).toEqual([]);
+    expect(useCalendarStore.getState().widgetDisabledCalendarIds).toEqual([]);
   });
 
   it('sets hour row height', () => {
