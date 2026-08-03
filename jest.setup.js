@@ -7,6 +7,9 @@ jest.mock('@nozbe/watermelondb/adapters/sqlite', () => ({
   },
 }));
 
+jest.mock('react-native-safe-area-context', () =>
+  require('react-native-safe-area-context/jest/mock').default);
+
 jest.mock('react-native-worklets', () => ({
   scheduleOnRN: (fn, ...args) => fn(...args),
 }));

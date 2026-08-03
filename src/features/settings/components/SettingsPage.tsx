@@ -1,11 +1,9 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { ScreenHeader, ViewContainer } from '@/ui/components';
-
-const MAX_CONTENT_WIDTH = 700;
 
 interface Props {
   title: string;
@@ -14,6 +12,7 @@ interface Props {
 
 export function SettingsPage({ title, children }: Props) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   return (
     <ViewContainer>
@@ -23,7 +22,7 @@ export function SettingsPage({ title, children }: Props) {
         </View>
         <ScrollView
           style={styles.flex}
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 24 }]}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.column}>{children}</View>
@@ -35,6 +34,6 @@ export function SettingsPage({ title, children }: Props) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  scroll: { paddingTop: 8, paddingBottom: 24 },
-  column: { width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center' },
+  scroll: { paddingTop: 8 },
+  column: { width: '100%', maxWidth: 700, alignSelf: 'center' },
 });

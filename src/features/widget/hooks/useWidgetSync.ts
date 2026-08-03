@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { useAccountStore } from '@/stores/accountStore';
+import { useCalendarStore } from '@/stores/calendarStore';
 import { EVENT_OBSERVED_COLUMNS } from '@/database/observedColumns';
 
 import { observeAgendaEventsQuery } from '../core/readEvents';
@@ -15,6 +16,17 @@ const MIN_DELAY_MS = 1_000;
 
 export function useWidgetSync(): void {
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
+  const hiddenCalendarIds = useCalendarStore((s) => s.hiddenCalendarIds);
+  const widgetDisabledCalendarIds = useCalendarStore((s) => s.widgetDisabledCalendarIds);
+
+  const skipFirstPrefsRun = useRef(true);
+  useEffect(() => {
+    if (skipFirstPrefsRun.current) {
+      skipFirstPrefsRun.current = false;
+      return;
+    }
+    void syncWidget();
+  }, [hiddenCalendarIds, widgetDisabledCalendarIds]);
 
   useEffect(() => {
     if (!activeAccountId) {
