@@ -214,20 +214,35 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
 
 const widget = createWidget<{ snapshot: AgendaSnapshot | null }>(WIDGET_NAME, CalendarWidget);
 
+function stripNullish<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => stripNullish(item)) as unknown as T;
+  }
+  if (value !== null && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+      if (val === null || val === undefined) continue;
+      out[key] = stripNullish(val);
+    }
+    return out as T;
+  }
+  return value;
+}
+
 export const homeWidget: WidgetSurface<AgendaSnapshot> = {
   id: 'homeWidget',
   isSupported: () => true,
   update: async (snapshot) => {
-    widget.updateSnapshot({ snapshot });
+    widget.updateSnapshot(stripNullish({ snapshot }));
   },
   updateTimeline: async (entries) => {
     if (entries.length === 0) return;
     widget.updateTimeline(
-      entries.map((entry) => ({ date: new Date(entry.atIso), props: { snapshot: entry.snapshot } })),
+      entries.map((entry) => ({ date: new Date(entry.atIso), props: stripNullish({ snapshot: entry.snapshot }) })),
     );
   },
   clear: async () => {
-    widget.updateSnapshot({ snapshot: null });
+    widget.updateSnapshot(stripNullish({ snapshot: null }));
   },
 };
 
