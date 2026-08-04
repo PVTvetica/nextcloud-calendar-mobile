@@ -7,9 +7,11 @@ import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'expo-router';
+import { Repeat } from 'lucide-react-native';
 import { useMonthGrid } from '@super-calendar/native';
 import { useSettingsStore } from '@/stores/settingsStore';
 import type { CalendarEvent } from '@/types';
+import { AnimatedPressable } from '@/ui/components';
 import { calendarLocale } from '../utils/calendar';
 
 dayjs.extend(localizedFormat);
@@ -167,22 +169,33 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
             data={dayEvents}
             keyExtractor={(e) => `${e.calendarId}-${e.uid}-${e.dtstart.getTime()}`}
             renderItem={({ item }) => (
-              <TouchableOpacity
+              <AnimatedPressable
                 style={[styles.eventRow, { borderLeftColor: item.color, backgroundColor: theme.colors.surface }]}
                 onPress={() => onPressEvent(item)}
+                scaleTo={0.98}
+                opacityTo={0.7}
               >
                 <View style={[styles.eventColorBar, { backgroundColor: item.color }]} />
                 <View style={styles.eventInfo}>
-                  <Text style={[styles.eventTitle, { color: theme.colors.text }]} numberOfLines={1}>
-                    {item.summary}
-                  </Text>
+                  <View style={styles.eventTitleRow}>
+                    <Text style={[styles.eventTitle, { color: theme.colors.text }]} numberOfLines={1}>
+                      {item.summary}
+                    </Text>
+                    {item.isRecurring && (
+                      <Repeat
+                        size={12}
+                        color={theme.colors.textTertiary}
+                        accessibilityLabel={t('event.recurring')}
+                      />
+                    )}
+                  </View>
                   <Text style={[styles.eventTime, { color: theme.colors.textSecondary }]}>
                     {item.allDay
                       ? t('calendar.allDay')
                       : `${dayjs(item.dtstart).locale(language).format('LT')} – ${dayjs(item.dtend).locale(language).format('LT')}`}
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </AnimatedPressable>
             )}
             contentContainerStyle={{ paddingBottom: 16 }}
           />
@@ -211,6 +224,7 @@ const styles = StyleSheet.create({
   eventRow: { flexDirection: 'row', borderRadius: 8, marginBottom: 8, overflow: 'hidden' },
   eventColorBar: { width: 4 },
   eventInfo: { flex: 1, padding: 10 },
-  eventTitle: { fontSize: 15, fontWeight: '500' },
+  eventTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  eventTitle: { fontSize: 15, fontWeight: '500', flexShrink: 1 },
   eventTime: { fontSize: 12, marginTop: 2 },
 });

@@ -1,17 +1,25 @@
 diff --git a/node_modules/@super-calendar/native/src/components/TimeGrid.tsx b/node_modules/@super-calendar/native/src/components/TimeGrid.tsx
-index f4768c3..4557476 100644
+index f4768c3..18670c7 100644
 --- a/node_modules/@super-calendar/native/src/components/TimeGrid.tsx
 +++ b/node_modules/@super-calendar/native/src/components/TimeGrid.tsx
-@@ -134,12 +134,20 @@ const MOVE_ACTIVATE_MS = 500;
+@@ -134,12 +134,28 @@ const MOVE_ACTIVATE_MS = 500;
  const DRAG_ACTIVATE_PX = 8;
  // Height of the resize grip at the bottom of a draggable event box.
  const RESIZE_HANDLE_HEIGHT = 14;
 +// PATCH: cascade geometry for overlapping events. Each successive event in an
 +// overlap cluster is indented by up to OVERLAP_OFFSET_MAX px and painted over
-+// the previous one; the step shrinks so the last box never falls below
-+// MIN_OVERLAP_WIDTH_RATIO of the day column.
++// the previous one.
 +const OVERLAP_OFFSET_MAX = 28;
-+const MIN_OVERLAP_WIDTH_RATIO = 0.4;
++// A card narrower than this cannot hold a readable title: the text breaks one
++// character per line. Indentation is spent out of whatever the column has above
++// this floor first.
++const MIN_EVENT_WIDTH = 96;
++// Given up before the peek is, when a pile is too deep for the comfortable one.
++const MIN_EVENT_WIDTH_TIGHT = 72;
++// Every overlapping card keeps at least this much of itself showing. It is the
++// one guarantee that never bends: a card hidden completely is also a card that
++// cannot be tapped, and nothing on screen would say it is there.
++const MIN_PEEK = 24;
  // Default minutes a drag snaps to when `dragStepMinutes` isn't set.
  const DEFAULT_DRAG_STEP_MINUTES = 15;
  // zIndex applied to an event while it's being dragged/resized so it sits above
@@ -23,7 +31,7 @@ index f4768c3..4557476 100644
  // How long to hold the dragged event past the visible columns before the view
  // pages one period toward that edge.
  const EDGE_DWELL_MS = 500;
-@@ -240,6 +248,67 @@ export type EventDragStartHandler<T> = (event: CalendarEvent<T>) => void;
+@@ -240,6 +256,67 @@ export type EventDragStartHandler<T> = (event: CalendarEvent<T>) => void;
  const HOUR_LABEL_TOP_INSET = 12;
  const HOUR_LABEL_NUDGE = 6;
  
@@ -91,7 +99,7 @@ index f4768c3..4557476 100644
  type AnimatedEventBoxProps<T> = {
    positioned: PositionedEvent<T>;
    cellHeight: SharedValue<number>;
-@@ -273,6 +342,9 @@ type AnimatedEventBoxProps<T> = {
+@@ -273,6 +350,9 @@ type AnimatedEventBoxProps<T> = {
    // Page the view one period (dir -1/+1) when the event is dragged past the
    // visible columns and held there. Absent disables edge auto-advance.
    onEdgeAdvance?: (dir: number) => void;
@@ -101,7 +109,7 @@ index f4768c3..4557476 100644
  };
  
  function AnimatedEventBox<T>({
-@@ -297,6 +369,7 @@ function AnimatedEventBox<T>({
+@@ -297,6 +377,7 @@ function AnimatedEventBox<T>({
    showDragHandle,
    eventStartEditable,
    eventDurationEditable,
@@ -109,7 +117,7 @@ index f4768c3..4557476 100644
  }: AnimatedEventBoxProps<T>) {
    const RenderEventComponent = renderEvent;
    const theme = useCalendarTheme();
-@@ -380,9 +453,20 @@ function AnimatedEventBox<T>({
+@@ -380,9 +461,20 @@ function AnimatedEventBox<T>({
        top: (startHours - minHour) * cellHeight.value + moveOffset.value + resizeStartDelta.value,
        height: boxHeight.value,
        transform: [{ translateX: moveOffsetX.value }],
@@ -123,16 +131,24 @@ index f4768c3..4557476 100644
 +  );
 +
 +  // PATCH: the resize strips are absolutely positioned over the box and carry
-+  // their own gestures, so at the 32px minimum height two fixed 14px handles
-+  // covered the entire event and swallowed every tap. Cap each strip at a
-+  // quarter of the live box height to always leave a tappable middle.
++  // their own gestures. At two fixed 14px handles they cover a 32px box whole
++  // and swallow the tap that opens the event. Capping each at a quarter of the
++  // live height always leaves a tappable middle, and follows the zoom.
 +  const resizeHandleStyle = useAnimatedStyle(
 +    () => ({ height: Math.min(RESIZE_HANDLE_HEIGHT, boxHeight.value / 4) }),
 +    [],
    );
  
    // Clear the drag preview once the committed change re-renders this box at its
-@@ -777,7 +861,7 @@ function AnimatedEventBox<T>({
+@@ -768,6 +860,7 @@ function AnimatedEventBox<T>({
+         event={positioned.event}
+         mode={mode}
+         boxHeight={boxHeight}
++        boxWidth={width}
+         continuesBefore={positioned.continuesBefore}
+         continuesAfter={positioned.continuesAfter}
+         accessibilityActions={accessibilityActions}
+@@ -777,7 +870,7 @@ function AnimatedEventBox<T>({
        />
        {resizableFromStart ? (
          <GestureDetector gesture={resizeStartGesture}>
@@ -141,7 +157,7 @@ index f4768c3..4557476 100644
              {showDragHandle ? (
                <View style={[styles.resizeGrip, { backgroundColor: theme.colors.eventText }]} />
              ) : null}
-@@ -786,7 +870,7 @@ function AnimatedEventBox<T>({
+@@ -786,7 +879,7 @@ function AnimatedEventBox<T>({
        ) : null}
        {resizable ? (
          <GestureDetector gesture={resizeGesture}>
@@ -150,7 +166,7 @@ index f4768c3..4557476 100644
              {/* The grip is the only visible drag affordance; hiding it keeps the
                  resize gesture working but removes the indicator. */}
              {showDragHandle ? (
-@@ -908,7 +992,9 @@ const NowIndicator = ({ cellHeight, nowHours, minHour, left, width, color }: Now
+@@ -908,7 +1001,9 @@ const NowIndicator = ({ cellHeight, nowHours, minHour, left, width, color }: Now
    );
  
    const lineSlot = slot("nowIndicator", {
@@ -161,7 +177,7 @@ index f4768c3..4557476 100644
      themed: [{ backgroundColor: color }, theme.containers.nowIndicator],
    });
    return <Animated.View {...lineSlot} style={[lineSlot.style, animatedStyle]} />;
-@@ -1602,12 +1688,30 @@ function TimetablePageInner<T>({
+@@ -1602,12 +1697,35 @@ function TimetablePageInner<T>({
                  )
                : null}
  
@@ -180,24 +196,29 @@ index f4768c3..4557476 100644
 -                  const columnWidth = dayWidth / positioned.columns;
 +                  // PATCH: overlapping events cascade (each one indented and
 +                  // layered over the previous) instead of splitting the day into
-+                  // equal columns, so a busy day stays readable on a phone. The
-+                  // step is capped so the deepest box keeps MIN_OVERLAP_WIDTH_RATIO
-+                  // of the column.
++                  // equal columns, so a busy day stays readable on a phone.
 +                  const { depth, maxDepth } = cascade.get(positioned) ?? { depth: 0, maxDepth: 0 };
-+                  // Cap the step so even the deepest box keeps
-+                  // MIN_OVERLAP_WIDTH_RATIO of the column.
-+                  const step =
-+                    maxDepth > 0
-+                      ? Math.min(
-+                          OVERLAP_OFFSET_MAX,
-+                          (dayWidth * (1 - MIN_OVERLAP_WIDTH_RATIO)) / maxDepth,
-+                        )
-+                      : 0;
++                  // Indentation is paid for out of the width above a floor, and
++                  // the floor gives way before the peek does: a crowded pile
++                  // ends up with narrower cards rather than with cards buried
++                  // whole. The final cap keeps the deepest one at least one
++                  // peek wide, so every card in the pile stays visible and
++                  // tappable however deep it goes.
++                  const spare = (floor: number) => Math.max(0, dayWidth - floor);
++                  let step = 0;
++                  if (maxDepth > 0) {
++                    step = Math.min(OVERLAP_OFFSET_MAX, spare(MIN_EVENT_WIDTH) / maxDepth);
++                    if (step < MIN_PEEK) {
++                      step = Math.min(OVERLAP_OFFSET_MAX, spare(MIN_EVENT_WIDTH_TIGHT) / maxDepth);
++                    }
++                    if (step < MIN_PEEK) step = MIN_PEEK;
++                    step = Math.min(step, spare(MIN_PEEK) / maxDepth);
++                  }
 +                  const indent = depth * step;
                    return (
                      <AnimatedEventBox
                        // Prefix with the day so a multi-day event's per-day segments
-@@ -1617,8 +1721,9 @@ function TimetablePageInner<T>({
+@@ -1617,8 +1735,9 @@ function TimetablePageInner<T>({
                        positioned={positioned}
                        cellHeight={heightSource}
                        minHour={minHour}
@@ -209,7 +230,7 @@ index f4768c3..4557476 100644
                        dayWidth={dayWidth}
                        dayIndex={dayIndex}
                        dayCount={days.length}
-@@ -1637,8 +1742,8 @@ function TimetablePageInner<T>({
+@@ -1637,8 +1756,8 @@ function TimetablePageInner<T>({
                        onEdgeAdvance={onEdgeAdvance}
                      />
                    );
@@ -220,7 +241,24 @@ index f4768c3..4557476 100644
  
              {showNowIndicator && nowDayIndex >= 0 && nowInWindow ? (
                <NowIndicator
-@@ -2791,9 +2896,10 @@ const styles = StyleSheet.create({
+@@ -2756,12 +2875,14 @@ const styles = StyleSheet.create({
+   },
+   hourLine: {
+     flex: 1,
+-    height: StyleSheet.hairlineWidth,
++    // PATCH: a hairline is a third of a pixel at 3x and disappears against the
++    // grid. A whole pixel is the difference between a hint and a rule.
++    height: 1,
+   },
+   timeslotLine: {
+     position: "absolute",
+     right: 0,
+-    height: StyleSheet.hairlineWidth,
++    height: 1,
+     opacity: 0.5,
+   },
+   resizeHandle: {
+@@ -2791,9 +2912,10 @@ const styles = StyleSheet.create({
    eventBox: {
      position: "absolute",
      overflow: "hidden",
@@ -234,3 +272,21 @@ index f4768c3..4557476 100644
    },
    // The cross-week drag ghost: pinned to the pager's top-left, moved into place by
    // its transform, and floated above every page so it stays visible across a page.
+diff --git a/node_modules/@super-calendar/native/src/types.ts b/node_modules/@super-calendar/native/src/types.ts
+index 55c86a9..e14d9d3 100644
+--- a/node_modules/@super-calendar/native/src/types.ts
++++ b/node_modules/@super-calendar/native/src/types.ts
+@@ -43,6 +43,13 @@ export type RenderEventArgs<T = unknown> = {
+    * grows. `undefined` in month mode, where events render at a fixed size.
+    */
+   boxHeight?: SharedValue<number>;
++  /**
++   * PATCH: pixel width of the event box on the week/day grid. Fixed for a given
++   * layout, unlike the height. A renderer needs it to decide how much text can
++   * fit: a narrow column with a cascade of overlaps leaves cards too slim for a
++   * wrapped title, which otherwise breaks one character per line.
++   */
++  boxWidth?: number;
+   /**
+    * On the week/day grid, true when this is a clipped segment of a multi-day
+    * event that started on an earlier day / continues onto a later day. Lets a

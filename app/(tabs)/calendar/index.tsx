@@ -183,6 +183,8 @@ export default function CalendarScreen() {
               weekStartsOn={deferredWeekStartsOn}
               cellHeight={cellHeight}
               hourHeight={hourRowHeight}
+              timeslots={2}
+              showDragHandle={false}
               scrollOffsetMinutes={scrollOffsetMinutes}
               locale={locale}
               theme={scTheme}

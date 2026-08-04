@@ -30,12 +30,14 @@ function AnimatedPressable({
   ...rest
 }: AnimatedPressableProps) {
   const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
   const reduceMotion = useSettingsStore((s) => s.reduceMotion);
 
   const shouldAnimate = animated && !reduceMotion;
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
+    opacity: opacity.value,
   }));
 
   return (
@@ -44,11 +46,13 @@ function AnimatedPressable({
       style={[rest.style as object, animatedStyle]}
       onPressIn={(e) => {
         if (shouldAnimate) scale.value = withTiming(scaleTo, { duration: 100 });
+        if (opacityTo !== undefined) opacity.value = withTiming(opacityTo, { duration: 100 });
         if (hapticFeedback) haptic(hapticFeedback);
         onPressIn?.(e);
       }}
       onPressOut={(e) => {
         if (shouldAnimate) scale.value = withTiming(1, { duration: 100 });
+        if (opacityTo !== undefined) opacity.value = withTiming(1, { duration: 100 });
         onPressOut?.(e);
       }}
     >

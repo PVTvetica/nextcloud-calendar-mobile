@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'expo-router';
 import { X } from 'lucide-react-native';
@@ -19,6 +19,7 @@ interface Props {
 export function AccountProfileWebModal({ account, visible, onClose }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
 
   return (
@@ -30,7 +31,7 @@ export function AccountProfileWebModal({ account, visible, onClose }: Props) {
       onShow={() => setLoading(true)}
     >
       <ViewContainer>
-        <SafeAreaView edges={['top']} style={styles.flex}>
+        <View style={[styles.flex, { paddingTop: insets.top }]}>
           <View style={styles.flex}>
             <WebView
               source={{
@@ -67,7 +68,7 @@ export function AccountProfileWebModal({ account, visible, onClose }: Props) {
               </IconButton>
             </View>
           </View>
-        </SafeAreaView>
+        </View>
       </ViewContainer>
     </Modal>
   );
@@ -76,5 +77,5 @@ export function AccountProfileWebModal({ account, visible, onClose }: Props) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   overlay: { ...StyleSheet.absoluteFill },
-  closeSlot: { position: 'absolute', top: 8, left: 8 },
+  closeSlot: { position: 'absolute', top: 8, left: 8, zIndex: 2, elevation: 2 },
 });

@@ -6,8 +6,10 @@ import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'expo-router';
+import { Repeat } from 'lucide-react-native';
 import type { Theme } from '@/theme';
 import type { CalendarEvent } from '@/types';
+import { AnimatedPressable } from '@/ui/components';
 
 dayjs.extend(localizedFormat);
 
@@ -84,16 +86,26 @@ const EventRow = memo(({ event, theme, onPress }: EventRowProps) => {
   const allDayLabel = t('calendar.allDay');
 
   return (
-    <TouchableOpacity
+    <AnimatedPressable
       style={[styles.eventRow, { backgroundColor: theme.colors.surface }]}
       onPress={() => onPress(event)}
-      activeOpacity={0.75}
+      scaleTo={0.98}
+      opacityTo={0.7}
     >
       <View style={[styles.colorBar, { backgroundColor: event.color }]} />
       <View style={styles.eventContent}>
-        <Text style={[styles.eventTitle, { color: theme.colors.text }]} numberOfLines={2}>
-          {event.summary || t('calendar.noTitle')}
-        </Text>
+        <View style={styles.eventTitleRow}>
+          <Text style={[styles.eventTitle, { color: theme.colors.text }]} numberOfLines={2}>
+            {event.summary || t('calendar.noTitle')}
+          </Text>
+          {event.isRecurring && (
+            <Repeat
+              size={12}
+              color={theme.colors.textTertiary}
+              accessibilityLabel={t('event.recurring')}
+            />
+          )}
+        </View>
         <View style={styles.eventMeta}>
           <Text style={[styles.eventTime, { color: theme.colors.textSecondary }]}>
             {formatTime(event.dtstart, event.allDay, allDayLabel)}
@@ -109,7 +121,7 @@ const EventRow = memo(({ event, theme, onPress }: EventRowProps) => {
           ) : null}
         </View>
       </View>
-    </TouchableOpacity>
+    </AnimatedPressable>
   );
 });
 
@@ -247,7 +259,8 @@ const styles = StyleSheet.create({
   },
   colorBar: { width: 4 },
   eventContent: { flex: 1, padding: 10, justifyContent: 'center' },
-  eventTitle: { fontSize: 14, fontWeight: '600', marginBottom: 3 },
+  eventTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 3 },
+  eventTitle: { fontSize: 14, fontWeight: '600', flexShrink: 1 },
   eventMeta: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 },
   eventTime: { fontSize: 12, fontWeight: '500' },
   eventDuration: { fontSize: 11 },
