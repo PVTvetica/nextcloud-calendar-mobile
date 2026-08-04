@@ -49,6 +49,7 @@ export default function CalendarScreen() {
   const deferredViewMode = useDeferredValue(viewMode);
   const deferredDate = useDeferredValue(date);
   const deferredWeekStartsOn = useDeferredValue(weekStartsOn);
+  const isCalendarMode = isCalMode(viewMode);
   const deferredIsCalendarMode = isCalMode(deferredViewMode);
 
   const [todayPending, setTodayPending] = useState(false);
@@ -141,7 +142,7 @@ export default function CalendarScreen() {
       <OfflineBanner />
 
       <View style={styles.viewArea}>
-        <ViewLayer visible={deferredViewMode === 'month'}>
+        <ViewLayer visible={viewMode === 'month'}>
           <GestureDetector gesture={monthSwipeGesture}>
             <View style={styles.fill}>
               <MonthDayView
@@ -156,7 +157,7 @@ export default function CalendarScreen() {
           </GestureDetector>
         </ViewLayer>
 
-        <ViewLayer visible={deferredViewMode === 'schedule'}>
+        <ViewLayer visible={viewMode === 'schedule'}>
           <AgendaView
             ref={nav.agendaRef}
             events={allEvents}
@@ -167,7 +168,7 @@ export default function CalendarScreen() {
           />
         </ViewLayer>
 
-        <ViewLayer visible={deferredIsCalendarMode}>
+        <ViewLayer visible={isCalendarMode}>
           <View style={styles.fill}>
             <Calendar
               mode={deferredIsCalendarMode ? deferredViewMode : 'week'}

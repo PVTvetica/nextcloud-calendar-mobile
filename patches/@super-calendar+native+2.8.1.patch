@@ -1,8 +1,25 @@
 diff --git a/node_modules/@super-calendar/native/src/components/TimeGrid.tsx b/node_modules/@super-calendar/native/src/components/TimeGrid.tsx
-index f4768c3..18670c7 100644
+index f4768c3..80ed7e6 100644
 --- a/node_modules/@super-calendar/native/src/components/TimeGrid.tsx
 +++ b/node_modules/@super-calendar/native/src/components/TimeGrid.tsx
-@@ -134,12 +134,28 @@ const MOVE_ACTIVATE_MS = 500;
+@@ -106,7 +106,15 @@ const MINUTES_PER_DAY = MINUTES_PER_HOUR * HOURS_PER_DAY;
+ // Steps rendered either side of the current page. LegendList virtualises, so
+ // only a few mount at once; a wide window means the user effectively never runs
+ // out of pages to swipe. Items are keyed by date and never recycled.
+-const PAGE_WINDOW = 180;
++// PATCH: was 180, i.e. 361 pages either side of today — about three and a half
++// years of weeks. Every render rebuilds that array and the snap-index list from
++// it, and the list has to resolve initialScrollIndex in the middle of it before
++// it can show anything. A year each way is more than a session ever pages
++// through, and costs a third as much.
++const PAGE_WINDOW = 52;
++// PATCH: how long the pager stays focused on the visible page before it starts
++// building the ones on either side.
++const NEIGHBOUR_PREFETCH_DELAY_MS = 400;
+ // A page must be ~fully on screen before it becomes the committed date.
+ const PAGE_VIEWABILITY = { itemVisiblePercentThreshold: 90 };
+ 
+@@ -134,12 +142,28 @@ const MOVE_ACTIVATE_MS = 500;
  const DRAG_ACTIVATE_PX = 8;
  // Height of the resize grip at the bottom of a draggable event box.
  const RESIZE_HANDLE_HEIGHT = 14;
@@ -31,7 +48,7 @@ index f4768c3..18670c7 100644
  // How long to hold the dragged event past the visible columns before the view
  // pages one period toward that edge.
  const EDGE_DWELL_MS = 500;
-@@ -240,6 +256,67 @@ export type EventDragStartHandler<T> = (event: CalendarEvent<T>) => void;
+@@ -240,6 +264,67 @@ export type EventDragStartHandler<T> = (event: CalendarEvent<T>) => void;
  const HOUR_LABEL_TOP_INSET = 12;
  const HOUR_LABEL_NUDGE = 6;
  
@@ -99,7 +116,7 @@ index f4768c3..18670c7 100644
  type AnimatedEventBoxProps<T> = {
    positioned: PositionedEvent<T>;
    cellHeight: SharedValue<number>;
-@@ -273,6 +350,9 @@ type AnimatedEventBoxProps<T> = {
+@@ -273,6 +358,9 @@ type AnimatedEventBoxProps<T> = {
    // Page the view one period (dir -1/+1) when the event is dragged past the
    // visible columns and held there. Absent disables edge auto-advance.
    onEdgeAdvance?: (dir: number) => void;
@@ -109,7 +126,7 @@ index f4768c3..18670c7 100644
  };
  
  function AnimatedEventBox<T>({
-@@ -297,6 +377,7 @@ function AnimatedEventBox<T>({
+@@ -297,6 +385,7 @@ function AnimatedEventBox<T>({
    showDragHandle,
    eventStartEditable,
    eventDurationEditable,
@@ -117,7 +134,7 @@ index f4768c3..18670c7 100644
  }: AnimatedEventBoxProps<T>) {
    const RenderEventComponent = renderEvent;
    const theme = useCalendarTheme();
-@@ -380,9 +461,20 @@ function AnimatedEventBox<T>({
+@@ -380,9 +469,20 @@ function AnimatedEventBox<T>({
        top: (startHours - minHour) * cellHeight.value + moveOffset.value + resizeStartDelta.value,
        height: boxHeight.value,
        transform: [{ translateX: moveOffsetX.value }],
@@ -140,7 +157,7 @@ index f4768c3..18670c7 100644
    );
  
    // Clear the drag preview once the committed change re-renders this box at its
-@@ -768,6 +860,7 @@ function AnimatedEventBox<T>({
+@@ -768,6 +868,7 @@ function AnimatedEventBox<T>({
          event={positioned.event}
          mode={mode}
          boxHeight={boxHeight}
@@ -148,7 +165,7 @@ index f4768c3..18670c7 100644
          continuesBefore={positioned.continuesBefore}
          continuesAfter={positioned.continuesAfter}
          accessibilityActions={accessibilityActions}
-@@ -777,7 +870,7 @@ function AnimatedEventBox<T>({
+@@ -777,7 +878,7 @@ function AnimatedEventBox<T>({
        />
        {resizableFromStart ? (
          <GestureDetector gesture={resizeStartGesture}>
@@ -157,7 +174,7 @@ index f4768c3..18670c7 100644
              {showDragHandle ? (
                <View style={[styles.resizeGrip, { backgroundColor: theme.colors.eventText }]} />
              ) : null}
-@@ -786,7 +879,7 @@ function AnimatedEventBox<T>({
+@@ -786,7 +887,7 @@ function AnimatedEventBox<T>({
        ) : null}
        {resizable ? (
          <GestureDetector gesture={resizeGesture}>
@@ -166,7 +183,7 @@ index f4768c3..18670c7 100644
              {/* The grip is the only visible drag affordance; hiding it keeps the
                  resize gesture working but removes the indicator. */}
              {showDragHandle ? (
-@@ -908,7 +1001,9 @@ const NowIndicator = ({ cellHeight, nowHours, minHour, left, width, color }: Now
+@@ -908,7 +1009,9 @@ const NowIndicator = ({ cellHeight, nowHours, minHour, left, width, color }: Now
    );
  
    const lineSlot = slot("nowIndicator", {
@@ -177,7 +194,7 @@ index f4768c3..18670c7 100644
      themed: [{ backgroundColor: color }, theme.containers.nowIndicator],
    });
    return <Animated.View {...lineSlot} style={[lineSlot.style, animatedStyle]} />;
-@@ -1602,12 +1697,35 @@ function TimetablePageInner<T>({
+@@ -1602,12 +1705,35 @@ function TimetablePageInner<T>({
                  )
                : null}
  
@@ -218,7 +235,7 @@ index f4768c3..18670c7 100644
                    return (
                      <AnimatedEventBox
                        // Prefix with the day so a multi-day event's per-day segments
-@@ -1617,8 +1735,9 @@ function TimetablePageInner<T>({
+@@ -1617,8 +1743,9 @@ function TimetablePageInner<T>({
                        positioned={positioned}
                        cellHeight={heightSource}
                        minHour={minHour}
@@ -230,7 +247,7 @@ index f4768c3..18670c7 100644
                        dayWidth={dayWidth}
                        dayIndex={dayIndex}
                        dayCount={days.length}
-@@ -1637,8 +1756,8 @@ function TimetablePageInner<T>({
+@@ -1637,8 +1764,8 @@ function TimetablePageInner<T>({
                        onEdgeAdvance={onEdgeAdvance}
                      />
                    );
@@ -241,7 +258,72 @@ index f4768c3..18670c7 100644
  
              {showNowIndicator && nowDayIndex >= 0 && nowInWindow ? (
                <NowIndicator
-@@ -2756,12 +2875,14 @@ const styles = StyleSheet.create({
+@@ -1919,7 +2046,19 @@ function TimeGridInner<T>({
+   // window-height seed — or it keeps the oversized seed and clips. It must NOT
+   // remount on later height changes (e.g. a taller day header vs a shorter week
+   // header on a mode switch): a remount blanks the visible page for a frame.
++  // Kept as the "the pager knows its real size" signal; the list no longer
++  // remounts on it (see the LegendList below), it only starts the prefetch.
+   const [measured, setMeasured] = useState(false);
++  // PATCH: only the page on screen is worth building for the first paint. The
++  // neighbours the default draw distance pre-renders cost about as much again
++  // each, and nothing shows them yet. They are fetched a moment later so a
++  // swipe still lands on a page that is already built.
++  const [prefetchNeighbours, setPrefetchNeighbours] = useState(false);
++  useEffect(() => {
++    if (!measured) return;
++    const id = setTimeout(() => setPrefetchNeighbours(true), NEIGHBOUR_PREFETCH_DELAY_MS);
++    return () => clearTimeout(id);
++  }, [measured]);
+   // Week-anchored modes page by a full week and align pages to the week start:
+   // `week`, and `custom` when a `weekEndsOn` defines a partial-week span.
+   const weekAnchored = mode === "week" || (mode === "custom" && weekEndsOn != null);
+@@ -2284,6 +2423,7 @@ function TimeGridInner<T>({
+   }, [onPressCell, resetPageOnPressCell, activeIndex, reduceMotion]);
+ 
+   const snapToIndices = useMemo(() => pageDates.map((_, index) => index), [pageDates]);
++  const alwaysRenderActive = useMemo(() => ({ indices: [activeIndex] }), [activeIndex]);
+   const keyExtractorList = useCallback((item: Date) => item.toISOString(), []);
+   const getFixedItemSize = useCallback(() => containerWidth, [containerWidth]);
+   const renderItem = useCallback(
+@@ -2444,11 +2584,16 @@ function TimeGridInner<T>({
+               });
+             }}
+           >
++            {/* PATCH: paint on the seed, correct in place. The list used to be
++                keyed on the seed→measured transition, so the pages built at the
++                window-height seed were thrown away and built again at the real
++                height — twice the work, and the wasted build delayed the very
++                onLayout it was waiting for. The key is constant now: the pages
++                are built once, immediately, and the height correction is a
++                re-render rather than a remount. A seeded page is too tall by
++                the header's height, which only extends it below the fold. */}
+             <LegendList
+-              // Remount only on the seed→measured transition (see `measured`), not on
+-              // every height change, so a day↔week header-height difference resizes the
+-              // items in place instead of remounting and blanking the page.
+-              key={measured ? "grid" : "grid-seed"}
++              key="grid"
+               ref={listRef}
+               style={isWeb ? [styles.pagerList, styles.webNoScroll] : styles.pagerList}
+               data={pageDates}
+@@ -2472,6 +2617,15 @@ function TimeGridInner<T>({
+                     snapToIndices: freeSwipe ? snapToIndices : undefined,
+                   })}
+               initialScrollIndex={activeIndex}
++              // PATCH: the list renders nothing until it has measured itself,
++              // so the first pass produced no page at all and the grid appeared
++              // only after a second render. The size hint alone did not change
++              // that; pinning the visible page does — it is rendered whatever
++              // the virtualiser knows so far, which is what the user is waiting
++              // for. The size hint stays so the rest lines up without a reflow.
++              alwaysRender={alwaysRenderActive}
++              estimatedListSize={{ width: containerWidth, height: pageHeight }}
++              drawDistance={prefetchNeighbours ? undefined : 0}
+               showsHorizontalScrollIndicator={false}
+               viewabilityConfig={PAGE_VIEWABILITY}
+               onViewableItemsChanged={handleViewableItemsChanged}
+@@ -2756,12 +2910,14 @@ const styles = StyleSheet.create({
    },
    hourLine: {
      flex: 1,
@@ -258,7 +340,7 @@ index f4768c3..18670c7 100644
      opacity: 0.5,
    },
    resizeHandle: {
-@@ -2791,9 +2912,10 @@ const styles = StyleSheet.create({
+@@ -2791,9 +2947,10 @@ const styles = StyleSheet.create({
    eventBox: {
      position: "absolute",
      overflow: "hidden",

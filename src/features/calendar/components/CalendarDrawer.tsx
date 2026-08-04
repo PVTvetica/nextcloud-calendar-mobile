@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Animated, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useTranslation } from 'react-i18next';
@@ -47,6 +48,11 @@ export function CalendarDrawer({
   const { t } = useTranslation();
   const safeInsets = useSafeAreaInsets();
 
+  const [everOpen, setEverOpen] = useState(open);
+  useEffect(() => {
+    if (open) setEverOpen(true);
+  }, [open]);
+
   return (
     <>
       <Animated.View
@@ -67,6 +73,8 @@ export function CalendarDrawer({
           },
         ]}
       >
+        {everOpen ? (
+          <>
         <View style={styles.header}>
           <AccountSwitcher
             trigger={
@@ -124,6 +132,8 @@ export function CalendarDrawer({
             </List>
           )}
         </ScrollView>
+          </>
+        ) : null}
       </Animated.View>
     </>
   );

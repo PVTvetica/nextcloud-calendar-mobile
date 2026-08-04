@@ -13,10 +13,17 @@ function visibilityStyle(visible: boolean): ViewStyle {
 }
 
 function ViewLayerImpl({ visible, style, children, ...rest }: Props) {
-  const [everVisible, setEverVisible] = useState(visible);
+  const [mounted, setMounted] = useState(visible);
+
   useEffect(() => {
-    if (visible) setEverVisible(true);
-  }, [visible]);
+    if (mounted) return;
+    if (visible) {
+      setMounted(true);
+      return;
+    }
+    const id = setTimeout(() => setMounted(true), 1500);
+    return () => clearTimeout(id);
+  }, [visible, mounted]);
 
   return (
     <View
@@ -25,7 +32,7 @@ function ViewLayerImpl({ visible, style, children, ...rest }: Props) {
       style={[StyleSheet.absoluteFill, visibilityStyle(visible), style]}
       pointerEvents={visible ? 'auto' : 'none'}
     >
-      {everVisible ? children : null}
+      {mounted ? children : null}
     </View>
   );
 }

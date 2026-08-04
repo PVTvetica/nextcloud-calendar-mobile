@@ -12,8 +12,6 @@ import { useCalendars } from '@/hooks/useCalendars';
 import { normalizeEvents } from '@/utils/normalizeEvent';
 import { monthRange, monthRangeAt } from '../utils/range';
 
-const MIN_INTERVAL_MS = 5_000;
-
 export function useCalendarData(date: Date) {
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
   const hiddenCalendarIds = useCalendarStore((s) => s.hiddenCalendarIds);
@@ -45,7 +43,7 @@ export function useCalendarData(date: Date) {
       return;
     }
     if (inFlight.current) return;
-    if (!force && Date.now() - lastRunAt.current < MIN_INTERVAL_MS) return;
+    if (!force && Date.now() - lastRunAt.current < (5_000)) return;
 
     inFlight.current = true;
     setSyncing(true);
@@ -66,7 +64,8 @@ export function useCalendarData(date: Date) {
   }, [activeAccount, calendars, start.getTime(), end.getTime(), date]);
 
   useEffect(() => {
-    void runSync(true);
+    const id = setTimeout(() => { void runSync(true); }, 700);
+    return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeAccount?.id, calendars, start.getTime(), end.getTime()]);
 
