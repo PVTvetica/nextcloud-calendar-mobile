@@ -9,7 +9,7 @@ import { useAccounts } from '@/hooks/useAccounts';
 import { useAccountStore } from '@/stores/accountStore';
 import { AvatarImage } from '@/components/AvatarImage';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
-import { AccountProfileForm } from '@/features/account/components/AccountProfileForm';
+import { AccountProfileCard } from '@/features/account/components/AccountProfileCard';
 import { AccountReconnectForm } from '@/features/account/components/AccountReconnectForm';
 import { useDeleteAccount } from '@/features/account/hooks/useMutateAccount';
 import { useAccountAuthStatus } from '@/features/account/hooks/useAccountAuthStatus';
@@ -98,7 +98,7 @@ export default function AccountDetailScreen() {
         ) : null}
       </Stack>
 
-      <AccountProfileForm account={account} style={cardOuter} />
+      <AccountProfileCard account={account} style={cardOuter} />
 
       <Stack style={cardOuter} hAlign="stretch">
         <SectionHeader title={t('settings.account.server')} />

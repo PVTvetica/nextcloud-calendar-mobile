@@ -6,7 +6,10 @@ import dayjs from 'dayjs';
 import { putEvent, updateEvent, deleteEvent, moveEvent, fetchEventIcs } from '@/services/nextcloud/caldav';
 import { createTalkRoom } from '@/services/nextcloud/talk';
 import { describeMutationError } from '@/services/shared/errors';
-import { buildIcs, buildAllDayIcs, buildExceptionIcs, injectExdate, truncateRruleUntil } from '@/utils/ics';
+import {
+  buildIcs, buildAllDayIcs, buildExceptionIcs, injectExdate, truncateRruleUntil,
+  nextSequence, upsertOverride, resolveRecurrenceId, applyMasterEdit,
+} from '@/utils/ics';
 import { parseIcsObjects, extractDtstartTzid } from '@/utils/caldav-parse';
 import { isValidTimeZone } from '@/utils/timezone';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -15,7 +18,7 @@ import {
   insertEvents,
   patchByUid,
   removeWhere,
-  restoreSeries,
+  replaceSeries,
   snapshotByBase,
   seriesBaseUid,
 } from '@/database/eventWrites';
@@ -33,19 +36,28 @@ function resolveCalendar(calendars: CalendarMeta[], calendarId: string): Calenda
   return calendars.find((c) => c.id === calendarId) ?? calendars[0];
 }
 
-function buildIcsForInput(uid: string, input: CreateEventInput, location: string, description: string, timezone: string): string {
+function buildIcsForInput(
+  uid: string,
+  input: CreateEventInput,
+  location: string,
+  description: string,
+  timezone: string,
+  sequence = 0,
+): string {
   return input.allDay
     ? buildAllDayIcs({
         uid, summary: input.summary, description, location,
         dtstart: input.dtstart, dtend: input.dtend,
         organizerEmail: input.organizerEmail, organizerName: input.organizerName,
         attendees: input.attendees, rrule: input.rrule, alarmMinutes: input.alarmMinutes,
+        sequence,
       })
     : buildIcs({
         uid, summary: input.summary, description, location,
         dtstart: input.dtstart, dtend: input.dtend,
         organizerEmail: input.organizerEmail, organizerName: input.organizerName,
         attendees: input.attendees, timezone, rrule: input.rrule, alarmMinutes: input.alarmMinutes,
+        sequence,
       });
 }
 
@@ -104,21 +116,25 @@ function eventFromInput(
   };
 }
 
+function occurrenceRange(anchor: Date): { start: Date; end: Date } {
+  return {
+    start: dayjs(Math.min(anchor.getTime(), Date.now())).subtract(1, 'month').toDate(),
+    end: dayjs(Math.max(anchor.getTime(), Date.now())).add(3, 'month').toDate(),
+  };
+}
+
 function expandOccurrences(
-  baseUid: string,
-  input: CreateEventInput,
+  ics: string,
+  href: string,
   calendar: CalendarMeta,
   account: Account,
+  range: { start: Date; end: Date },
 ): CalendarEvent[] {
-  const timezone = resolveTimezone(account);
-  const ics = buildIcsForInput(baseUid, input, input.location ?? '', input.description ?? '', timezone);
-  const rangeStart = dayjs(input.dtstart).subtract(1, 'month').toDate();
-  const rangeEnd = dayjs(input.dtstart).add(3, 'month').toDate();
   return parseIcsObjects(
-    [{ ics, href: `${calendar.url}${baseUid}.ics` }],
+    [{ ics, href }],
     { calendarId: calendar.id, accountId: account.id, color: calendar.color },
-    rangeStart,
-    rangeEnd,
+    range.start,
+    range.end,
   );
 }
 
@@ -129,19 +145,25 @@ export function useCreateEvent(account: Account, calendars: CalendarMeta[]) {
       if (!calendar) return;
 
       const uid = Crypto.randomUUID();
+      const href = `${calendar.url}${uid}.ics`;
+      const timezone = resolveTimezone(account);
+      const range = occurrenceRange(input.dtstart);
+
       const optimistic = input.rrule
-        ? expandOccurrences(uid, input, calendar, account)
+        ? expandOccurrences(
+            buildIcsForInput(uid, input, input.location ?? '', input.description ?? '', timezone),
+            href, calendar, account, range,
+          )
         : [eventFromInput(uid, input, calendar, account)];
       await insertEvents(optimistic);
 
       try {
         const resolved = await resolveLocationAndDescription(account, input);
-        const timezone = resolveTimezone(account);
         const ics = buildIcsForInput(uid, input, resolved.location, resolved.description, timezone);
         await putEvent(account, calendar, uid, ics);
 
         const real = input.rrule
-          ? expandOccurrences(uid, input, calendar, account)
+          ? expandOccurrences(ics, href, calendar, account, range)
           : [eventFromInput(uid, input, calendar, account, resolved)];
         await insertEvents(real);
       } catch (error) {
@@ -179,47 +201,85 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
 
       try {
         const { location, description } = await resolveLocationAndDescription(account, input);
-        let timezone = resolveTimezone(account);
+        const timezone = resolveTimezone(account);
+        const sequence = nextSequence();
+        const range = occurrenceRange(input.dtstart);
 
-        if (!event.isRecurring || scope === 'all') {
-          if (event.isRecurring) {
-            try {
-              const masterIcs = await fetchEventIcs(account, event.href);
-              timezone = extractDtstartTzid(masterIcs) ?? timezone;
-            } catch {
-            }
-          }
-          const ics = buildIcsForInput(event.uid, input, location, description, timezone);
-          await updateEvent(account, event.href, ics);
-          if (!event.isRecurring && input.calendarId !== event.calendarId) {
+        let seriesIcs: string | undefined;
+        let seriesDropped = false;
+        const extras: CalendarEvent[] = [];
+
+        if (event.isRecurring && scope === 'all') {
+          seriesIcs = applyMasterEdit(await fetchEventIcs(account, event.href), {
+            summary: input.summary, description, location,
+            shiftMs: input.dtstart.getTime() - event.dtstart.getTime(),
+            durationMs: input.dtend.getTime() - input.dtstart.getTime(),
+            organizerEmail: input.organizerEmail, organizerName: input.organizerName,
+            attendees: input.attendees, alarmMinutes: input.alarmMinutes, sequence,
+          });
+          await updateEvent(account, event.href, seriesIcs);
+        } else if (!event.isRecurring) {
+          await updateEvent(
+            account, event.href,
+            buildIcsForInput(base, input, location, description, timezone, sequence),
+          );
+          if (input.calendarId !== event.calendarId) {
             const cal = calendars.find((c) => c.id === input.calendarId);
             if (!cal) throw new Error('Target calendar not found');
-            await moveEvent(account, event.href, cal, event.uid);
+            await moveEvent(account, event.href, cal, base);
           }
         } else if (scope === 'this') {
           const masterIcs = await fetchEventIcs(account, event.href);
-          await updateEvent(account, event.href, injectExdate(masterIcs, event.dtstart, timezone));
-          const cal = calendars.find((c) => c.id === event.calendarId) ?? calendars.find((c) => c.id === input.calendarId);
-          if (!cal) throw new Error('Calendar not found for exception VEVENT');
-          const exceptionUid = `${event.uid}-exc-${event.dtstart.getTime()}`;
-          const exIcs = buildExceptionIcs({
-            uid: event.uid, summary: input.summary, description, location,
+          seriesIcs = upsertOverride(masterIcs, buildExceptionIcs({
+            uid: base, summary: input.summary, description, location,
             dtstart: input.dtstart, dtend: input.dtend,
             organizerEmail: input.organizerEmail, organizerName: input.organizerName,
-            attendees: input.attendees, timezone, recurrenceId: event.dtstart,
-          });
-          await putEvent(account, cal, exceptionUid, exIcs);
+            attendees: input.attendees, timezone: extractDtstartTzid(masterIcs),
+            recurrenceId: resolveRecurrenceId(masterIcs, event.dtstart),
+            alarmMinutes: input.alarmMinutes,
+            sequence,
+          }));
+          await updateEvent(account, event.href, seriesIcs);
         } else if (scope === 'thisAndFollowing') {
           const masterIcs = await fetchEventIcs(account, event.href);
-          const oneDayBefore = dayjs(event.dtstart).subtract(1, 'day').endOf('day').toDate();
-          await updateEvent(account, event.href, truncateRruleUntil(masterIcs, oneDayBefore));
+          const truncated = truncateRruleUntil(masterIcs, new Date(event.dtstart.getTime() - 1000));
+          if (truncated) {
+            seriesIcs = truncated;
+            await updateEvent(account, event.href, truncated);
+          } else {
+            await deleteEvent(account, event.href);
+            seriesDropped = true;
+          }
+
           const cal = calendars.find((c) => c.id === event.calendarId) ?? calendars.find((c) => c.id === input.calendarId);
           if (!cal) throw new Error('Calendar not found for new series');
           const newUid = Crypto.randomUUID();
-          await putEvent(account, cal, newUid, buildIcsForInput(newUid, input, location, description, timezone));
+          const newIcs = applyMasterEdit(masterIcs, {
+            summary: input.summary, description, location,
+            shiftMs: input.dtstart.getTime() - event.dtstart.getTime(),
+            startAt: input.dtstart, uid: newUid,
+            durationMs: input.dtend.getTime() - input.dtstart.getTime(),
+            organizerEmail: input.organizerEmail, organizerName: input.organizerName,
+            attendees: input.attendees, alarmMinutes: input.alarmMinutes, sequence,
+          });
+          await putEvent(account, cal, newUid, newIcs);
+          extras.push(...expandOccurrences(newIcs, `${cal.url}${newUid}.ics`, cal, account, range));
+        }
+
+        const cal = event.isRecurring ? resolveCalendar(calendars, event.calendarId) : undefined;
+        if (cal && (seriesIcs || seriesDropped)) {
+          await replaceSeries(
+            account.id,
+            base,
+            [
+              ...(seriesIcs ? expandOccurrences(seriesIcs, event.href, cal, account, range) : []),
+              ...extras,
+            ],
+            range,
+          );
         }
       } catch (error) {
-        await restoreSeries(account.id, base, snapshot);
+        await replaceSeries(account.id, base, snapshot);
         Alert.alert(i18n.t('event.errorUpdateFailed'), describeMutationError(error));
       }
     }, [account, calendars]),
@@ -248,13 +308,14 @@ export function useDeleteEvent(account: Account) {
           await deleteEvent(account, event.href);
           return;
         }
-        const timezone = resolveTimezone(account);
         const masterIcs = await fetchEventIcs(account, event.href);
+        const timezone = extractDtstartTzid(masterIcs);
         if (scope === 'this') {
           await updateEvent(account, event.href, injectExdate(masterIcs, event.dtstart, timezone));
         } else if (scope === 'thisAndFollowing') {
-          const oneDayBefore = dayjs(event.dtstart).subtract(1, 'day').endOf('day').toDate();
-          await updateEvent(account, event.href, truncateRruleUntil(masterIcs, oneDayBefore));
+          const truncated = truncateRruleUntil(masterIcs, new Date(event.dtstart.getTime() - 1000));
+          if (truncated) await updateEvent(account, event.href, truncated);
+          else await deleteEvent(account, event.href);
         }
       } catch (error) {
         await insertEvents(removed);

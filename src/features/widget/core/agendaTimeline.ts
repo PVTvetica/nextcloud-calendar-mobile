@@ -1,7 +1,7 @@
 import type { CalendarEvent } from '@/types';
 import { zonedWallTimeToUtc } from '@/utils/timezone';
 
-import { buildAgendaSnapshot, type BuildAgendaOptions } from './agendaSnapshot';
+import { buildAgendaSnapshot, dayKeyFormatter, type BuildAgendaOptions } from './agendaSnapshot';
 import type { AgendaTimelineEntry } from './types';
 
 const DEFAULT_HORIZON_HOURS = 48;
@@ -28,9 +28,7 @@ export function agendaBoundaries(
     if (end > from && end <= until) marks.add(end);
   }
 
-  const dayFmt = new Intl.DateTimeFormat('en-CA', {
-    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
-  });
+  const dayFmt = dayKeyFormatter(timeZone);
   for (let i = 1; i <= Math.ceil(horizonHours / 24) + 1; i++) {
     const [y, m, d] = dayFmt.format(new Date(from + i * 86_400_000)).split('-').map(Number);
     const midnight = zonedWallTimeToUtc(y, m, d, 0, 0, 0, timeZone).getTime();

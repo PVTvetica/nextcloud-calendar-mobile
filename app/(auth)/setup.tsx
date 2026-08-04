@@ -33,7 +33,6 @@ export default function SetupScreen() {
   const [baseUrl, setBaseUrl] = useState('');
   const [username, setUsername] = useState('');
   const [appPassword, setAppPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -43,7 +42,6 @@ export default function SetupScreen() {
     baseUrl: string;
     username: string;
     appPassword: string;
-    displayName: string;
   }) {
     setError(null);
     let normalizedUrl = params.baseUrl.trim().replace(/\/$/, '');
@@ -65,13 +63,13 @@ export default function SetupScreen() {
       });
       const account: Account = {
         id: Crypto.randomUUID(),
-        displayName: params.displayName || params.username,
+        displayName: userInfo?.displayName || params.username,
         baseUrl: normalizedUrl,
         username: params.username,
         appPassword: params.appPassword,
         davUserId,
-        timezone: userInfo.timezone,
-        email: userInfo.email,
+        timezone: userInfo?.timezone,
+        email: userInfo?.email,
       };
       await saveAccount(account);
       await setActiveAccountId(account.id);
@@ -95,7 +93,7 @@ export default function SetupScreen() {
       setError(t('setup.errors.required'));
       return;
     }
-    connectWith({ baseUrl, username, appPassword, displayName });
+    connectWith({ baseUrl, username, appPassword });
   }
 
   async function handleQrScanned(data: NcLoginData) {
@@ -105,7 +103,7 @@ export default function SetupScreen() {
 
     if (!data.oneTime) {
       setAppPassword(data.password);
-      connectWith({ baseUrl: data.server, username: data.user, appPassword: data.password, displayName: '' });
+      connectWith({ baseUrl: data.server, username: data.user, appPassword: data.password });
       return;
     }
 
@@ -130,7 +128,7 @@ export default function SetupScreen() {
     }
     setLoading(false);
     setAppPassword(appPassword);
-    connectWith({ baseUrl: data.server, username: data.user, appPassword, displayName: '' });
+    connectWith({ baseUrl: data.server, username: data.user, appPassword });
   }
 
   return (
@@ -196,13 +194,6 @@ export default function SetupScreen() {
                     : <Eye size={20} color={theme.colors.textTertiary} />}
                 </IconButton>
               }
-            />
-
-            <TextField
-              label={`${t('setup.displayName')} ${t('setup.optional')}`}
-              placeholder={t('setup.placeholders.displayName')}
-              value={displayName}
-              onChangeText={setDisplayName}
             />
 
             {error ? <Typography variant="caption" color="danger">{error}</Typography> : null}

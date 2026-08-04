@@ -26,16 +26,13 @@
     "serverUrl": "Server-URL",
     "username": "Benutzername",
     "appPassword": "App-Passwort",
-    "displayName": "Anzeigename",
-    "optional": "(optional)",
     "connect": "Verbinden",
     "hint": "Erstellen Sie ein App-Passwort in Nextcloud → Einstellungen → Sicherheit → App-Passwörter.",
     "footer": "Mit ♥ für die Community erstellt · Open Source",
     "placeholders": {
       "serverUrl": "https://cloud.example.com",
       "username": "max.mustermann",
-      "appPassword": "xxxx-xxxx-xxxx-xxxx",
-      "displayName": "Arbeit"
+      "appPassword": "xxxx-xxxx-xxxx-xxxx"
     },
     "errors": {
       "required": "Alle Felder sind erforderlich.",
@@ -59,7 +56,6 @@
     "month": "Monat",
     "schedule": "Agenda",
     "weekAbbr": "KW",
-    "loadingCalendar": "Kalender wird geladen…",
     "drawerAccount": "KONTO",
     "manageAccounts": "Konten verwalten →",
     "drawerCalendars": "KALENDER",
@@ -237,7 +233,10 @@
       "profile": "Profil",
       "displayName": "Anzeigename",
       "email": "E-Mail",
-      "emailHint": "Wird als Organisator der von Ihnen erstellten Termine verwendet.",
+      "emailMissing": "In Nextcloud nicht festgelegt",
+      "profileManagedHint": "Anzeigename und E-Mail werden von Nextcloud verwaltet. Ändere sie dort, sie werden hierher synchronisiert.",
+      "openNextcloudProfile": "In Nextcloud bearbeiten",
+      "refreshProfile": "Aktualisieren",
       "server": "Server",
       "serverUrl": "Serveradresse",
       "username": "Benutzername",
@@ -246,14 +245,11 @@
       "appPassword": "App-Passwort",
       "scanQr": "QR-Code scannen",
       "reconnect": "Neu verbinden",
-      "save": "Speichern",
-      "saved": "Änderungen gespeichert.",
       "reconnected": "Konto neu verbunden.",
       "useThisAccount": "Dieses Konto verwenden",
       "delete": "Konto entfernen",
       "errors": {
         "required": "Dieses Feld ist erforderlich.",
-        "invalidEmail": "Ungültige E-Mail-Adresse.",
         "accountMismatch": "Dieser QR-Code gehört zu einem anderen Konto."
       },
       "connectionLost": "Die Verbindung zu diesem Server ist abgelaufen. Verbinden Sie sich neu, um weiter zu synchronisieren.",

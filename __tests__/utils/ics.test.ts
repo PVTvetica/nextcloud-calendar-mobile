@@ -120,3 +120,22 @@ describe('buildAllDayIcs', () => {
     expect(ics).not.toContain('TZID');
   });
 });
+
+describe('line folding', () => {
+  const long = (n: number) => 'a'.repeat(n) + 'éèà' + 'b'.repeat(20);
+
+  it('never splits a multi-byte character across a fold', () => {
+    for (let n = 40; n < 90; n += 1) {
+      const ics = buildIcs({ ...base, summary: long(n) });
+      expect(ics).not.toContain('�');
+      expect(ics.replace(/\r\n /g, '')).toContain(`SUMMARY:${long(n)}`);
+    }
+  });
+
+  it('keeps every line within 75 octets', () => {
+    const ics = buildIcs({ ...base, summary: long(60) });
+    for (const line of ics.split('\r\n')) {
+      expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75);
+    }
+  });
+});

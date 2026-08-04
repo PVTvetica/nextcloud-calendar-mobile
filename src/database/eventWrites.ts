@@ -93,10 +93,11 @@ export async function removeWhere(
   return removed;
 }
 
-export async function restoreSeries(
+export async function replaceSeries(
   accountId: string,
   baseUid: string,
-  snapshot: CalendarEvent[],
+  list: CalendarEvent[],
+  range?: { start: Date; end: Date },
 ): Promise<void> {
   bumpMutationEpoch();
   const db = getDatabaseInstance();
@@ -104,17 +105,20 @@ export async function restoreSeries(
     const rows = await events().query(Q.where('account_id', accountId)).fetch();
     const baseRows = rows.filter((r) => seriesBaseUid(r.uid) === baseUid);
     const byKey = new Map(baseRows.map((r) => [keyOf(r), r]));
-    const snapKeys = new Set(snapshot.map((ev) => eventKey(ev.accountId, ev.calendarId, ev.uid)));
+    const keep = new Set(list.map((ev) => eventKey(ev.accountId, ev.calendarId, ev.uid)));
+    const prunable = range
+      ? baseRows.filter((r) => r.start < range.end.getTime() && r.end > range.start.getTime())
+      : baseRows;
 
     const ops = [
-      ...snapshot.map((ev) => {
+      ...list.map((ev) => {
         const found = byKey.get(eventKey(ev.accountId, ev.calendarId, ev.uid));
         return found
           ? found.prepareUpdate((r: Event) => writeEvent(r, ev))
           : prepareCreateEvent(events(), ev);
       }),
-      ...baseRows.filter((r) => !snapKeys.has(keyOf(r))).map((r) => r.prepareMarkAsDeleted()),
+      ...prunable.filter((r) => !keep.has(keyOf(r))).map((r) => r.prepareMarkAsDeleted()),
     ];
     await db.batch(ops);
-  }, 15000, 'restoreSeries');
+  }, 15000, 'replaceSeries');
 }

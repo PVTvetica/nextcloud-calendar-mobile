@@ -26,16 +26,13 @@
     "serverUrl": "Server URL",
     "username": "Username",
     "appPassword": "App Password",
-    "displayName": "Display Name",
-    "optional": "(optional)",
     "connect": "Connect",
     "hint": "Generate an app password in Nextcloud → Settings → Security → App passwords.",
     "footer": "Made with ♥ for the community · Open Source",
     "placeholders": {
       "serverUrl": "https://cloud.example.com",
       "username": "john.doe",
-      "appPassword": "xxxx-xxxx-xxxx-xxxx",
-      "displayName": "Work"
+      "appPassword": "xxxx-xxxx-xxxx-xxxx"
     },
     "errors": {
       "required": "All fields are required.",
@@ -59,7 +56,6 @@
     "month": "Month",
     "schedule": "Agenda",
     "weekAbbr": "W",
-    "loadingCalendar": "Loading calendar…",
     "drawerAccount": "ACCOUNT",
     "manageAccounts": "Manage accounts →",
     "drawerCalendars": "CALENDARS",
@@ -237,7 +233,10 @@
       "profile": "Profile",
       "displayName": "Display name",
       "email": "Email",
-      "emailHint": "Used as the organiser of the events you create.",
+      "emailMissing": "Not set on Nextcloud",
+      "profileManagedHint": "Your display name and email are managed by Nextcloud. Change them there and they sync back here.",
+      "openNextcloudProfile": "Edit on Nextcloud",
+      "refreshProfile": "Refresh",
       "server": "Server",
       "serverUrl": "Server address",
       "username": "Username",
@@ -246,14 +245,11 @@
       "appPassword": "App password",
       "scanQr": "Scan a QR code",
       "reconnect": "Reconnect",
-      "save": "Save",
-      "saved": "Changes saved.",
       "reconnected": "Account reconnected.",
       "useThisAccount": "Use this account",
       "delete": "Remove account",
       "errors": {
         "required": "This field is required.",
-        "invalidEmail": "Invalid email address.",
         "accountMismatch": "This QR code belongs to a different account."
       },
       "connectionLost": "The connection to this server has expired. Reconnect to keep syncing.",

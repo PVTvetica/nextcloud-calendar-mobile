@@ -12,6 +12,7 @@ import { useUpdateEvent } from '@/features/event/hooks/useMutateEvent';
 import { useAccountStore } from '@/stores/accountStore';
 import { EventForm } from '@/features/event/components/EventForm';
 import { accountOrganizerEmail } from '@/features/event/organizer';
+import { parseRruleString } from '@/utils/ics';
 import {
   ViewContainer, Stack, Typography, Button, Spinner, ScreenHeader,
 } from '@/ui/components';
@@ -90,6 +91,7 @@ export default function EditEventScreen() {
     location: event.location ?? '',
     attendees: event.attendees,
     alarmMinutes: event.alarmMinutes,
+    rrule: scope === 'this' ? undefined : parseRruleString(event.rrule),
   };
 
   const scopeLabel =

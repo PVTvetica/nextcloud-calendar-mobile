@@ -31,6 +31,21 @@ function eventTzid(vevent: ICAL.Component): string | undefined {
   return undefined;
 }
 
+
+export function propInstant(
+  vevent: ICAL.Component,
+  name: string,
+  isEnd = false,
+): Date | undefined {
+  const prop = vevent.getFirstProperty(name);
+  if (!prop) return undefined;
+  const value = prop.getFirstValue();
+  if (!(value instanceof ICAL.Time)) return undefined;
+  const raw = prop.getParameter('tzid');
+  const tzid = typeof raw === 'string' && isValidTimeZone(raw) ? raw : undefined;
+  return resolveInstant(value, tzid, isEnd);
+}
+
 function resolveInstant(t: ICAL.Time, tzid: string | undefined, isEnd = false): Date {
   if (t.isDate) {
     return isEnd
@@ -81,6 +96,13 @@ export function parseIcsItem(
     const jcal = parseIcsToJcal(ics);
     const comp = new ICAL.Component(jcal);
     const vevents = comp.getAllSubcomponents('vevent');
+
+    const overrides = new Map<string, ICAL.Component>();
+    for (const vevent of vevents) {
+      const at = propInstant(vevent, 'recurrence-id');
+      if (!at) continue;
+      overrides.set(`${vevent.getFirstPropertyValue('uid')}|${at.getTime()}`, vevent);
+    }
 
     for (const vevent of vevents) {
       if (vevent.getFirstPropertyValue('recurrence-id')) continue;
@@ -138,15 +160,24 @@ export function parseIcsItem(
         let nextTime: ICAL.Time;
 
         while ((nextTime = iter.next()) && emitted < MAX_OCCURRENCES) {
-          const occStart = resolveInstant(nextTime, tzid);
+          const ruleStart = resolveInstant(nextTime, tzid);
 
-          if (rangeEnd && occStart >= rangeEnd) break;
+          if (rangeEnd && ruleStart >= rangeEnd) break;
 
-          if (occStart.getTime() + durationMs <= rangeStartMs) continue;
+          if (ruleStart.getTime() + durationMs <= rangeStartMs) continue;
 
           const details = icalEvent.getOccurrenceDetails(nextTime);
-          const occAllDay = details.startDate.isDate;
-          const occEnd = resolveInstant(details.endDate, tzid, true);
+          const override = overrides.get(`${icalEvent.uid}|${ruleStart.getTime()}`);
+
+          const occAllDay = override
+            ? (override.getFirstProperty('dtstart')?.getFirstValue() as ICAL.Time)?.isDate ?? false
+            : details.startDate.isDate;
+          const occStart = override
+            ? propInstant(override, 'dtstart') ?? ruleStart
+            : resolveInstant(details.startDate, tzid);
+          const occEnd = override
+            ? propInstant(override, 'dtend', true) ?? new Date(occStart.getTime() + durationMs)
+            : resolveInstant(details.endDate, tzid, true);
 
           if (rangeStart && occEnd <= rangeStart) continue;
 
@@ -154,6 +185,11 @@ export function parseIcsItem(
             ...base,
             uid: `${icalEvent.uid}_occ_${nextTime.toUnixTime()}`,
             href,
+            ...(override && {
+              summary: (override.getFirstPropertyValue('summary') as string) ?? base.summary,
+              description: (override.getFirstPropertyValue('description') as string) ?? undefined,
+              location: (override.getFirstPropertyValue('location') as string) ?? undefined,
+            }),
             dtstart: occStart,
             dtend: occEnd,
             allDay: occAllDay,

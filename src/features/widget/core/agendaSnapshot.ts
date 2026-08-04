@@ -14,23 +14,50 @@ export interface BuildAgendaOptions {
 
 const DAY_MS = 86_400_000;
 
+const FORMATS = {
+  dayKey: { year: 'numeric', month: '2-digit', day: '2-digit' },
+  time: { hour: '2-digit', minute: '2-digit' },
+  weekdayShort: { weekday: 'short' },
+  dayNumber: { day: 'numeric' },
+  weekdayLong: { weekday: 'long' },
+  fullDate: { weekday: 'long', day: 'numeric', month: 'long' },
+} as const satisfies Record<string, Intl.DateTimeFormatOptions>;
+
+const FORMATTERS = new Map<string, Intl.DateTimeFormat>();
+
+function fmt(
+  kind: keyof typeof FORMATS,
+  locale: string | undefined,
+  timeZone: string,
+): Intl.DateTimeFormat {
+  const key = `${kind}|${locale ?? ''}|${timeZone}`;
+  let cached = FORMATTERS.get(key);
+  if (!cached) {
+    cached = new Intl.DateTimeFormat(kind === 'dayKey' ? 'en-CA' : locale, {
+      timeZone,
+      ...FORMATS[kind],
+    });
+    FORMATTERS.set(key, cached);
+  }
+  return cached;
+}
+
+export function dayKeyFormatter(timeZone: string): Intl.DateTimeFormat {
+  return fmt('dayKey', undefined, timeZone);
+}
+
 function zonedKey(d: Date, tz: string): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(d);
+  return dayKeyFormatter(tz).format(d);
 }
 
 function sameZonedDay(a: Date, b: Date, timeZone: string): boolean {
-  const fmt = new Intl.DateTimeFormat('en-CA', {
-    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
-  });
-  return fmt.format(a) === fmt.format(b);
+  return zonedKey(a, timeZone) === zonedKey(b, timeZone);
 }
 
 function timeLabel(event: CalendarEvent, locale: string | undefined, tz: string): string {
   if (event.allDay) return 'All day';
-  const fmt = new Intl.DateTimeFormat(locale, { timeZone: tz, hour: '2-digit', minute: '2-digit' });
-  return `${fmt.format(event.dtstart)} – ${fmt.format(event.dtend)}`;
+  const f = fmt('time', locale, tz);
+  return `${f.format(event.dtstart)} – ${f.format(event.dtend)}`;
 }
 
 function toItem(event: CalendarEvent, locale: string | undefined, tz: string): AgendaEventItem {
@@ -60,13 +87,11 @@ export function buildAgendaSnapshot(
     .filter((e) => e.allDay || e.dtend.getTime() > now.getTime())
     .sort((a, b) => a.dtstart.getTime() - b.dtstart.getTime());
 
-  const dayLabel = new Intl.DateTimeFormat(locale, { timeZone: tz, weekday: 'short' })
-    .format(now).toUpperCase();
-  const dayNumber = new Intl.DateTimeFormat(locale, { timeZone: tz, day: 'numeric' })
-    .format(now);
+  const dayLabel = fmt('weekdayShort', locale, tz).format(now).toUpperCase();
+  const dayNumber = fmt('dayNumber', locale, tz).format(now);
 
   const relativeLabel = todays.length > 0
-    ? new Intl.DateTimeFormat(locale, { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long' }).format(now)
+    ? fmt('fullDate', locale, tz).format(now)
     : i18n.t('widget.emptyAgenda');
 
   const byKey = new Map<string, CalendarEvent[]>();
@@ -88,9 +113,9 @@ export function buildAgendaSnapshot(
     if (dayEvents.length === 0 && !isToday) continue;
     sections.push({
       dayKey: key,
-      dayLabel: new Intl.DateTimeFormat(locale, { timeZone: tz, weekday: 'short' }).format(dayDate).toUpperCase(),
-      dayNumber: new Intl.DateTimeFormat(locale, { timeZone: tz, day: 'numeric' }).format(dayDate),
-      weekdayLong: new Intl.DateTimeFormat(locale, { timeZone: tz, weekday: 'long' }).format(dayDate),
+      dayLabel: fmt('weekdayShort', locale, tz).format(dayDate).toUpperCase(),
+      dayNumber: fmt('dayNumber', locale, tz).format(dayDate),
+      weekdayLong: fmt('weekdayLong', locale, tz).format(dayDate),
       isToday,
       items: dayEvents.slice(0, maxPerSection).map((e) => toItem(e, locale, tz)),
     });

@@ -4,6 +4,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { useAccountStore } from '@/stores/accountStore';
 import { useCalendarStore } from '@/stores/calendarStore';
 import { EVENT_OBSERVED_COLUMNS } from '@/database/observedColumns';
+import { trailingDebounce } from '@/utils/debounce';
 
 import { observeAgendaEventsQuery } from '../core/readEvents';
 import { liveActivity } from '../surfaces/liveActivity';
@@ -13,6 +14,7 @@ import { AGENDA_DAYS, syncWidget } from '../sync/syncWidget';
 const MAX_DELAY_MS = 60_000;
 const BOUNDARY_MARGIN_MS = 1_000;
 const MIN_DELAY_MS = 1_000;
+const REFRESH_DEBOUNCE_MS = 3_000;
 
 export function useWidgetSync(): void {
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
@@ -50,27 +52,30 @@ export function useWidgetSync(): void {
       void syncWidget().then(schedule);
     };
 
-    void liveActivity.requestPermission?.().then(() => syncWidget());
 
-    run();
+    const refresh = trailingDebounce(run, REFRESH_DEBOUNCE_MS);
+    void liveActivity.requestPermission?.().catch(() => undefined);
+
+    refresh.call();
     void registerWidgetBackgroundSync();
 
     const sub = observeAgendaEventsQuery(activeAccountId, AGENDA_DAYS)
       .observeWithColumns(EVENT_OBSERVED_COLUMNS)
       .subscribe(() => {
-        void syncWidget();
+        refresh.call();
       });
 
     const onAppState = (status: AppStateStatus) => {
       if (status === 'active') {
         clearTimeout(timer);
-        run();
+        refresh.call();
       }
     };
     const appSub = AppState.addEventListener('change', onAppState);
 
     return () => {
       cancelled = true;
+      refresh.cancel();
       sub.unsubscribe();
       clearTimeout(timer);
       appSub.remove();

@@ -26,16 +26,13 @@
     "serverUrl": "URL del server",
     "username": "Nome utente",
     "appPassword": "Password dell'app",
-    "displayName": "Nome visualizzato",
-    "optional": "(facoltativo)",
     "connect": "Connetti",
     "hint": "Genera una password dell'app in Nextcloud → Impostazioni → Sicurezza → Password app.",
     "footer": "Fatto con ♥ per la community · Open Source",
     "placeholders": {
       "serverUrl": "https://cloud.example.com",
       "username": "mario.rossi",
-      "appPassword": "xxxx-xxxx-xxxx-xxxx",
-      "displayName": "Lavoro"
+      "appPassword": "xxxx-xxxx-xxxx-xxxx"
     },
     "errors": {
       "required": "Tutti i campi sono obbligatori.",
@@ -59,7 +56,6 @@
     "month": "Mese",
     "schedule": "Agenda",
     "weekAbbr": "S",
-    "loadingCalendar": "Caricamento del calendario…",
     "drawerAccount": "ACCOUNT",
     "manageAccounts": "Gestisci account →",
     "drawerCalendars": "CALENDARI",
@@ -237,7 +233,10 @@
       "profile": "Profilo",
       "displayName": "Nome visualizzato",
       "email": "Email",
-      "emailHint": "Usato come organizzatore degli eventi che crei.",
+      "emailMissing": "Non impostato su Nextcloud",
+      "profileManagedHint": "Il nome visualizzato e l'email sono gestiti da Nextcloud. Modificali lì e verranno sincronizzati qui.",
+      "openNextcloudProfile": "Modifica su Nextcloud",
+      "refreshProfile": "Aggiorna",
       "server": "Server",
       "serverUrl": "Indirizzo del server",
       "username": "Nome utente",
@@ -246,14 +245,11 @@
       "appPassword": "Password dell'app",
       "scanQr": "Scansiona un codice QR",
       "reconnect": "Riconnetti",
-      "save": "Salva",
-      "saved": "Modifiche salvate.",
       "reconnected": "Account riconnesso.",
       "useThisAccount": "Usa questo account",
       "delete": "Rimuovi account",
       "errors": {
         "required": "Questo campo è obbligatorio.",
-        "invalidEmail": "Indirizzo email non valido.",
         "accountMismatch": "Questo codice QR appartiene a un altro account."
       },
       "connectionLost": "La connessione a questo server è scaduta. Riconnettiti per continuare a sincronizzare.",

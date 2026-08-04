@@ -12,7 +12,6 @@ import { useCalendarStore } from '@/stores/calendarStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { setAccounts } from '@/hooks/useAccounts';
 import { setupOnlineManager } from '@/services/shared/network';
-import { initializeDatabaseOnStartup } from '@/database/utils/initialization';
 import { syncCalendars } from '@/database/sync';
 import { migrateFromAsyncStorage } from '@/storage';
 
@@ -38,14 +37,12 @@ export function useAppInitialization() {
           useCalendarStore.persist.rehydrate(),
           useSettingsStore.persist.rehydrate(),
         ]);
-        await initializeDatabaseOnStartup();
-
         const accounts = await loadAccounts();
         setAccounts(accounts);
         if (accounts.length > 0) {
           const activeId = await getActiveAccountId();
           const id = activeId ?? accounts[0].id;
-          await persistActiveAccountId(id);
+          void persistActiveAccountId(id).catch(() => undefined);
           setStoreAccountId(id);
 
           const activeAccount = accounts.find((a) => a.id === id) ?? accounts[0];

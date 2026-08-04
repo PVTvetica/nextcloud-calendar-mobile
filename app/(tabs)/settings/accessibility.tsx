@@ -12,8 +12,6 @@ export default function AccessibilitySettingsScreen() {
   const setHapticsEnabled = useSettingsStore((s) => s.setHapticsEnabled);
   const reduceMotion = useSettingsStore((s) => s.reduceMotion);
   const setReduceMotion = useSettingsStore((s) => s.setReduceMotion);
-  const scaleCalendarText = useSettingsStore((s) => s.scaleCalendarText);
-  const setScaleCalendarText = useSettingsStore((s) => s.setScaleCalendarText);
 
   const rows = [
     {
@@ -29,13 +27,6 @@ export default function AccessibilitySettingsScreen() {
       hint: t('settings.accessibility.reduceMotionHint'),
       value: reduceMotion,
       onChange: setReduceMotion,
-    },
-    {
-      key: 'scaleCalendarText',
-      title: t('settings.accessibility.scaleCalendarText'),
-      hint: t('settings.accessibility.scaleCalendarTextHint'),
-      value: scaleCalendarText,
-      onChange: setScaleCalendarText,
     },
   ];
 

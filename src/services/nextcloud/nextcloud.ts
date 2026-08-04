@@ -29,9 +29,15 @@ export async function exchangeOneTimeToken(params: {
   return appPassword;
 }
 
+export interface NextcloudUserProfile {
+  timezone: string;
+  email: string;
+  displayName: string;
+}
+
 export async function fetchUserInfo(
   account: Pick<Account, 'baseUrl' | 'username' | 'appPassword' | 'davUserId'>
-): Promise<{ timezone: string; email: string }> {
+): Promise<NextcloudUserProfile | null> {
   try {
     const url = `${account.baseUrl}/ocs/v2.php/cloud/users/${encodeURIComponent(account.davUserId)}`;
     const res = await fetch(url, {
@@ -42,15 +48,17 @@ export async function fetchUserInfo(
         Accept: 'application/json',
       },
     });
-    if (!res.ok) return { timezone: '', email: '' };
+    if (!res.ok) return null;
     const json = await res.json();
     const data = json?.ocs?.data;
+    if (!data) return null;
     return {
-      timezone: (data?.timezone as string) || '',
-      email: (data?.email as string) || '',
+      timezone: (data.timezone as string) || '',
+      email: (data.email as string) || '',
+      displayName: (data.displayname as string) || (data['display-name'] as string) || '',
     };
   } catch {
-    return { timezone: '', email: '' };
+    return null;
   }
 }
 

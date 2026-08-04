@@ -1,13 +1,8 @@
 import type { Account } from '@/types';
 
-export interface AccountProfilePatch {
-  displayName?: string;
-  email?: string;
-}
+export type AccountField = 'appPassword' | 'username';
 
-export type AccountField = keyof AccountProfilePatch | 'appPassword' | 'username';
-
-export type FieldErrorCode = 'required' | 'invalidEmail' | 'accountMismatch';
+export type FieldErrorCode = 'required' | 'accountMismatch';
 
 export type FieldErrors = Partial<Record<AccountField, FieldErrorCode>>;
 
@@ -21,12 +16,6 @@ export class AccountFieldError extends Error {
   }
 }
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function normalize(value: string | undefined): string | undefined {
-  return value === undefined ? undefined : value.trim();
-}
-
 export function hostnameOf(url: string): string {
   try {
     return new URL(url).hostname;
@@ -35,30 +24,10 @@ export function hostnameOf(url: string): string {
   }
 }
 
-export function diffProfile(account: Account, patch: AccountProfilePatch): AccountProfilePatch {
-  const changes: AccountProfilePatch = {};
-  const displayName = normalize(patch.displayName);
-  const email = normalize(patch.email);
-  if (displayName !== undefined && displayName !== account.displayName) {
-    changes.displayName = displayName;
-  }
-  if (email !== undefined && email !== (account.email ?? '')) {
-    changes.email = email;
-  }
-  return changes;
+export function nextcloudProfileUrl(baseUrl: string): string {
+  return `${baseUrl.replace(/\/$/, '')}/settings/user`;
 }
 
-export function validateProfilePatch(patch: AccountProfilePatch): FieldErrors | null {
-  const errors: FieldErrors = {};
-
-  if (patch.displayName !== undefined && !patch.displayName.trim()) {
-    errors.displayName = 'required';
-  }
-
-  const email = normalize(patch.email);
-  if (email && !EMAIL_RE.test(email)) {
-    errors.email = 'invalidEmail';
-  }
-
-  return Object.keys(errors).length > 0 ? errors : null;
+export function basicAuthHeader(account: Pick<Account, 'username' | 'appPassword'>): string {
+  return `Basic ${btoa(`${account.username}:${account.appPassword}`)}`;
 }

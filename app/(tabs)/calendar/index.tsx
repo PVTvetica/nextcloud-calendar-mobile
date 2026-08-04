@@ -26,7 +26,6 @@ import { CalendarTopBar } from '@/features/calendar/components/CalendarTopBar';
 import { EventCell } from '@/features/calendar/components/EventCell';
 import { ViewLayer } from '@/features/calendar/components/ViewLayer';
 import { CalendarFab } from '@/features/calendar/components/CalendarFab';
-import { CalendarLoadingOverlay } from '@/features/calendar/components/CalendarLoadingOverlay';
 import {
   calendarLocale, calendarTheme, toSuperEvents, type SuperEvent,
 } from '@/features/calendar/utils/calendar';
@@ -62,7 +61,7 @@ export default function CalendarScreen() {
   }, [todayPending, date, deferredDate]);
 
   const { hourRowHeight, cellHeight } = useZoom();
-  const { activeAccount, calendars, allEvents, showFullOverlay, showSmallLoader } = useCalendarData(fetchDate);
+  const { activeAccount, calendars, allEvents, showSmallLoader } = useCalendarData(fetchDate);
   const drawer = useCalendarDrawer();
 
   const scrollOffsetMinutes = useMemo(() => {
@@ -192,8 +191,9 @@ export default function CalendarScreen() {
         </ViewLayer>
       </View>
 
-      {showFullOverlay && <CalendarLoadingOverlay label={t('calendar.loadingCalendar')} />}
-      {showSmallLoader && <Spinner size="small" color="secondary" style={styles.smallLoader} />}
+      {showSmallLoader && (
+        <Spinner size="small" color="secondary" pointerEvents="none" style={styles.smallLoader} />
+      )}
 
       <CalendarFab onPress={handleCreateEvent} />
 

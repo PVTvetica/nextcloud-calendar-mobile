@@ -1,0 +1,236 @@
+diff --git a/node_modules/@super-calendar/native/src/components/TimeGrid.tsx b/node_modules/@super-calendar/native/src/components/TimeGrid.tsx
+index f4768c3..4557476 100644
+--- a/node_modules/@super-calendar/native/src/components/TimeGrid.tsx
++++ b/node_modules/@super-calendar/native/src/components/TimeGrid.tsx
+@@ -134,12 +134,20 @@ const MOVE_ACTIVATE_MS = 500;
+ const DRAG_ACTIVATE_PX = 8;
+ // Height of the resize grip at the bottom of a draggable event box.
+ const RESIZE_HANDLE_HEIGHT = 14;
++// PATCH: cascade geometry for overlapping events. Each successive event in an
++// overlap cluster is indented by up to OVERLAP_OFFSET_MAX px and painted over
++// the previous one; the step shrinks so the last box never falls below
++// MIN_OVERLAP_WIDTH_RATIO of the day column.
++const OVERLAP_OFFSET_MAX = 28;
++const MIN_OVERLAP_WIDTH_RATIO = 0.4;
+ // Default minutes a drag snaps to when `dragStepMinutes` isn't set.
+ const DEFAULT_DRAG_STEP_MINUTES = 15;
+ // zIndex applied to an event while it's being dragged/resized so it sits above
+ // every other event (RN stacks siblings by order, so without this a dragged box
+ // moved over a later event would fall behind it).
+ const DRAG_EVENT_Z = 100;
++// PATCH: above every cascaded event box, below a box being dragged.
++const NOW_INDICATOR_Z = 90;
+ // How long to hold the dragged event past the visible columns before the view
+ // pages one period toward that edge.
+ const EDGE_DWELL_MS = 500;
+@@ -240,6 +248,67 @@ export type EventDragStartHandler<T> = (event: CalendarEvent<T>) => void;
+ const HOUR_LABEL_TOP_INSET = 12;
+ const HOUR_LABEL_NUDGE = 6;
+ 
++// PATCH: cascade layout for overlapping events.
++//
++// `layoutDayEvents` packs events into the first free column, so which one ends
++// up leftmost depends on iteration order rather than on anything the reader
++// cares about. For a cascade the order has to be meaningful: the longest event
++// sits at the back, full width, and shorter ones are indented and painted over
++// it. A short meeting nested inside a long block therefore stays visible and
++// tappable instead of being buried under it. Ties go to the earlier event, so
++// equal-length events still read left to right in time order.
++//
++// The indent counts only the events a box actually overlaps, not everything in
++// its run. Two short events inside one long block do not overlap each other, so
++// they share an indent and each keeps the full remaining width instead of
++// stepping further right for no reason.
++function cascadeLayout<T>(
++  positioned: PositionedEvent<T>[],
++): Map<PositionedEvent<T>, { depth: number; maxDepth: number }> {
++  const out = new Map<PositionedEvent<T>, { depth: number; maxDepth: number }>();
++  const overlaps = (a: PositionedEvent<T>, b: PositionedEvent<T>) =>
++    a.startHours < b.startHours + b.durationHours &&
++    b.startHours < a.startHours + a.durationHours;
++
++  const byStart = [...positioned].sort(
++    (a, b) => a.startHours - b.startHours || b.durationHours - a.durationHours,
++  );
++
++  let cluster: PositionedEvent<T>[] = [];
++  let clusterEnd = 0;
++
++  const flush = () => {
++    // Back to front: longest first, then earliest.
++    const ordered = [...cluster].sort(
++      (a, b) => b.durationHours - a.durationHours || a.startHours - b.startHours,
++    );
++    const depths: number[] = [];
++    let maxDepth = 0;
++    ordered.forEach((p, i) => {
++      let depth = 0;
++      for (let j = 0; j < i; j += 1) {
++        if (overlaps(p, ordered[j])) depth = Math.max(depth, depths[j] + 1);
++      }
++      depths.push(depth);
++      maxDepth = Math.max(maxDepth, depth);
++    });
++    ordered.forEach((p, i) => out.set(p, { depth: depths[i], maxDepth }));
++    cluster = [];
++  };
++
++  for (const p of byStart) {
++    // A gap ends the run of mutual overlaps: everything after it is independent.
++    if (cluster.length > 0 && p.startHours >= clusterEnd) flush();
++    clusterEnd = cluster.length === 0
++      ? p.startHours + p.durationHours
++      : Math.max(clusterEnd, p.startHours + p.durationHours);
++    cluster.push(p);
++  }
++  if (cluster.length > 0) flush();
++
++  return out;
++}
++
+ type AnimatedEventBoxProps<T> = {
+   positioned: PositionedEvent<T>;
+   cellHeight: SharedValue<number>;
+@@ -273,6 +342,9 @@ type AnimatedEventBoxProps<T> = {
+   // Page the view one period (dir -1/+1) when the event is dragged past the
+   // visible columns and held there. Absent disables edge auto-advance.
+   onEdgeAdvance?: (dir: number) => void;
++  // PATCH: resting stacking order. Overlapping boxes cascade instead of sharing
++  // the column width, so the later ones must paint above the earlier ones.
++  baseZ: number;
+ };
+ 
+ function AnimatedEventBox<T>({
+@@ -297,6 +369,7 @@ function AnimatedEventBox<T>({
+   showDragHandle,
+   eventStartEditable,
+   eventDurationEditable,
++  baseZ,
+ }: AnimatedEventBoxProps<T>) {
+   const RenderEventComponent = renderEvent;
+   const theme = useCalendarTheme();
+@@ -380,9 +453,20 @@ function AnimatedEventBox<T>({
+       top: (startHours - minHour) * cellHeight.value + moveOffset.value + resizeStartDelta.value,
+       height: boxHeight.value,
+       transform: [{ translateX: moveOffsetX.value }],
+-      zIndex: dragZ.value,
++      // PATCH: cascaded boxes rely on an explicit resting z-order; a drag still
++      // lifts the box above everything via dragZ.
++      zIndex: dragZ.value || baseZ,
+     }),
+-    [startHours, durationHours, minHour],
++    [startHours, durationHours, minHour, baseZ],
++  );
++
++  // PATCH: the resize strips are absolutely positioned over the box and carry
++  // their own gestures, so at the 32px minimum height two fixed 14px handles
++  // covered the entire event and swallowed every tap. Cap each strip at a
++  // quarter of the live box height to always leave a tappable middle.
++  const resizeHandleStyle = useAnimatedStyle(
++    () => ({ height: Math.min(RESIZE_HANDLE_HEIGHT, boxHeight.value / 4) }),
++    [],
+   );
+ 
+   // Clear the drag preview once the committed change re-renders this box at its
+@@ -777,7 +861,7 @@ function AnimatedEventBox<T>({
+       />
+       {resizableFromStart ? (
+         <GestureDetector gesture={resizeStartGesture}>
+-          <Animated.View style={styles.resizeHandleTop}>
++          <Animated.View style={[styles.resizeHandleTop, resizeHandleStyle]}>
+             {showDragHandle ? (
+               <View style={[styles.resizeGrip, { backgroundColor: theme.colors.eventText }]} />
+             ) : null}
+@@ -786,7 +870,7 @@ function AnimatedEventBox<T>({
+       ) : null}
+       {resizable ? (
+         <GestureDetector gesture={resizeGesture}>
+-          <Animated.View style={styles.resizeHandle}>
++          <Animated.View style={[styles.resizeHandle, resizeHandleStyle]}>
+             {/* The grip is the only visible drag affordance; hiding it keeps the
+                 resize gesture working but removes the indicator. */}
+             {showDragHandle ? (
+@@ -908,7 +992,9 @@ const NowIndicator = ({ cellHeight, nowHours, minHour, left, width, color }: Now
+   );
+ 
+   const lineSlot = slot("nowIndicator", {
+-    base: [styles.nowIndicator, styles.nonInteractive, { left, width }],
++    // PATCH: cascaded events carry a resting z-index, so the line needs one too
++    // or it hides underneath them.
++    base: [styles.nowIndicator, styles.nonInteractive, { left, width, zIndex: NOW_INDICATOR_Z }],
+     themed: [{ backgroundColor: color }, theme.containers.nowIndicator],
+   });
+   return <Animated.View {...lineSlot} style={[lineSlot.style, animatedStyle]} />;
+@@ -1602,12 +1688,30 @@ function TimetablePageInner<T>({
+                 )
+               : null}
+ 
+-            {dayLayouts.flatMap((layout, dayIndex) =>
+-              layout
+-                // Skip events that fall entirely outside the [minHour, maxHour) window.
+-                .filter((p) => p.startHours < maxHour && p.startHours + p.durationHours > minHour)
++            {dayLayouts.flatMap((layout, dayIndex) => {
++              // Skip events that fall entirely outside the [minHour, maxHour) window.
++              const visible = layout.filter(
++                (p) => p.startHours < maxHour && p.startHours + p.durationHours > minHour,
++              );
++              const cascade = cascadeLayout(visible);
++              return visible
+                 .map((positioned, eventIndex) => {
+-                  const columnWidth = dayWidth / positioned.columns;
++                  // PATCH: overlapping events cascade (each one indented and
++                  // layered over the previous) instead of splitting the day into
++                  // equal columns, so a busy day stays readable on a phone. The
++                  // step is capped so the deepest box keeps MIN_OVERLAP_WIDTH_RATIO
++                  // of the column.
++                  const { depth, maxDepth } = cascade.get(positioned) ?? { depth: 0, maxDepth: 0 };
++                  // Cap the step so even the deepest box keeps
++                  // MIN_OVERLAP_WIDTH_RATIO of the column.
++                  const step =
++                    maxDepth > 0
++                      ? Math.min(
++                          OVERLAP_OFFSET_MAX,
++                          (dayWidth * (1 - MIN_OVERLAP_WIDTH_RATIO)) / maxDepth,
++                        )
++                      : 0;
++                  const indent = depth * step;
+                   return (
+                     <AnimatedEventBox
+                       // Prefix with the day so a multi-day event's per-day segments
+@@ -1617,8 +1721,9 @@ function TimetablePageInner<T>({
+                       positioned={positioned}
+                       cellHeight={heightSource}
+                       minHour={minHour}
+-                      left={dayLeft(dayIndex) + positioned.column * columnWidth}
+-                      width={columnWidth}
++                      left={dayLeft(dayIndex) + indent}
++                      width={dayWidth - indent}
++                      baseZ={depth + 1}
+                       dayWidth={dayWidth}
+                       dayIndex={dayIndex}
+                       dayCount={days.length}
+@@ -1637,8 +1742,8 @@ function TimetablePageInner<T>({
+                       onEdgeAdvance={onEdgeAdvance}
+                     />
+                   );
+-                }),
+-            )}
++                });
++            })}
+ 
+             {showNowIndicator && nowDayIndex >= 0 && nowInWindow ? (
+               <NowIndicator
+@@ -2791,9 +2896,10 @@ const styles = StyleSheet.create({
+   eventBox: {
+     position: "absolute",
+     overflow: "hidden",
+-    // Border-box padding insets the visible box (the flex child) on all sides,
+-    // giving a small gap without touching the slot geometry above.
+-    padding: EVENT_GAP,
++    // PATCH: inset the sides only. A vertical inset also applied here, so two
++    // back-to-back events were drawn 2 * EVENT_GAP apart and could never sit
++    // flush — the slot geometry says they touch, and they should look like it.
++    paddingHorizontal: EVENT_GAP,
+   },
+   // The cross-week drag ghost: pinned to the pager's top-left, moved into place by
+   // its transform, and floated above every page so it stays visible across a page.

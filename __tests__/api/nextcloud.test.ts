@@ -17,7 +17,7 @@ const mockFetch = jest.fn();
 beforeEach(() => jest.clearAllMocks());
 
 describe('fetchUserInfo', () => {
-  it('returns timezone and email from OCS JSON response', async () => {
+  it('returns the profile from the OCS JSON response', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -25,6 +25,7 @@ describe('fetchUserInfo', () => {
           data: {
             timezone: 'Europe/Paris',
             email: 'john@example.com',
+            displayname: 'John Doe',
           },
         },
       }),
@@ -32,7 +33,11 @@ describe('fetchUserInfo', () => {
 
     const result = await fetchUserInfo(account);
 
-    expect(result).toEqual({ timezone: 'Europe/Paris', email: 'john@example.com' });
+    expect(result).toEqual({
+      timezone: 'Europe/Paris',
+      email: 'john@example.com',
+      displayName: 'John Doe',
+    });
     expect(mockFetch).toHaveBeenCalledWith(
       'https://cloud.example.com/ocs/v2.php/cloud/users/john',
       expect.objectContaining({
@@ -44,25 +49,36 @@ describe('fetchUserInfo', () => {
     );
   });
 
-  it('returns empty strings on network error', async () => {
-    mockFetch.mockRejectedValue(new Error('network error'));
-    const result = await fetchUserInfo(account);
-    expect(result).toEqual({ timezone: '', email: '' });
-  });
-
-  it('returns empty strings on non-ok response', async () => {
-    mockFetch.mockResolvedValue({ ok: false, json: async () => ({}) });
-    const result = await fetchUserInfo(account);
-    expect(result).toEqual({ timezone: '', email: '' });
-  });
-
-  it('returns empty strings when OCS data fields are missing', async () => {
+  it('accepts the older display-name spelling', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ ocs: { data: {} } }),
+      json: async () => ({ ocs: { data: { 'display-name': 'John Doe' } } }),
     });
     const result = await fetchUserInfo(account);
-    expect(result).toEqual({ timezone: '', email: '' });
+    expect(result?.displayName).toBe('John Doe');
+  });
+
+  it('returns null on network error, so callers keep what they stored', async () => {
+    mockFetch.mockRejectedValue(new Error('network error'));
+    expect(await fetchUserInfo(account)).toBeNull();
+  });
+
+  it('returns null on non-ok response', async () => {
+    mockFetch.mockResolvedValue({ ok: false, json: async () => ({}) });
+    expect(await fetchUserInfo(account)).toBeNull();
+  });
+
+  it('returns null when the OCS envelope carries no data', async () => {
+    mockFetch.mockResolvedValue({ ok: true, json: async () => ({ ocs: {} }) });
+    expect(await fetchUserInfo(account)).toBeNull();
+  });
+
+  it('returns empty strings when the data object has no profile fields', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ ocs: { data: { id: 'john' } } }),
+    });
+    expect(await fetchUserInfo(account)).toEqual({ timezone: '', email: '', displayName: '' });
   });
 });
 

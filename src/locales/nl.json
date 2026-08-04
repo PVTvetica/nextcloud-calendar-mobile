@@ -26,16 +26,13 @@
     "serverUrl": "Server-URL",
     "username": "Gebruikersnaam",
     "appPassword": "App-wachtwoord",
-    "displayName": "Weergavenaam",
-    "optional": "(optioneel)",
     "connect": "Verbinden",
     "hint": "Genereer een app-wachtwoord in Nextcloud → Instellingen → Beveiliging → App-wachtwoorden.",
     "footer": "Gemaakt met ♥ voor de community · Open source",
     "placeholders": {
       "serverUrl": "https://cloud.voorbeeld.com",
       "username": "jan.jansen",
-      "appPassword": "xxxx-xxxx-xxxx-xxxx",
-      "displayName": "Werk"
+      "appPassword": "xxxx-xxxx-xxxx-xxxx"
     },
     "errors": {
       "required": "Alle velden zijn verplicht.",
@@ -59,7 +56,6 @@
     "month": "Maand",
     "schedule": "Agenda",
     "weekAbbr": "W",
-    "loadingCalendar": "Agenda laden…",
     "drawerAccount": "ACCOUNT",
     "manageAccounts": "Accounts beheren →",
     "drawerCalendars": "AGENDA'S",
@@ -237,7 +233,10 @@
       "profile": "Profiel",
       "displayName": "Weergavenaam",
       "email": "E-mail",
-      "emailHint": "Wordt gebruikt als organisator van de afspraken die je aanmaakt.",
+      "emailMissing": "Niet ingesteld in Nextcloud",
+      "profileManagedHint": "Je weergavenaam en e-mailadres worden beheerd door Nextcloud. Wijzig ze daar; ze worden hier gesynchroniseerd.",
+      "openNextcloudProfile": "Bewerken in Nextcloud",
+      "refreshProfile": "Vernieuwen",
       "server": "Server",
       "serverUrl": "Serveradres",
       "username": "Gebruikersnaam",
@@ -246,14 +245,11 @@
       "appPassword": "App-wachtwoord",
       "scanQr": "QR-code scannen",
       "reconnect": "Opnieuw verbinden",
-      "save": "Opslaan",
-      "saved": "Wijzigingen opgeslagen.",
       "reconnected": "Account opnieuw verbonden.",
       "useThisAccount": "Dit account gebruiken",
       "delete": "Account verwijderen",
       "errors": {
         "required": "Dit veld is verplicht.",
-        "invalidEmail": "Ongeldig e-mailadres.",
         "accountMismatch": "Deze QR-code hoort bij een ander account."
       },
       "connectionLost": "De verbinding met deze server is verlopen. Maak opnieuw verbinding om te blijven synchroniseren.",

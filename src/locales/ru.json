@@ -26,16 +26,13 @@
     "serverUrl": "URL сервера",
     "username": "Имя пользователя",
     "appPassword": "Пароль приложения",
-    "displayName": "Отображаемое имя",
-    "optional": "(необязательно)",
     "connect": "Подключиться",
     "hint": "Создайте пароль приложения в Nextcloud → Настройки → Безопасность → Пароли приложений.",
     "footer": "Сделано с ♥ для сообщества · Открытый код",
     "placeholders": {
       "serverUrl": "https://cloud.example.com",
       "username": "ivan.ivanov",
-      "appPassword": "xxxx-xxxx-xxxx-xxxx",
-      "displayName": "Работа"
+      "appPassword": "xxxx-xxxx-xxxx-xxxx"
     },
     "errors": {
       "required": "Все поля обязательны.",
@@ -59,7 +56,6 @@
     "month": "Месяц",
     "schedule": "Повестка",
     "weekAbbr": "нед.",
-    "loadingCalendar": "Загрузка календаря…",
     "drawerAccount": "АККАУНТ",
     "manageAccounts": "Управление аккаунтами →",
     "drawerCalendars": "КАЛЕНДАРИ",
@@ -237,7 +233,10 @@
       "profile": "Профиль",
       "displayName": "Отображаемое имя",
       "email": "Эл. почта",
-      "emailHint": "Используется как организатор создаваемых вами событий.",
+      "emailMissing": "Не задано в Nextcloud",
+      "profileManagedHint": "Отображаемое имя и адрес почты управляются в Nextcloud. Измените их там — они синхронизируются сюда.",
+      "openNextcloudProfile": "Изменить в Nextcloud",
+      "refreshProfile": "Обновить",
       "server": "Сервер",
       "serverUrl": "Адрес сервера",
       "username": "Имя пользователя",
@@ -246,14 +245,11 @@
       "appPassword": "Пароль приложения",
       "scanQr": "Сканировать QR-код",
       "reconnect": "Переподключить",
-      "save": "Сохранить",
-      "saved": "Изменения сохранены.",
       "reconnected": "Учётная запись переподключена.",
       "useThisAccount": "Использовать эту запись",
       "delete": "Удалить учётную запись",
       "errors": {
         "required": "Это поле обязательно.",
-        "invalidEmail": "Неверный адрес эл. почты.",
         "accountMismatch": "Этот QR-код принадлежит другой учётной записи."
       },
       "connectionLost": "Подключение к этому серверу истекло. Переподключитесь, чтобы продолжить синхронизацию.",

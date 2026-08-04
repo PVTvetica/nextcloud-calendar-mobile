@@ -85,16 +85,7 @@ export function useCalendarData(date: Date) {
     [dbEvents, hiddenCalendarIds],
   );
 
-  const hadEventsRef = useRef(false);
-  useEffect(() => {
-    if (allEvents.length > 0) hadEventsRef.current = true;
-  }, [allEvents]);
-  useEffect(() => {
-    hadEventsRef.current = false;
-  }, [activeAccountId]);
+  const showSmallLoader = syncing || calsFetching;
 
-  const showFullOverlay = !hadEventsRef.current && syncing && allEvents.length === 0;
-  const showSmallLoader = (syncing || calsFetching) && !showFullOverlay;
-
-  return { activeAccount, calendars, allEvents, showFullOverlay, showSmallLoader };
+  return { activeAccount, calendars, allEvents, showSmallLoader };
 }

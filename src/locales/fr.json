@@ -26,16 +26,13 @@
     "serverUrl": "URL du serveur",
     "username": "Nom d'utilisateur",
     "appPassword": "Mot de passe d'application",
-    "displayName": "Nom affiché",
-    "optional": "(facultatif)",
     "connect": "Se connecter",
     "hint": "Générez un mot de passe d'application dans Nextcloud → Paramètres → Sécurité → Mots de passe d'application.",
     "footer": "Fait avec ♥ pour la communauté · Open Source",
     "placeholders": {
       "serverUrl": "https://cloud.example.com",
       "username": "jean.dupont",
-      "appPassword": "xxxx-xxxx-xxxx-xxxx",
-      "displayName": "Travail"
+      "appPassword": "xxxx-xxxx-xxxx-xxxx"
     },
     "errors": {
       "required": "Tous les champs sont obligatoires.",
@@ -59,7 +56,6 @@
     "month": "Mois",
     "schedule": "Agenda",
     "weekAbbr": "S",
-    "loadingCalendar": "Chargement du calendrier…",
     "drawerAccount": "COMPTE",
     "manageAccounts": "Gérer les comptes →",
     "drawerCalendars": "CALENDRIERS",
@@ -237,7 +233,10 @@
       "profile": "Profil",
       "displayName": "Nom d'affichage",
       "email": "E-mail",
-      "emailHint": "Utilisé comme organisateur des événements que vous créez.",
+      "emailMissing": "Non défini sur Nextcloud",
+      "profileManagedHint": "Votre nom d'affichage et votre e-mail sont gérés par Nextcloud. Modifiez-les là-bas, ils seront synchronisés ici.",
+      "openNextcloudProfile": "Modifier sur Nextcloud",
+      "refreshProfile": "Actualiser",
       "server": "Serveur",
       "serverUrl": "Adresse du serveur",
       "username": "Nom d'utilisateur",
@@ -246,14 +245,11 @@
       "appPassword": "Mot de passe d'application",
       "scanQr": "Scanner un QR code",
       "reconnect": "Reconnecter",
-      "save": "Enregistrer",
-      "saved": "Modifications enregistrées.",
       "reconnected": "Compte reconnecté.",
       "useThisAccount": "Utiliser ce compte",
       "delete": "Supprimer le compte",
       "errors": {
         "required": "Ce champ est obligatoire.",
-        "invalidEmail": "Adresse e-mail invalide.",
         "accountMismatch": "Ce QR code correspond à un autre compte."
       },
       "connectionLost": "La connexion à ce serveur a expiré. Reconnectez-vous pour continuer à synchroniser.",
