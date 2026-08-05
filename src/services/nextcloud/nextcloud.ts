@@ -5,6 +5,16 @@ function basicAuth(account: Pick<Account, 'username' | 'appPassword'>): string {
   return 'Basic ' + btoa(`${account.username}:${account.appPassword}`);
 }
 
+async function ocsFetch(url: string, options: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function exchangeOneTimeToken(params: {
   baseUrl: string;
   username: string;
@@ -40,7 +50,7 @@ export async function fetchUserInfo(
 ): Promise<NextcloudUserProfile | null> {
   try {
     const url = `${account.baseUrl}/ocs/v2.php/cloud/users/${encodeURIComponent(account.davUserId)}`;
-    const res = await fetch(url, {
+    const res = await ocsFetch(url, {
       credentials: 'omit',
       headers: {
         Authorization: basicAuth(account),

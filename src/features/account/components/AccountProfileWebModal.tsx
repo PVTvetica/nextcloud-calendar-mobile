@@ -31,7 +31,7 @@ export function AccountProfileWebModal({ account, visible, onClose }: Props) {
       onShow={() => setLoading(true)}
     >
       <ViewContainer>
-        <View style={[styles.flex, { paddingTop: insets.top }]}>
+        <View style={[styles.flex, { paddingTop: insets.top + 12, paddingBottom: insets.bottom }]}>
           <View style={styles.flex}>
             <WebView
               source={{
@@ -77,5 +77,5 @@ export function AccountProfileWebModal({ account, visible, onClose }: Props) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   overlay: { ...StyleSheet.absoluteFill },
-  closeSlot: { position: 'absolute', top: 8, left: 8, zIndex: 2, elevation: 2 },
+  closeSlot: { position: 'absolute', top: 16, left: 16, zIndex: 2, elevation: 2 },
 });

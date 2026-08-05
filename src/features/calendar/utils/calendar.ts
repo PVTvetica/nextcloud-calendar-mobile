@@ -50,7 +50,7 @@ export function calendarTheme(colors: ThemeColors, dark: boolean): PartialCalend
     colors: {
       ...base.colors,
       surface: colors.background,
-      gridLine: colors.textTertiary,
+      gridLine: colors.gridLine,
       text: colors.text,
       textMuted: colors.textSecondary,
       textDisabled: colors.textTertiary,

@@ -1,15 +1,16 @@
 import { memo, useEffect, useState } from 'react';
-import { View, StyleSheet, Platform, type ViewProps, type ViewStyle } from 'react-native';
+import { View, StyleSheet, type ViewProps, type ViewStyle } from 'react-native';
 
 interface Props extends ViewProps {
   visible: boolean;
 }
 
+// `display: 'none'` would be cheaper, but Yoga skips layout for such a subtree, so a
+// pre-warmed layer measures itself at zero width and keeps that size until it is
+// revealed — the calendar pager then sizes its pages to nothing. Staying laid out is
+// what makes the pre-warm worth anything.
 function visibilityStyle(visible: boolean): ViewStyle {
-  if (Platform.OS === 'ios') {
-    return { opacity: visible ? 1 : 0, zIndex: visible ? 1 : 0 };
-  }
-  return { display: visible ? 'flex' : 'none' };
+  return { opacity: visible ? 1 : 0, zIndex: visible ? 1 : 0 };
 }
 
 function ViewLayerImpl({ visible, style, children, ...rest }: Props) {

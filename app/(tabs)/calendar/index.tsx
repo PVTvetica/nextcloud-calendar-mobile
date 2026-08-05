@@ -33,6 +33,8 @@ import { isCalMode } from '@/features/calendar/constants';
 
 dayjs.extend(isoWeek);
 
+const eventKeyExtractor = (event: SuperEvent) => event.id;
+
 export default function CalendarScreen() {
   const router = useRouter();
   const theme = useTheme();
@@ -184,6 +186,7 @@ export default function CalendarScreen() {
               weekStartsOn={deferredWeekStartsOn}
               cellHeight={cellHeight}
               hourHeight={hourRowHeight}
+              hourColumnWidth={38}
               timeslots={2}
               showDragHandle={false}
               scrollOffsetMinutes={scrollOffsetMinutes}

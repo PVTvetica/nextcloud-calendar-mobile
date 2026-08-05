@@ -24,6 +24,7 @@ export interface ThemeColors {
   textTertiary: string;
   border: string;
   borderSubtle: string;
+  gridLine: string;
   primary: string;
   primaryText: string;
   talk: string;
@@ -100,6 +101,7 @@ const lightColors: ThemeColors = {
   textTertiary: '#888888',
   border: '#eeeeee',
   borderSubtle: '#f5f5f5',
+  gridLine: '#e4e4e4',
   primary: '#109be6',
   primaryText: '#ffffff',
   talk: '#0082c9',
@@ -125,6 +127,7 @@ const darkColors: ThemeColors = {
   textTertiary: '#666666',
   border: '#333333',
   borderSubtle: '#242424',
+  gridLine: '#666666',
   primary: '#29aef7',
   primaryText: '#ffffff',
   talk: '#29b6f6',

@@ -17,6 +17,7 @@ const mockGetInstances = jest.fn();
 
 jest.mock('expo-widgets', () => ({
   createLiveActivity: () => ({ start: mockStart, getInstances: mockGetInstances }),
+  after: (date: Date) => ({ after: date }),
 }));
 
 function makeState(overrides: Partial<LiveEventState> = {}): LiveEventState {
@@ -86,5 +87,41 @@ describe('liveActivity (ios)', () => {
     await liveActivity.clear();
 
     expect(existing.end).toHaveBeenCalledWith('immediate');
+  });
+
+  it('handOff() ends the activity with a deferred dismissal at the event end', async () => {
+    const existing = { update: jest.fn(), end: jest.fn().mockResolvedValue(undefined) };
+    mockGetInstances.mockReturnValue([existing]);
+    const until = new Date(Date.now() + 30 * 60_000);
+
+    const { liveActivity } = require('@/features/widget/surfaces/liveActivity/liveActivity.ios');
+    await liveActivity.handOff(until);
+
+    expect(existing.end).toHaveBeenCalledWith({ after: until });
+  });
+
+  it('handOff() leaves the activity live when the event ends beyond the four-hour dismissal window', async () => {
+    const existing = { update: jest.fn(), end: jest.fn().mockResolvedValue(undefined) };
+    mockGetInstances.mockReturnValue([existing]);
+
+    const { liveActivity } = require('@/features/widget/surfaces/liveActivity/liveActivity.ios');
+    await liveActivity.handOff(new Date(Date.now() + 5 * 3_600_000));
+
+    expect(existing.end).not.toHaveBeenCalled();
+  });
+
+  it('starts a fresh activity after a handOff instead of updating the dismissed one', async () => {
+    const handedOff = { update: jest.fn(), end: jest.fn().mockResolvedValue(undefined) };
+    mockGetInstances.mockReturnValue([handedOff]);
+    const fresh = { update: jest.fn(), end: jest.fn() };
+    mockStart.mockReturnValue(fresh);
+
+    const { liveActivity } = require('@/features/widget/surfaces/liveActivity/liveActivity.ios');
+    await liveActivity.handOff(new Date(Date.now() + 10 * 60_000));
+    await liveActivity.update(makeState());
+
+    expect(handedOff.end).toHaveBeenLastCalledWith('immediate');
+    expect(handedOff.update).not.toHaveBeenCalled();
+    expect(mockStart).toHaveBeenCalledTimes(1);
   });
 });

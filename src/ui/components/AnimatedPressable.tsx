@@ -35,10 +35,11 @@ function AnimatedPressable({
 
   const shouldAnimate = animated && !reduceMotion;
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }));
+  const animatedStyle = useAnimatedStyle(() =>
+    opacityTo === undefined
+      ? { transform: [{ scale: scale.value }] }
+      : { transform: [{ scale: scale.value }], opacity: opacity.value }
+  );
 
   return (
     <AnimatedPressableBase

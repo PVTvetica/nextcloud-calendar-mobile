@@ -1,7 +1,7 @@
 import React from 'react';
 import { HStack, Image, ProgressView, RoundedRectangle, Spacer, Text, VStack, ZStack } from '@expo/ui/swift-ui';
 import { clipShape, font, foregroundStyle, frame, opacity, padding, progressViewStyle, tint } from '@expo/ui/swift-ui/modifiers';
-import { createLiveActivity, type LiveActivity } from 'expo-widgets';
+import { after, createLiveActivity, type LiveActivity } from 'expo-widgets';
 import dayjs from 'dayjs';
 
 import type { LiveEventState, WidgetSurface } from '../../core/types';
@@ -147,10 +147,19 @@ const CalendarLiveActivity = (props: ActivityProps) => {
 const activity = createLiveActivity<ActivityProps>(ACTIVITY_NAME, CalendarLiveActivity);
 
 let instance: LiveActivity<ActivityProps> | null = null;
+let handedOff = false;
 
 function trackedInstance(): LiveActivity<ActivityProps> | null {
   if (!instance) instance = activity.getInstances()[0] ?? null;
   return instance;
+}
+
+async function endAll(): Promise<void> {
+  await Promise.all(
+    activity.getInstances().map((a) => a.end('immediate').catch(() => undefined)),
+  );
+  instance = null;
+  handedOff = false;
 }
 
 export const liveActivity: WidgetSurface<LiveEventState> = {
@@ -159,13 +168,17 @@ export const liveActivity: WidgetSurface<LiveEventState> = {
   update: async (state) => {
     writeLiveEvent(state);
     const props = toProps(state);
-    const current = trackedInstance();
-    if (current) {
-      try {
-        await current.update(props);
-        return;
-      } catch {
-        instance = null;
+    if (handedOff) {
+      await endAll();
+    } else {
+      const current = trackedInstance();
+      if (current) {
+        try {
+          await current.update(props);
+          return;
+        } catch {
+          instance = null;
+        }
       }
     }
     try {
@@ -178,9 +191,26 @@ export const liveActivity: WidgetSurface<LiveEventState> = {
   clear: async () => {
     writeLiveEvent(null);
     const current = trackedInstance();
-    if (!current) return;
+    if (!current) {
+      handedOff = false;
+      return;
+    }
     try {
       await current.end('immediate');
+    } finally {
+      instance = null;
+      handedOff = false;
+    }
+  },
+  handOff: async (until) => {
+    const current = trackedInstance();
+    if (!current || handedOff) return;
+    if (until.getTime() - Date.now() > (4 * 3_600_000)) return;
+    try {
+      await current.end(after(until));
+      handedOff = true;
+    } catch {
+      handedOff = false;
     } finally {
       instance = null;
     }

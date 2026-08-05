@@ -56,6 +56,7 @@ export interface WidgetSurface<P> {
   requestPermission?(): Promise<boolean>;
   canPromote?(): boolean;
   updateTimeline?(entries: AgendaTimelineEntry[]): Promise<void>;
+  handOff?(until: Date): Promise<void>;
 }
 
 export function eventDeepLink(uid: string): string {

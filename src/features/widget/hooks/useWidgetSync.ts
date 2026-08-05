@@ -7,6 +7,7 @@ import { EVENT_OBSERVED_COLUMNS } from '@/database/observedColumns';
 import { trailingDebounce } from '@/utils/debounce';
 
 import { observeAgendaEventsQuery } from '../core/readEvents';
+import { readLiveEvent } from '../storage/widgetStore';
 import { liveActivity } from '../surfaces/liveActivity';
 import { registerWidgetBackgroundSync, unregisterWidgetBackgroundSync } from '../sync/backgroundSync';
 import { AGENDA_DAYS, syncWidget } from '../sync/syncWidget';
@@ -65,10 +66,20 @@ export function useWidgetSync(): void {
         refresh.call();
       });
 
+    const handOffLiveActivity = () => {
+      if (!liveActivity.handOff) return;
+      const state = readLiveEvent();
+      if (!state) return;
+      void liveActivity.handOff(new Date(state.endIso)).catch(() => undefined);
+    };
+
     const onAppState = (status: AppStateStatus) => {
       if (status === 'active') {
         clearTimeout(timer);
         refresh.call();
+      } else if (status === 'background') {
+        clearTimeout(timer);
+        handOffLiveActivity();
       }
     };
     const appSub = AppState.addEventListener('change', onAppState);

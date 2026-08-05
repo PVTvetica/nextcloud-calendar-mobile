@@ -65,7 +65,13 @@ function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOp
           {todayLoading ? (
             <Spinner />
           ) : (
-            <Typography variant="body2" color="primary" nowrap adjustsFontSizeToFit minimumFontScale={0.8}>
+            <Typography
+              variant="body2"
+              color={isToday ? colors.textTertiary : 'primary'}
+              nowrap
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+            >
               {t('calendar.today')}
             </Typography>
           )}
