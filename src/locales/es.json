@@ -235,7 +235,6 @@
       "email": "Correo electrónico",
       "emailMissing": "No definido en Nextcloud",
       "profileManagedHint": "Tu nombre visible y tu correo los gestiona Nextcloud. Cámbialos allí y se sincronizarán aquí.",
-      "openNextcloudProfile": "Editar en Nextcloud",
       "refreshProfile": "Actualizar",
       "server": "Servidor",
       "serverUrl": "Dirección del servidor",

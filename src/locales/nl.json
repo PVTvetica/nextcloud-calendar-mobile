@@ -235,7 +235,6 @@
       "email": "E-mail",
       "emailMissing": "Niet ingesteld in Nextcloud",
       "profileManagedHint": "Je weergavenaam en e-mailadres worden beheerd door Nextcloud. Wijzig ze daar; ze worden hier gesynchroniseerd.",
-      "openNextcloudProfile": "Bewerken in Nextcloud",
       "refreshProfile": "Vernieuwen",
       "server": "Server",
       "serverUrl": "Serveradres",

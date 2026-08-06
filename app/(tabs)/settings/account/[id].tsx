@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Alert } from 'react-native';
 import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +11,7 @@ import { useAccountStore } from '@/stores/accountStore';
 import { AvatarImage } from '@/components/AvatarImage';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
 import { AccountProfileCard } from '@/features/account/components/AccountProfileCard';
+import { syncAccountProfile } from '@/features/account/hooks/useAccountProfileSync';
 import { AccountReconnectForm } from '@/features/account/components/AccountReconnectForm';
 import { useDeleteAccount } from '@/features/account/hooks/useMutateAccount';
 import { useAccountAuthStatus } from '@/features/account/hooks/useAccountAuthStatus';
@@ -30,6 +32,7 @@ export default function AccountDetailScreen() {
   const setStoreId = useAccountStore((s) => s.setActiveAccountId);
   const remove = useDeleteAccount();
   const authStatus = useAccountAuthStatus(account);
+  const [refreshing, setRefreshing] = useState(false);
 
   if (!account) {
     return (
@@ -48,6 +51,16 @@ export default function AccountDetailScreen() {
   const handleSetActive = async () => {
     await setActiveAccountId(account.id);
     setStoreId(account.id);
+  };
+
+  const handleRefreshProfile = async () => {
+    setRefreshing(true);
+    try {
+      await syncAccountProfile(account);
+    } catch {
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleDelete = () => {
@@ -126,6 +139,13 @@ export default function AccountDetailScreen() {
             onPress={handleSetActive}
           />
         )}
+        <Button
+          variant="ghost"
+          title={t('settings.account.refreshProfile')}
+          loading={refreshing}
+          disabled={refreshing}
+          onPress={handleRefreshProfile}
+        />
         <Button
           variant="ghost"
           color="danger"

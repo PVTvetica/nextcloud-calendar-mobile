@@ -235,7 +235,6 @@
       "email": "Email",
       "emailMissing": "Not set on Nextcloud",
       "profileManagedHint": "Your display name and email are managed by Nextcloud. Change them there and they sync back here.",
-      "openNextcloudProfile": "Edit on Nextcloud",
       "refreshProfile": "Refresh",
       "server": "Server",
       "serverUrl": "Server address",

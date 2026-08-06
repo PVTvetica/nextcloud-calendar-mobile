@@ -235,7 +235,6 @@
       "email": "Эл. почта",
       "emailMissing": "Не задано в Nextcloud",
       "profileManagedHint": "Отображаемое имя и адрес почты управляются в Nextcloud. Измените их там — они синхронизируются сюда.",
-      "openNextcloudProfile": "Изменить в Nextcloud",
       "refreshProfile": "Обновить",
       "server": "Сервер",
       "serverUrl": "Адрес сервера",

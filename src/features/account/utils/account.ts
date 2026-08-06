@@ -1,5 +1,3 @@
-import type { Account } from '@/types';
-
 export type AccountField = 'appPassword' | 'username';
 
 export type FieldErrorCode = 'required' | 'accountMismatch';
@@ -24,10 +22,3 @@ export function hostnameOf(url: string): string {
   }
 }
 
-export function nextcloudProfileUrl(baseUrl: string): string {
-  return `${baseUrl.replace(/\/$/, '')}/settings/user`;
-}
-
-export function basicAuthHeader(account: Pick<Account, 'username' | 'appPassword'>): string {
-  return `Basic ${btoa(`${account.username}:${account.appPassword}`)}`;
-}

@@ -235,7 +235,6 @@
       "email": "E-Mail",
       "emailMissing": "In Nextcloud nicht festgelegt",
       "profileManagedHint": "Anzeigename und E-Mail werden von Nextcloud verwaltet. Ändere sie dort, sie werden hierher synchronisiert.",
-      "openNextcloudProfile": "In Nextcloud bearbeiten",
       "refreshProfile": "Aktualisieren",
       "server": "Server",
       "serverUrl": "Serveradresse",
