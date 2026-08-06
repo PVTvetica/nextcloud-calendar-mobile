@@ -29,7 +29,7 @@ import { CalendarFab } from '@/features/calendar/components/CalendarFab';
 import {
   calendarLocale, calendarTheme, toSuperEvents, type SuperEvent,
 } from '@/features/calendar/utils/calendar';
-import { isCalMode } from '@/features/calendar/constants';
+import { isCalMode, type CalMode } from '@/features/calendar/constants';
 
 dayjs.extend(isoWeek);
 
@@ -48,11 +48,12 @@ export default function CalendarScreen() {
   const nav = useCalendarNavigation();
   const { viewMode, date, fetchDate, agendaVisibleDate, navigateMonth, goToday } = nav;
 
-  const deferredViewMode = useDeferredValue(viewMode);
   const deferredDate = useDeferredValue(date);
   const deferredWeekStartsOn = useDeferredValue(weekStartsOn);
   const isCalendarMode = isCalMode(viewMode);
-  const deferredIsCalendarMode = isCalMode(deferredViewMode);
+
+  const lastCalMode = useRef<CalMode>(isCalendarMode ? viewMode : 'week');
+  if (isCalendarMode) lastCalMode.current = viewMode;
 
   const [todayPending, setTodayPending] = useState(false);
   const handleToday = useCallback(() => {
@@ -173,8 +174,9 @@ export default function CalendarScreen() {
         <ViewLayer visible={isCalendarMode}>
           <View style={styles.fill}>
             <Calendar
-              mode={deferredIsCalendarMode ? deferredViewMode : 'week'}
+              mode={lastCalMode.current}
               date={date}
+              //events={[]}
               events={superEvents}
               onChangeDate={nav.onChangeDate}
               onPressEvent={handlePressEvent}

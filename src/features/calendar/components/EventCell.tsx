@@ -1,8 +1,8 @@
 import { memo } from 'react';
-import { StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import dayjs from 'dayjs';
 import type { RenderEventArgs } from '@super-calendar/native';
-import { AnimatedPressable, Typography } from '@/ui/components';
+import { Typography } from '@/ui/components';
 
 import type { SuperEventExtra } from '../utils/calendar';
 
@@ -32,10 +32,8 @@ function EventCellImpl({ event, isAllDay, boxWidth, onPress }: RenderEventArgs<S
     && dayjs(event.end).diff(event.start, 'minute') >= TIME_MIN_MINUTES;
 
   return (
-    <AnimatedPressable
+    <Pressable
       onPress={onPress}
-      scaleTo={0.94}
-      opacityTo={0.7}
       style={[
         styles.cell,
         { backgroundColor: event.color, borderColor: light ? 'rgba(0,0,0,0.14)' : 'rgba(255,255,255,0.35)' },
@@ -58,7 +56,7 @@ function EventCellImpl({ event, isAllDay, boxWidth, onPress }: RenderEventArgs<S
           {dayjs(event.start).format('H:mm')}–{dayjs(event.end).format('H:mm')}
         </Typography>
       )}
-    </AnimatedPressable>
+    </Pressable>
   );
 }
 

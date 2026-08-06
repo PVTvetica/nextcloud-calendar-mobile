@@ -38,4 +38,4 @@ function ViewLayerImpl({ visible, style, children, ...rest }: Props) {
   );
 }
 
-export const ViewLayer = memo(ViewLayerImpl);
+export const ViewLayer = memo(ViewLayerImpl, (prev, next) => !prev.visible && !next.visible);

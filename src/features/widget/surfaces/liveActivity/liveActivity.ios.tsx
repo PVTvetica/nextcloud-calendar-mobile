@@ -1,4 +1,5 @@
 import React from 'react';
+import { AppState } from 'react-native';
 import { HStack, Image, ProgressView, RoundedRectangle, Spacer, Text, VStack, ZStack } from '@expo/ui/swift-ui';
 import { clipShape, font, foregroundStyle, frame, opacity, padding, progressViewStyle, tint } from '@expo/ui/swift-ui/modifiers';
 import { after, createLiveActivity, type LiveActivity } from 'expo-widgets';
@@ -180,6 +181,10 @@ export const liveActivity: WidgetSurface<LiveEventState> = {
           instance = null;
         }
       }
+    }
+    if (AppState.currentState !== 'active') {
+      instance = null;
+      return;
     }
     try {
       instance = activity.start(props, state.deepLink);

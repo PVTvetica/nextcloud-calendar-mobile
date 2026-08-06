@@ -143,13 +143,13 @@ export async function syncCollection(
   for (const chunk of splitResponses(xml)) {
     const hrefMatch = chunk.match(/<d:href>([^<]+)<\/d:href>/);
     if (!hrefMatch) continue;
-    const abs = `${account.baseUrl}${hrefMatch[1]}`;
+    const abs = `${account.baseUrl}${decodeXmlEntities(hrefMatch[1])}`;
     if (/<d:status>[^<]*\b404\b/.test(chunk)) deleted.push(abs);
     else changed.push(abs);
   }
 
   const tokenMatch = xml.match(/<d:sync-token>([^<]*)<\/d:sync-token>/);
-  return { changed, deleted, newToken: tokenMatch?.[1]?.trim() ?? '', reset: false };
+  return { changed, deleted, newToken: decodeXmlEntities(tokenMatch?.[1] ?? '').trim(), reset: false };
 }
 
 export async function fetchCalendars(account: Account): Promise<CalendarMeta[]> {
@@ -188,22 +188,22 @@ export async function fetchCalendars(account: Account): Promise<CalendarMeta[]> 
 
     const hrefMatch = chunk.match(/<d:href>([^<]+)<\/d:href>/);
     if (!hrefMatch) continue;
-    const path = hrefMatch[1];
+    const path = decodeXmlEntities(hrefMatch[1]);
     const calFullUrl = `${account.baseUrl}${path}`;
     const slug = extractSlug(path);
 
     const displayNameMatch = chunk.match(/<d:displayname>([^<]*)<\/d:displayname>/);
-    const displayName = displayNameMatch?.[1]?.trim() || slug;
+    const displayName = decodeXmlEntities(displayNameMatch?.[1] ?? '').trim() || slug;
 
     const colorMatch = chunk.match(/<\w+:calendar-color[^>]*>([^<]+)<\/\w+:calendar-color>/);
     const rawColor = colorMatch?.[1]?.trim() || '';
     const color = rawColor.startsWith('#') ? rawColor.slice(0, 7) : '#1976d2';
 
     const ctagMatch = chunk.match(/<cs:getctag>([^<]*)<\/cs:getctag>/);
-    const ctag = ctagMatch?.[1]?.trim() || '';
+    const ctag = decodeXmlEntities(ctagMatch?.[1] ?? '').trim();
 
     const sourceMatch = chunk.match(/<cs:source[^>]*>[\s\S]*?<d:href>([^<]+)<\/d:href>[\s\S]*?<\/cs:source>/);
-    const sourceUrl = sourceMatch?.[1]?.trim();
+    const sourceUrl = sourceMatch?.[1] ? decodeXmlEntities(sourceMatch[1]).trim() : undefined;
 
     const hasPrivilegeSet = chunk.includes('current-user-privilege-set');
     const hasAll = chunk.includes('<d:all');
@@ -283,7 +283,7 @@ export async function fetchEvents(
     const hrefMatch = chunk.match(/<d:href>([^<]+)<\/d:href>/);
     const dataMatch = chunk.match(/<cal:calendar-data[^>]*>([\s\S]*?)<\/cal:calendar-data>/);
     if (dataMatch?.[1] && hrefMatch?.[1]) {
-      const href = `${account.baseUrl}${hrefMatch[1]}`;
+      const href = `${account.baseUrl}${decodeXmlEntities(hrefMatch[1])}`;
       items.push({ ics: decodeXmlEntities(dataMatch[1].trim()), href });
     }
   }
@@ -416,7 +416,10 @@ export async function fetchEventsByHrefs(
       const hrefMatch = chunk.match(/<d:href>([^<]+)<\/d:href>/);
       const dataMatch = chunk.match(/<cal:calendar-data[^>]*>([\s\S]*?)<\/cal:calendar-data>/);
       if (dataMatch?.[1] && hrefMatch?.[1]) {
-        items.push({ ics: decodeXmlEntities(dataMatch[1].trim()), href: `${account.baseUrl}${hrefMatch[1]}` });
+        items.push({
+          ics: decodeXmlEntities(dataMatch[1].trim()),
+          href: `${account.baseUrl}${decodeXmlEntities(hrefMatch[1])}`,
+        });
       }
     }
 

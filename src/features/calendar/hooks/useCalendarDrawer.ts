@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, useWindowDimensions } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { drawerWidthFor } from '../constants';
 
@@ -46,6 +47,15 @@ export function useCalendarDrawer() {
     drawerAnimation.current = slide(-drawerWidth, 0, 200);
     drawerAnimation.current.start(({ finished }) => { if (finished) setDrawerOpen(false); });
   }, [slide, drawerWidth]);
+
+  useFocusEffect(useCallback(() => () => {
+    drawerAnimation.current?.stop();
+    if (!openRef.current) return;
+    openRef.current = false;
+    drawerAnim.setValue(-drawerWidth);
+    overlayAnim.setValue(0);
+    setDrawerOpen(false);
+  }, [drawerAnim, overlayAnim, drawerWidth]));
 
   return { drawerOpen, drawerAnim, overlayAnim, drawerWidth, openDrawer, closeDrawer };
 }

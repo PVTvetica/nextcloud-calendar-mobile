@@ -27,15 +27,28 @@ function exclusiveEnd(event: CalendarEvent): Date {
 }
 
 export function toSuperEvents(events: CalendarEvent[]): SuperEvent[] {
-  return events.map((event) => ({
-    id: `${event.calendarId}|${event.uid}|${event.dtstart.getTime()}`,
-    title: event.summary || '(no title)',
-    start: event.dtstart,
-    end: exclusiveEnd(event),
-    allDay: event.allDay,
-    color: event.color,
-    source: event,
-  }));
+  const seen = new Set<string>();
+  const out: SuperEvent[] = [];
+
+  for (const event of events) {
+    const id = `${event.calendarId}|${event.uid}|${event.dtstart.getTime()}`;
+    if (seen.has(id)) {
+      if (__DEV__) console.warn('[toSuperEvents] duplicate event dropped', id);
+      continue;
+    }
+    seen.add(id);
+    out.push({
+      id,
+      title: event.summary || '(no title)',
+      start: event.dtstart,
+      end: exclusiveEnd(event),
+      allDay: event.allDay,
+      color: event.color,
+      source: event,
+    });
+  }
+
+  return out;
 }
 
 const LOCALES: Record<AppLanguage, Locale> = { en: enGB, fr, de, es, it, ru, pt, nl };

@@ -1,5 +1,5 @@
 diff --git a/node_modules/@super-calendar/native/src/components/TimeGrid.tsx b/node_modules/@super-calendar/native/src/components/TimeGrid.tsx
-index f4768c3..80ed7e6 100644
+index f4768c3..da97f02 100644
 --- a/node_modules/@super-calendar/native/src/components/TimeGrid.tsx
 +++ b/node_modules/@super-calendar/native/src/components/TimeGrid.tsx
 @@ -106,7 +106,15 @@ const MINUTES_PER_DAY = MINUTES_PER_HOUR * HOURS_PER_DAY;
@@ -116,16 +116,18 @@ index f4768c3..80ed7e6 100644
  type AnimatedEventBoxProps<T> = {
    positioned: PositionedEvent<T>;
    cellHeight: SharedValue<number>;
-@@ -273,6 +358,9 @@ type AnimatedEventBoxProps<T> = {
-   // Page the view one period (dir -1/+1) when the event is dragged past the
-   // visible columns and held there. Absent disables edge auto-advance.
+@@ -273,9 +358,12 @@ type AnimatedEventBoxProps<T> = {
    onEdgeAdvance?: (dir: number) => void;
 +  // PATCH: resting stacking order. Overlapping boxes cascade instead of sharing
 +  // the column width, so the later ones must paint above the earlier ones.
 +  baseZ: number;
  };
  
- function AnimatedEventBox<T>({
+-function AnimatedEventBox<T>({
++function AnimatedEventBoxImpl<T>({
+   positioned,
+   cellHeight,
+   minHour,
 @@ -297,6 +385,7 @@ function AnimatedEventBox<T>({
    showDragHandle,
    eventStartEditable,
@@ -183,7 +185,16 @@ index f4768c3..80ed7e6 100644
              {/* The grip is the only visible drag affordance; hiding it keeps the
                  resize gesture working but removes the indicator. */}
              {showDragHandle ? (
-@@ -908,7 +1009,9 @@ const NowIndicator = ({ cellHeight, nowHours, minHour, left, width, color }: Now
+@@ -804,6 +905,17 @@ function AnimatedEventBox<T>({
+   return <GestureDetector gesture={moveGesture}>{box}</GestureDetector>;
+ }
+
++const AnimatedEventBox = memo(AnimatedEventBoxImpl) as typeof AnimatedEventBoxImpl;
++
+ /** Replace the hour-axis label. Receives the hour (0–23) and the `ampm` flag. */
+ export type HourRenderer = (hour: number, ampm: boolean) => React.ReactNode;
+ 
+@@ -908,7 +1020,9 @@ const NowIndicator = ({ cellHeight, nowHours, minHour, left, width, color }: Now
    );
  
    const lineSlot = slot("nowIndicator", {
@@ -194,20 +205,43 @@ index f4768c3..80ed7e6 100644
      themed: [{ backgroundColor: color }, theme.containers.nowIndicator],
    });
    return <Animated.View {...lineSlot} style={[lineSlot.style, animatedStyle]} />;
-@@ -1602,12 +1705,35 @@ function TimetablePageInner<T>({
+@@ -1202,7 +1316,38 @@ function TimetablePageInner<T>({
+     [days],
+   );
+ 
+-  const dayLayouts = useMemo(() => days.map((day) => layoutDayEvents(events, day)), [days, events]);
++  const pageEvents = useMemo(() => {
++    if (days.length === 0) return events;
++    const from = startOfDay(days[0]).getTime();
++    const to = addDays(startOfDay(days[days.length - 1]), 1).getTime();
++    return events.filter((e) => e.start.getTime() < to && e.end.getTime() > from);
++  }, [events, days]);
++
++  const dayLayouts = useMemo(
++    () => days.map((day) => layoutDayEvents(pageEvents, day)),
++    [days, pageEvents],
++  );
++
++  const dayCascades = useMemo(
++    () =>
++      dayLayouts.map((layout) => {
++        // Skip events that fall entirely outside the [minHour, maxHour) window.
++        const visible = layout.filter(
++          (p) => p.startHours < maxHour && p.startHours + p.durationHours > minHour,
++        );
++        return { visible, cascade: cascadeLayout(visible) };
++      }),
++    [dayLayouts, minHour, maxHour],
++  );
+ 
+@@ -1602,12 +1747,30 @@ function TimetablePageInner<T>({
                  )
                : null}
  
 -            {dayLayouts.flatMap((layout, dayIndex) =>
 -              layout
--                // Skip events that fall entirely outside the [minHour, maxHour) window.
 -                .filter((p) => p.startHours < maxHour && p.startHours + p.durationHours > minHour)
-+            {dayLayouts.flatMap((layout, dayIndex) => {
-+              // Skip events that fall entirely outside the [minHour, maxHour) window.
-+              const visible = layout.filter(
-+                (p) => p.startHours < maxHour && p.startHours + p.durationHours > minHour,
-+              );
-+              const cascade = cascadeLayout(visible);
++            {dayCascades.flatMap(({ visible, cascade }, dayIndex) => {
 +              return visible
                  .map((positioned, eventIndex) => {
 -                  const columnWidth = dayWidth / positioned.columns;
@@ -234,8 +268,7 @@ index f4768c3..80ed7e6 100644
 +                  const indent = depth * step;
                    return (
                      <AnimatedEventBox
-                       // Prefix with the day so a multi-day event's per-day segments
-@@ -1617,8 +1743,9 @@ function TimetablePageInner<T>({
+@@ -1617,8 +1780,9 @@ function TimetablePageInner<T>({
                        positioned={positioned}
                        cellHeight={heightSource}
                        minHour={minHour}
@@ -247,7 +280,7 @@ index f4768c3..80ed7e6 100644
                        dayWidth={dayWidth}
                        dayIndex={dayIndex}
                        dayCount={days.length}
-@@ -1637,8 +1764,8 @@ function TimetablePageInner<T>({
+@@ -1637,8 +1801,8 @@ function TimetablePageInner<T>({
                        onEdgeAdvance={onEdgeAdvance}
                      />
                    );
@@ -258,27 +291,24 @@ index f4768c3..80ed7e6 100644
  
              {showNowIndicator && nowDayIndex >= 0 && nowInWindow ? (
                <NowIndicator
-@@ -1919,7 +2046,19 @@ function TimeGridInner<T>({
-   // window-height seed — or it keeps the oversized seed and clips. It must NOT
-   // remount on later height changes (e.g. a taller day header vs a shorter week
-   // header on a mode switch): a remount blanks the visible page for a frame.
+@@ -1919,7 +2083,28 @@ function TimeGridInner<T>({
+
 +  // Kept as the "the pager knows its real size" signal; the list no longer
 +  // remounts on it (see the LegendList below), it only starts the prefetch.
    const [measured, setMeasured] = useState(false);
 +  // PATCH: only the page on screen is worth building for the first paint. The
 +  // neighbours the default draw distance pre-renders cost about as much again
-+  // each, and nothing shows them yet. They are fetched a moment later so a
-+  // swipe still lands on a page that is already built.
-+  const [prefetchNeighbours, setPrefetchNeighbours] = useState(false);
+
++  const [prefetchedMode, setPrefetchedMode] = useState<string | null>(null);
++  if (prefetchedMode !== null && prefetchedMode !== mode) setPrefetchedMode(null);
++  const prefetchNeighbours = prefetchedMode === mode;
 +  useEffect(() => {
 +    if (!measured) return;
-+    const id = setTimeout(() => setPrefetchNeighbours(true), NEIGHBOUR_PREFETCH_DELAY_MS);
++    const id = setTimeout(() => setPrefetchedMode(mode), NEIGHBOUR_PREFETCH_DELAY_MS);
 +    return () => clearTimeout(id);
-+  }, [measured]);
-   // Week-anchored modes page by a full week and align pages to the week start:
-   // `week`, and `custom` when a `weekEndsOn` defines a partial-week span.
++  }, [measured, mode]);
    const weekAnchored = mode === "week" || (mode === "custom" && weekEndsOn != null);
-@@ -2284,6 +2423,7 @@ function TimeGridInner<T>({
+@@ -2284,6 +2469,7 @@ function TimeGridInner<T>({
    }, [onPressCell, resetPageOnPressCell, activeIndex, reduceMotion]);
  
    const snapToIndices = useMemo(() => pageDates.map((_, index) => index), [pageDates]);
@@ -286,7 +316,7 @@ index f4768c3..80ed7e6 100644
    const keyExtractorList = useCallback((item: Date) => item.toISOString(), []);
    const getFixedItemSize = useCallback(() => containerWidth, [containerWidth]);
    const renderItem = useCallback(
-@@ -2444,11 +2584,16 @@ function TimeGridInner<T>({
+@@ -2444,17 +2630,29 @@ function TimeGridInner<T>({
                });
              }}
            >
@@ -307,7 +337,14 @@ index f4768c3..80ed7e6 100644
                ref={listRef}
                style={isWeb ? [styles.pagerList, styles.webNoScroll] : styles.pagerList}
                data={pageDates}
-@@ -2472,6 +2617,15 @@ function TimeGridInner<T>({
+               extraData={listExtraData}
+               horizontal
+-              recycleItems={false}
++              recycleItems
+               keyExtractor={keyExtractorList}
+               getFixedItemSize={getFixedItemSize}
+               // On web LegendList ignores these RN scroll props (it leaks them to the
+@@ -2472,6 +2670,15 @@ function TimeGridInner<T>({
                      snapToIndices: freeSwipe ? snapToIndices : undefined,
                    })}
                initialScrollIndex={activeIndex}
@@ -323,7 +360,7 @@ index f4768c3..80ed7e6 100644
                showsHorizontalScrollIndicator={false}
                viewabilityConfig={PAGE_VIEWABILITY}
                onViewableItemsChanged={handleViewableItemsChanged}
-@@ -2756,12 +2910,14 @@ const styles = StyleSheet.create({
+@@ -2756,12 +2963,14 @@ const styles = StyleSheet.create({
    },
    hourLine: {
      flex: 1,
@@ -340,7 +377,7 @@ index f4768c3..80ed7e6 100644
      opacity: 0.5,
    },
    resizeHandle: {
-@@ -2791,9 +2947,10 @@ const styles = StyleSheet.create({
+@@ -2791,9 +3000,10 @@ const styles = StyleSheet.create({
    eventBox: {
      position: "absolute",
      overflow: "hidden",

@@ -16,6 +16,7 @@ const MAX_DELAY_MS = 60_000;
 const BOUNDARY_MARGIN_MS = 1_000;
 const MIN_DELAY_MS = 1_000;
 const REFRESH_DEBOUNCE_MS = 3_000;
+const IDLE_TIMEOUT_MS = 2_000;
 
 export function useWidgetSync(): void {
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
@@ -39,6 +40,7 @@ export function useWidgetSync(): void {
 
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let idle: ReturnType<typeof requestIdleCallback> | undefined;
 
     const schedule = (boundary: Date | null) => {
       if (cancelled) return;
@@ -50,7 +52,12 @@ export function useWidgetSync(): void {
     };
 
     const run = () => {
-      void syncWidget().then(schedule);
+      if (idle !== undefined) cancelIdleCallback(idle);
+      idle = requestIdleCallback(() => {
+        idle = undefined;
+        if (cancelled) return;
+        void syncWidget().then(schedule);
+      }, { timeout: IDLE_TIMEOUT_MS });
     };
 
 
@@ -87,6 +94,7 @@ export function useWidgetSync(): void {
     return () => {
       cancelled = true;
       refresh.cancel();
+      if (idle !== undefined) cancelIdleCallback(idle);
       sub.unsubscribe();
       clearTimeout(timer);
       appSub.remove();
