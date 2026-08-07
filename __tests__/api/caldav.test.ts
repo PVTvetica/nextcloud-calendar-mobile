@@ -1,4 +1,4 @@
-import { deleteEvent, moveEvent, syncCollection, fetchEventsByHrefs, MULTIGET_BATCH } from '../../src/services/nextcloud/caldav';
+import { deleteEvent, moveEvent, syncCollection, fetchEventsByHrefs, fetchCalendars, MULTIGET_BATCH } from '../../src/services/nextcloud/caldav';
 import type { Account, CalendarMeta } from '../../src/types';
 
 const account: Account = {
@@ -165,5 +165,72 @@ describe('fetchEventsByHrefs', () => {
     const events = await fetchEventsByHrefs(account, cal, [], range.s, range.e);
     expect(mockFetch).not.toHaveBeenCalled();
     expect(events).toEqual([]);
+  });
+});
+
+describe('fetchCalendars', () => {
+  const propfind = (displayname: string, extra = '') => `<?xml version="1.0"?>
+<d:multistatus xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav">
+  <d:response>
+    <d:href>/remote.php/dav/calendars/john/comics/</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:resourcetype><d:collection/><c:calendar/></d:resourcetype>
+        <d:displayname>${displayname}</d:displayname>
+        <cs:getctag>42</cs:getctag>
+        ${extra}
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+</d:multistatus>`;
+
+  it('decodes XML entities in the display name', async () => {
+    mockFetch.mockResolvedValue({ status: 207, text: async () => propfind('Calvin &amp; Hobbes') });
+
+    const [cal] = await fetchCalendars(account);
+
+    expect(cal.displayName).toBe('Calvin & Hobbes');
+  });
+
+  it('decodes the other escapes a name can carry', async () => {
+    mockFetch.mockResolvedValue({
+      status: 207,
+      text: async () => propfind('caf&#233; &lt;perso&gt; &quot;2026&quot;'),
+    });
+
+    const [cal] = await fetchCalendars(account);
+
+    expect(cal.displayName).toBe('café <perso> "2026"');
+  });
+
+  it('does not decode twice', async () => {
+    mockFetch.mockResolvedValue({ status: 207, text: async () => propfind('A &amp;amp; B') });
+
+    const [cal] = await fetchCalendars(account);
+
+    expect(cal.displayName).toBe('A &amp; B');
+  });
+
+  it('falls back to the slug when the name is empty', async () => {
+    mockFetch.mockResolvedValue({ status: 207, text: async () => propfind('') });
+
+    const [cal] = await fetchCalendars(account);
+
+    expect(cal.displayName).toBe('comics');
+  });
+
+  it('decodes an ampersand in a subscription source URL', async () => {
+    mockFetch.mockResolvedValue({
+      status: 207,
+      text: async () => propfind(
+        'Feed',
+        '<cs:source><d:href>https://ics.example.com/f?a=1&amp;b=2</d:href></cs:source>',
+      ),
+    });
+
+    const [cal] = await fetchCalendars(account);
+
+    expect(cal.sourceUrl).toBe('https://ics.example.com/f?a=1&b=2');
   });
 });

@@ -1,6 +1,7 @@
 import type { CalendarEvent } from '@/types';
 import i18n from '@/utils/i18n';
-import { type AgendaDaySection, type AgendaEventItem, type AgendaSnapshot, eventDeepLink } from './types';
+import { zonedWallTimeToUtc } from '@/utils/timezone';
+import { type AgendaDaySection, type AgendaEventItem, type AgendaSnapshot, type AgendaTimelineEntry, eventDeepLink } from './types';
 
 export interface BuildAgendaOptions {
   now?: Date;
@@ -109,4 +110,40 @@ export function buildAgendaSnapshot(
     sections,
     nextEvent,
   };
+}
+
+function nextZonedMidnight(after: Date, tz: string): Date {
+  const [y, m, d] = zonedKey(after, tz).split('-').map(Number);
+  return zonedWallTimeToUtc(y, m, d + 1, 0, 0, 0, tz);
+}
+
+export function buildAgendaTimeline(
+  events: CalendarEvent[],
+  options: BuildAgendaOptions = {},
+  maxEntries = 24,
+): AgendaTimelineEntry[] {
+  const now = options.now ?? new Date();
+  const tz = options.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const horizon = now.getTime() + ((options.days ?? 0) + 1) * DAY_MS;
+
+  const boundaries = new Set<number>([now.getTime()]);
+
+  for (const e of events) {
+    const end = e.dtend.getTime();
+    if (end > now.getTime() && end < horizon) boundaries.add(end);
+  }
+
+  let midnight = nextZonedMidnight(now, tz);
+  while (midnight.getTime() < horizon) {
+    boundaries.add(midnight.getTime());
+    midnight = nextZonedMidnight(midnight, tz);
+  }
+
+  return [...boundaries]
+    .sort((a, b) => a - b)
+    .slice(0, maxEntries)
+    .map((at) => ({
+      atIso: new Date(at).toISOString(),
+      snapshot: buildAgendaSnapshot(events, { ...options, now: new Date(at), timeZone: tz }),
+    }));
 }

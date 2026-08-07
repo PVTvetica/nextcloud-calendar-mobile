@@ -40,8 +40,20 @@ describe('buildIcs', () => {
     expect(buildIcs(base)).toContain('UID:test-uid-123\r\n');
   });
 
-  it('includes ORGANIZER with mailto', () => {
-    expect(buildIcs(base)).toContain('ORGANIZER;CN=John Doe:mailto:john@example.com\r\n');
+  it('includes ORGANIZER with mailto once somebody is invited', () => {
+    const ics = buildIcs({ ...base, attendees: [{ email: 'alice@example.com' }] });
+    expect(ics).toContain('ORGANIZER;CN=John Doe:mailto:john@example.com\r\n');
+  });
+
+  it('omits ORGANIZER on a solo event so calendar co-editors keep write access', () => {
+    expect(buildIcs(base)).not.toContain('ORGANIZER');
+    expect(buildAllDayIcs(base)).not.toContain('ORGANIZER');
+  });
+
+  it('defaults SEQUENCE to 0 and carries the given one', () => {
+    expect(buildIcs(base)).toContain('SEQUENCE:0\r\n');
+    expect(buildIcs({ ...base, sequence: 3 })).toContain('SEQUENCE:3\r\n');
+    expect(buildAllDayIcs({ ...base, sequence: 2 })).toContain('SEQUENCE:2\r\n');
   });
 
   it('includes ATTENDEE lines with RSVP=TRUE', () => {

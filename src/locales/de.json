@@ -45,7 +45,6 @@
     },
     "qrCameraDenied": "Kamerazugriff wurde verweigert. Aktivieren Sie ihn in den Geräteeinstellungen, um den QR-Code zu scannen.",
     "qrOpenSettings": "Einstellungen öffnen",
-    "qrHeaderTitle": "Nextcloud-QR scannen",
     "qrInvalidCode": "Kein gültiger Nextcloud-Login-QR-Code. Bitte erneut scannen.",
     "qrTryAgain": "Erneut versuchen",
     "qrHint": "Öffnen Sie Ihr Nextcloud-Dashboard → tippen Sie auf Ihren Avatar → „Per QR-Code anmelden“"
@@ -163,7 +162,6 @@
       "github": "Auf GitHub ansehen",
       "reportBug": "Fehler melden"
     },
-    "accountActive": "Aktiv",
     "notifications": {
       "title": "Benachrichtigungen",
       "liveActivity": "Live-Aktivität",
@@ -173,7 +171,6 @@
       "channelName": "Terminerinnerungen"
     },
     "alerts": {
-      "title": "Erinnerungen",
       "timed": "Standarderinnerung",
       "allDay": "Ganztägige Termine",
       "none": "Keine",
@@ -206,5 +203,16 @@
     "durationHour": "h",
     "durationMinute": "m",
     "emptyAgenda": "Keine anstehenden Termine"
+  },
+  "notifications": {
+    "lead": {
+      "now": "Jetzt",
+      "minutes": "in {{value}} Min.",
+      "hours": "in {{value}} Std.",
+      "hoursMinutes": "in {{value}} Std. {{minutes}}",
+      "days": "in {{value}} Tagen",
+      "today": "Heute",
+      "tomorrow": "Morgen"
+    }
   }
 }

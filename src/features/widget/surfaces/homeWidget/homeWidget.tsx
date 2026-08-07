@@ -1,6 +1,6 @@
-import type { AgendaSnapshot, WidgetSurface } from '../../core/types';
+import type { AgendaTimelineEntry, WidgetSurface } from '../../core/types';
 
-export const homeWidget: WidgetSurface<AgendaSnapshot> = {
+export const homeWidget: WidgetSurface<AgendaTimelineEntry[]> = {
   id: 'homeWidget',
   isSupported: () => false,
   update: async () => {},

@@ -178,6 +178,15 @@ export default function EventDetailScreen() {
   }
 
   if (!event) {
+    if (deleteMutation.isPending) {
+      return (
+        <ViewContainer>
+          <Stack flex vAlign="center" hAlign="center">
+            <Spinner size="large" />
+          </Stack>
+        </ViewContainer>
+      );
+    }
     return (
       <ViewContainer>
         <Stack flex vAlign="center" hAlign="center" gap={16}>
@@ -200,7 +209,7 @@ export default function EventDetailScreen() {
         <ScreenHeader
           onBack={() => goBackOrHome(router)}
           right={canEdit ? (
-            <IconButton variant="plain" size={40} onPress={handleEdit}>
+            <IconButton glass round size={40} onPress={handleEdit} accessibilityLabel={t('event.edit')}>
               <Pencil size={20} color={theme.colors.primary} />
             </IconButton>
           ) : undefined}

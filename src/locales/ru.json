@@ -45,7 +45,6 @@
     },
     "qrCameraDenied": "Доступ к камере запрещён. Включите его в настройках устройства, чтобы сканировать QR-код.",
     "qrOpenSettings": "Открыть настройки",
-    "qrHeaderTitle": "Сканировать QR Nextcloud",
     "qrInvalidCode": "Недействительный QR-код входа Nextcloud. Попробуйте отсканировать снова.",
     "qrTryAgain": "Повторить",
     "qrHint": "Откройте панель управления Nextcloud → нажмите на аватар → «Войти по QR-коду»"
@@ -163,7 +162,6 @@
       "github": "Открыть на GitHub",
       "reportBug": "Сообщить об ошибке"
     },
-    "accountActive": "Активный",
     "notifications": {
       "title": "Уведомления",
       "liveActivity": "Живая активность",
@@ -173,7 +171,6 @@
       "channelName": "Напоминания о событиях"
     },
     "alerts": {
-      "title": "Напоминания",
       "timed": "Напоминание по умолчанию",
       "allDay": "События на весь день",
       "none": "Нет",
@@ -206,5 +203,16 @@
     "durationHour": "ч",
     "durationMinute": "м",
     "emptyAgenda": "Нет предстоящих событий"
+  },
+  "notifications": {
+    "lead": {
+      "now": "Сейчас",
+      "minutes": "через {{value}} мин",
+      "hours": "через {{value}} ч",
+      "hoursMinutes": "через {{value}} ч {{minutes}}",
+      "days": "через {{value}} дн.",
+      "today": "Сегодня",
+      "tomorrow": "Завтра"
+    }
   }
 }

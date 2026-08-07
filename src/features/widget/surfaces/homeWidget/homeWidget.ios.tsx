@@ -4,7 +4,7 @@ import { background, containerBackground, cornerRadius, font, foregroundStyle, f
 import type { WidgetEnvironment } from 'expo-widgets';
 import { createWidget } from 'expo-widgets';
 
-import type { AgendaEventItem, AgendaSnapshot, WidgetSurface } from '../../core/types';
+import type { AgendaEventItem, AgendaSnapshot, AgendaTimelineEntry, WidgetSurface } from '../../core/types';
 import { openAppLink } from '../../core/types';
 
 const WIDGET_NAME = 'NextcloudCalendarWidget';
@@ -214,11 +214,12 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
 
 const widget = createWidget<{ snapshot: AgendaSnapshot | null }>(WIDGET_NAME, CalendarWidget);
 
-export const homeWidget: WidgetSurface<AgendaSnapshot> = {
+export const homeWidget: WidgetSurface<AgendaTimelineEntry[]> = {
   id: 'homeWidget',
   isSupported: () => true,
-  update: async (snapshot) => {
-    widget.updateSnapshot({ snapshot });
+  update: async (entries) => {
+    if (entries.length === 0) return;
+    widget.updateTimeline(entries.map((e) => ({ date: new Date(e.atIso), props: { snapshot: e.snapshot } })));
   },
   clear: async () => {
     widget.updateSnapshot({ snapshot: null });

@@ -45,7 +45,6 @@
     },
     "qrCameraDenied": "O acesso à câmara foi negado. Ative-o nas definições do dispositivo para ler o código QR.",
     "qrOpenSettings": "Abrir definições",
-    "qrHeaderTitle": "Ler QR do Nextcloud",
     "qrInvalidCode": "Não é um código QR de início de sessão válido do Nextcloud. Tente ler novamente.",
     "qrTryAgain": "Tentar novamente",
     "qrHint": "Abra o painel do Nextcloud → toque no seu avatar → \"Iniciar sessão via código QR\""
@@ -163,7 +162,6 @@
       "github": "Ver no GitHub",
       "reportBug": "Reportar um erro"
     },
-    "accountActive": "Ativa",
     "notifications": {
       "title": "Notificações",
       "liveActivity": "Atividade em direto",
@@ -173,7 +171,6 @@
       "channelName": "Alertas de eventos"
     },
     "alerts": {
-      "title": "Alertas",
       "timed": "Alerta predefinido",
       "allDay": "Eventos de dia inteiro",
       "none": "Nenhum",
@@ -206,5 +203,16 @@
     "durationHour": "h",
     "durationMinute": "m",
     "emptyAgenda": "Nenhum evento próximo"
+  },
+  "notifications": {
+    "lead": {
+      "now": "Agora",
+      "minutes": "em {{value}} min",
+      "hours": "em {{value}} h",
+      "hoursMinutes": "em {{value}} h {{minutes}}",
+      "days": "em {{value}} dias",
+      "today": "Hoje",
+      "tomorrow": "Amanhã"
+    }
   }
 }
