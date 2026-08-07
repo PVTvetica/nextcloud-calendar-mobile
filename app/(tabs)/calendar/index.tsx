@@ -1,9 +1,10 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useDeferredValue, useMemo, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';
-import { useRouter, useTheme } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { useCalendarStore } from '@/stores/calendarStore';
@@ -18,45 +19,20 @@ import { createNavigationGuard } from '@/utils/navigationGuard';
 import type { CalendarEvent } from '@/types';
 import { useCalendarNavigation } from '@/features/calendar/hooks/useCalendarNavigation';
 import { useCalendarData } from '@/features/calendar/hooks/useCalendarData';
-import { useCalendarLayout } from '@/features/calendar/hooks/useCalendarLayout';
 import { useCalendarDrawer } from '@/features/calendar/hooks/useCalendarDrawer';
 import { useZoom } from '@/features/calendar/hooks/useZoom';
 import { CalendarTopBar } from '@/features/calendar/components/CalendarTopBar';
 import { TimeGridView } from '@/features/calendar/components/TimeGridView';
-import { TimeGridEvent } from '@/features/calendar/components/TimeGridEvent';
 import { ViewLayer } from '@/features/calendar/components/ViewLayer';
 import { CalendarFab } from '@/features/calendar/components/CalendarFab';
 import { CalendarLoadingOverlay } from '@/features/calendar/components/CalendarLoadingOverlay';
 import { toGridEvents } from '@/features/calendar/utils/toGridEvents';
-import { isCalMode } from '@/features/calendar/constants';
-import { lightTheme, darkTheme, type ThemeColors } from '@/theme';
+import { isCalMode, type CalMode } from '@/features/calendar/constants';
 
 dayjs.extend(isoWeek);
 
-function makeBigCalendarTheme(colors: ThemeColors) {
-  return {
-    palette: {
-      primary: { main: colors.primary },
-      gray: {
-        '100': colors.borderSubtle,
-        '200': colors.border,
-        '500': colors.textSecondary,
-        '800': colors.text,
-      },
-    },
-    typography: {
-      xs: { fontSize: 12, lineHeight: 15 },
-      sm: { fontSize: 13, lineHeight: 17 },
-    },
-  };
-}
-
-const BIG_CAL_THEME_LIGHT = makeBigCalendarTheme(lightTheme.colors);
-const BIG_CAL_THEME_DARK = makeBigCalendarTheme(darkTheme.colors);
-
 export default function CalendarScreen() {
   const router = useRouter();
-  const theme = useTheme();
   const { t } = useTranslation();
 
   const weekStartsOn = useSettingsStore((s) => s.weekStartsOn);
@@ -65,44 +41,30 @@ export default function CalendarScreen() {
   const toggleCalendarVisibility = useCalendarStore((s) => s.toggleCalendarVisibility);
 
   const nav = useCalendarNavigation();
-  const { viewMode, date, fetchDate, agendaVisibleDate, navigateMonth, goToday } = nav;
+  const { viewMode, date, fetchDate, agendaVisibleDate } = nav;
 
   const deferredViewMode = useDeferredValue(viewMode);
-  const deferredCalDates = useDeferredValue(nav.calDates);
   const deferredDate = useDeferredValue(date);
   const deferredWeekStartsOn = useDeferredValue(weekStartsOn);
   const deferredIsCalendarMode = isCalMode(deferredViewMode);
 
-  const [todayPending, setTodayPending] = useState(false);
-  const handleToday = useCallback(() => {
-    setTodayPending(true);
-    goToday();
-  }, [goToday]);
-  useEffect(() => {
-    if (todayPending && date === deferredDate && nav.calDates === deferredCalDates) {
-      setTodayPending(false);
-    }
-  }, [todayPending, date, deferredDate, nav.calDates, deferredCalDates]);
-
-  const { hourRowHeight, calendarKey, pinchGesture } = useZoom();
+  const { hourRowHeight, pinchGesture } = useZoom();
   const { activeAccount, calendars, allEvents, showFullOverlay, showSmallLoader } = useCalendarData(fetchDate);
-  const { insets, onViewAreaLayout, heightFor, scrollOffset } = useCalendarLayout(allEvents, deferredWeekStartsOn, hourRowHeight);
+  const insets = useSafeAreaInsets();
   const drawer = useCalendarDrawer();
 
   const overlapMap = useMemo(() => computeOverlapMap(allEvents), [allEvents]);
   const calendarEvents = useMemo(() => toGridEvents(allEvents, overlapMap), [allEvents, overlapMap]);
 
-  // Temporary bridge for the new TimeGridView (single mode, single anchor date).
-  // Task 9 rewires navigation state (nav.anchorDate, per-mode all-day filtering, etc.)
-  // and this block goes away.
-  const calMode = isCalMode(deferredViewMode) ? deferredViewMode : 'week';
-  const allDayCalendarEvents = useMemo(() => allEvents.filter((e) => e.allDay), [allEvents]);
-  const initialScrollHour = useMemo(() => Math.max(0, new Date().getHours() - 1), []);
+  const allDayEvents = useMemo(() => allEvents.filter((e) => e.allDay), [allEvents]);
+  const nowHour = useMemo(() => Math.max(0, new Date().getHours() - 1), []);
 
   const navGuard = useRef(createNavigationGuard()).current;
 
-  const handlePressEvent = useCallback(
-    (event: any) => { navGuard(() => router.push(`/event/${encodeURIComponent(event._event.uid)}`)); },
+  const handlePressGridEvent = useCallback(
+    (event: { _event: CalendarEvent }) => {
+      navGuard(() => router.push(`/event/${encodeURIComponent(event._event.uid)}`));
+    },
     [router, navGuard]
   );
   const handlePressEventFromMonth = useCallback(
@@ -120,34 +82,11 @@ export default function CalendarScreen() {
         .activeOffsetX([-30, 30])
         .failOffsetY([-15, 15])
         .onEnd((e) => {
-          if (e.translationX < -50) scheduleOnRN(navigateMonth, 1);
-          else if (e.translationX > 50) scheduleOnRN(navigateMonth, -1);
+          if (e.translationX < -50) scheduleOnRN(nav.navigateMonth, 1);
+          else if (e.translationX > 50) scheduleOnRN(nav.navigateMonth, -1);
         }),
-    [navigateMonth]
+    [nav.navigateMonth]
   );
-
-  // Temporary bridge to the library's render prop; removed in Task 9 along with react-native-big-calendar.
-  const renderEvent = useCallback((event: any, touchableOpacityProps: any) => {
-    const { key } = touchableOpacityProps;
-    const libStyle = StyleSheet.flatten(touchableOpacityProps.style) as any;
-    return (
-      <TimeGridEvent
-        key={key}
-        event={event}
-        top={libStyle.top}
-        height={libStyle.height}
-        hourRowHeight={hourRowHeight}
-        onPress={handlePressEvent}
-      />
-    );
-  }, [hourRowHeight, handlePressEvent]);
-
-  const eventCellStyle = useCallback(
-    (event: any) => ({ backgroundColor: (event.color as string) || theme.colors.primary }),
-    [theme.colors.primary]
-  );
-
-  const bigCalendarTheme = theme.dark ? BIG_CAL_THEME_DARK : BIG_CAL_THEME_LIGHT;
 
   const isToday = viewMode === 'schedule'
     ? dayjs(agendaVisibleDate).isSame(dayjs(), 'day')
@@ -162,24 +101,20 @@ export default function CalendarScreen() {
     return monthYear;
   }, [date, agendaVisibleDate, viewMode, language, t]);
 
-
-  const calendarKeyFull = String(calendarKey);
-
   return (
     <ViewContainer>
       <CalendarTopBar
         headerTitle={headerTitle}
         isToday={isToday}
-        todayLoading={todayPending}
         viewMode={viewMode}
         onOpenDrawer={drawer.openDrawer}
-        onToday={handleToday}
+        onToday={nav.goToday}
         onSwitchMode={nav.switchMode}
       />
 
       <OfflineBanner />
 
-      <View style={styles.viewArea} onLayout={onViewAreaLayout}>
+      <View style={styles.viewArea}>
         <ViewLayer visible={deferredViewMode === 'month'}>
           <GestureDetector gesture={monthSwipeGesture}>
             <View style={styles.fill}>
@@ -208,18 +143,18 @@ export default function CalendarScreen() {
 
         <ViewLayer visible={deferredIsCalendarMode}>
           <TimeGridView
-            mode={calMode}
-            anchorDate={deferredDate}
+            mode={deferredViewMode as CalMode}
+            anchorDate={nav.anchorDate}
             activeDate={deferredDate}
             events={calendarEvents}
-            allDayEvents={allDayCalendarEvents}
+            allDayEvents={allDayEvents}
             hourRowHeight={hourRowHeight}
             weekStartsOn={deferredWeekStartsOn}
             pinchGesture={pinchGesture}
-            initialScrollHour={initialScrollHour}
-            onPageChange={nav.onSwipeEndHandlers[calMode]}
+            initialScrollHour={nowHour}
+            onPageChange={nav.onPageChange}
             onPressSlot={handlePressCell}
-            onPressEvent={handlePressEvent}
+            onPressEvent={handlePressGridEvent}
             onPressAllDayEvent={handlePressEventFromMonth}
           />
         </ViewLayer>

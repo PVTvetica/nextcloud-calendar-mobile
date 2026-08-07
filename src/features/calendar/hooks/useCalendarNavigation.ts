@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import { useCalendarStore } from '@/stores/calendarStore';
 import { trailingDebounce } from '@/utils/debounce';
 import type { AgendaViewHandle } from '@/features/calendar/components/AgendaView';
 import type { ViewMode } from '@/types';
-import { CAL_MODES, isCalMode, type CalMode } from '../constants';
+import { isCalMode } from '../constants';
 
 const FETCH_DATE_DEBOUNCE_MS = 300;
 
@@ -13,7 +13,8 @@ export function useCalendarNavigation() {
   const setViewMode = useCalendarStore((s) => s.setViewMode);
   const isCalendarMode = isCalMode(viewMode);
 
-  const [date, setDateState] = useState(new Date());
+  const [date, setDateState] = useState(() => new Date());
+  const [anchorDate, setAnchorDate] = useState(date);
   const [fetchDate, setFetchDate] = useState(date);
   const [agendaVisibleDate, setAgendaVisibleDate] = useState(date);
   const agendaRef = useRef<AgendaViewHandle>(null);
@@ -22,70 +23,43 @@ export function useCalendarNavigation() {
     trailingDebounce((d: Date) => setFetchDate(d), FETCH_DATE_DEBOUNCE_MS)
   ).current;
 
+  const dateRef = useRef(date); dateRef.current = date;
+  const viewModeRef = useRef(viewMode); viewModeRef.current = viewMode;
+  const agendaVisibleDateRef = useRef(agendaVisibleDate);
+  agendaVisibleDateRef.current = agendaVisibleDate;
+
+  /** A jump: move the view and re-anchor the pager on the target. */
   const setDate = useCallback((d: Date) => {
     fetchDebounce.cancel();
     setDateState(d);
+    setAnchorDate(d);
     setFetchDate(d);
   }, [fetchDebounce]);
 
-  const [calDates, setCalDates] = useState<Record<CalMode, Date>>(() => {
-    const now = new Date();
-    return { week: now, '3days': now, day: now };
-  });
-  const calInternalRef = useRef<Record<CalMode, Date>>({ ...calDates });
-
-  const [mountedCalModes, setMountedCalModes] = useState<Set<CalMode>>(
-    () => new Set([isCalendarMode ? (viewMode as CalMode) : 'week'])
-  );
-
-  const dateRef = useRef(date); dateRef.current = date;
-  const viewModeRef = useRef(viewMode); viewModeRef.current = viewMode;
-  const agendaVisibleDateRef = useRef(agendaVisibleDate); agendaVisibleDateRef.current = agendaVisibleDate;
+  /** A swipe: the anchor stays put so the pager keeps its index. */
+  const onPageChange = useCallback((d: Date) => {
+    setDateState(d);
+    fetchDebounce.call(d);
+  }, [fetchDebounce]);
 
   useEffect(() => { if (viewMode === 'schedule') setAgendaVisibleDate(date); }, [date, viewMode]);
 
-  useEffect(() => {
-    const handle = requestIdleCallback(() => {
-      setMountedCalModes((prev) =>
-        prev.has('week') && prev.has('3days') && prev.has('day')
-          ? prev
-          : new Set<CalMode>(CAL_MODES)
-      );
-    }, { timeout: 800 });
-    return () => cancelIdleCallback(handle);
-  }, []);
-
   const switchMode = useCallback((target: ViewMode) => {
-    const f = viewModeRef.current === 'schedule' ? agendaVisibleDateRef.current : dateRef.current;
-    if (isCalMode(target)) {
-      setMountedCalModes((prev) => (prev.has(target) ? prev : new Set(prev).add(target)));
-      if (!dayjs(calInternalRef.current[target]).isSame(f, 'day')) {
-        calInternalRef.current[target] = f;
-        setCalDates((prev) => ({ ...prev, [target]: f }));
-      }
-    }
-    if (target !== 'schedule' && !dayjs(f).isSame(dateRef.current, 'day')) setDate(f);
+    const focus = viewModeRef.current === 'schedule'
+      ? agendaVisibleDateRef.current
+      : dateRef.current;
+    if (target !== 'schedule') setDate(focus);
     setViewMode(target);
   }, [setViewMode, setDate]);
 
   const goToday = useCallback(() => {
     const now = new Date();
     setDate(now);
-    const vm = viewModeRef.current;
-    if (vm === 'schedule') {
+    if (viewModeRef.current === 'schedule') {
       setAgendaVisibleDate(now);
       agendaRef.current?.scrollToToday();
-    } else if (isCalMode(vm)) {
-      calInternalRef.current[vm] = now;
-      setCalDates((prev) => ({ ...prev, [vm]: now }));
     }
   }, [setDate]);
-
-  const onSwipeEndHandlers = useMemo<Record<CalMode, (d: Date) => void>>(() => ({
-    week: (d) => { calInternalRef.current.week = d; setDateState(d); fetchDebounce.call(d); },
-    '3days': (d) => { calInternalRef.current['3days'] = d; setDateState(d); fetchDebounce.call(d); },
-    day: (d) => { calInternalRef.current.day = d; setDateState(d); fetchDebounce.call(d); },
-  }), [fetchDebounce]);
 
   const navigateMonth = useCallback((dir: 1 | -1) => {
     setDate(dayjs(dateRef.current).add(dir, 'month').toDate());
@@ -95,16 +69,15 @@ export function useCalendarNavigation() {
     viewMode,
     isCalendarMode,
     date,
+    anchorDate,
     fetchDate,
     setDate,
     agendaVisibleDate,
     setAgendaVisibleDate,
     agendaRef,
-    calDates,
-    mountedCalModes,
     switchMode,
     goToday,
     navigateMonth,
-    onSwipeEndHandlers,
+    onPageChange,
   };
 }
