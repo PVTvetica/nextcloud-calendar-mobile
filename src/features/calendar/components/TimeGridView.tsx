@@ -4,7 +4,13 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // it in our own GestureDetector puts two NativeViewGestureHandlers on one view
 // and the inner one — which refuses interruption — never lets the scroll start.
 // One native handler, ours, composed with the pager via simultaneousGestures.
-import { View, ScrollView, StyleSheet } from 'react-native';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 import {
   Gesture,
   GestureDetector,
@@ -109,19 +115,37 @@ function TimeGridViewImpl({
   // activeDate lands inside the page the user is actually looking at, and
   // pageDates' week alignment normalises it regardless of which day within
   // the page activeDate happens to be — exact for all three modes.
-  // Sized on the tallest of the three buffered pages, not just the visible one.
-  // activeDate only catches up once a swipe settles, so a header sized for the
-  // outgoing page alone would be too short for the incoming page's chips for the
-  // whole duration of the gesture — they would spill over the grid. Over-sizing
-  // is invisible: the header is opaque and the grid flows under it.
-  const headerHeight = useMemo(() => {
-    let tallest = 0;
-    for (const index of [-1, 0, 1]) {
-      const band = allDayRowHeight(pageDates(activeDate, index, mode, weekStartsOn), allDayEvents);
-      if (band > tallest) tallest = band;
-    }
-    return DAY_HEADER_HEIGHT + tallest;
-  }, [activeDate, mode, weekStartsOn, allDayEvents]);
+  // Sized on the settled page only. activeDate catches up when a swipe lands, so
+  // the band resizes once on arrival rather than pre-empting the tallest of the
+  // buffered pages; mid-swipe overflow is clipped by the header's overflow:hidden.
+  const headerHeight = useMemo(
+    () =>
+      DAY_HEADER_HEIGHT +
+      allDayRowHeight(pageDates(activeDate, 0, mode, weekStartsOn), allDayEvents),
+    [activeDate, mode, weekStartsOn, allDayEvents]
+  );
+
+  // The content is inset by the FULL header height so 00:00 sits just below the
+  // band and stays reachable. On its own that would shove every hour line down
+  // by the band's height whenever it appears — so the same frame scrolls by the
+  // delta, cancelling the shift exactly. Net effect: hour lines never move, the
+  // band just grows or shrinks, and the top of the day is never trapped under
+  // the header.
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollY = useRef(initialScrollHour * hourRowHeight);
+  const prevHeaderHeight = useRef(headerHeight);
+  useEffect(() => {
+    const delta = headerHeight - prevHeaderHeight.current;
+    prevHeaderHeight.current = headerHeight;
+    if (delta === 0) return;
+    const y = Math.max(0, scrollY.current + delta);
+    scrollY.current = y;
+    scrollRef.current?.scrollTo({ y, animated: false });
+  }, [headerHeight]);
+
+  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    scrollY.current = e.nativeEvent.contentOffset.y;
+  }, []);
 
   // The anchor only moves on a mode switch now, and the span changed with it,
   // so every cached page is invalid anyway: land on page 0 without animating.
@@ -191,9 +215,12 @@ function TimeGridViewImpl({
             every such swipe, which reads as the grid jumping back toward 00:00. */}
         <GestureDetector gesture={nativeScroll}>
           <ScrollView
+            ref={scrollRef}
             style={styles.fill}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={{ paddingTop: headerHeight }}
             contentOffset={{ x: 0, y: initialScrollHour * hourRowHeight }}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
           >
             <View style={[styles.gridRow, { height: gridHeight }]}>
@@ -252,9 +279,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 2,
     zIndex: 20,
+    // Clips the incoming page's chips mid-swipe, while the row is still sized
+    // for the outgoing page. The resize lands when the swipe does.
+    overflow: 'hidden',
   },
   corner: { width: HOUR_RAIL_WIDTH, zIndex: 10 },
   gridRow: { flexDirection: 'row' },
-  // Constant, deliberately: see the comment at the ScrollView.
-  scrollContent: { paddingTop: DAY_HEADER_HEIGHT },
 });
