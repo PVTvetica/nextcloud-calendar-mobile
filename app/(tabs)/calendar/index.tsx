@@ -234,7 +234,7 @@ export default function CalendarScreen() {
         hiddenCalendarIds={hiddenCalendarIds}
         toggleCalendarVisibility={toggleCalendarVisibility}
         onClose={drawer.closeDrawer}
-        onNavigateSettings={() => { drawer.closeDrawer(); router.push('/(tabs)/settings'); }}
+        onNavigateSettings={() => { router.push('/(tabs)/settings'); drawer.closeDrawer(); }}
       />
     </ViewContainer>
   );

@@ -12,7 +12,7 @@ export function useCalendarDrawer() {
     drawerAnimation.current?.stop();
     setDrawerOpen(true);
     drawerAnimation.current = Animated.parallel([
-      Animated.spring(drawerAnim, { toValue: 0, useNativeDriver: true, damping: 20, stiffness: 200, mass: 0.8 }),
+      Animated.timing(drawerAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
       Animated.timing(overlayAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
     ]);
     drawerAnimation.current.start();
@@ -20,11 +20,12 @@ export function useCalendarDrawer() {
 
   const closeDrawer = useCallback(() => {
     drawerAnimation.current?.stop();
+    setDrawerOpen(false);
     drawerAnimation.current = Animated.parallel([
-      Animated.spring(drawerAnim, { toValue: -DRAWER_WIDTH, useNativeDriver: true, damping: 20, stiffness: 200, mass: 0.8 }),
+      Animated.timing(drawerAnim, { toValue: -DRAWER_WIDTH, duration: 250, useNativeDriver: true }),
       Animated.timing(overlayAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
     ]);
-    drawerAnimation.current.start(({ finished }) => { if (finished) setDrawerOpen(false); });
+    drawerAnimation.current.start();
   }, [drawerAnim, overlayAnim]);
 
   return { drawerOpen, drawerAnim, overlayAnim, openDrawer, closeDrawer };
