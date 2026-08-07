@@ -119,18 +119,21 @@ export default function CalendarScreen() {
     [navigateMonth]
   );
 
+  // Temporary bridge to the library's render prop; removed in Task 9 along with react-native-big-calendar.
   const renderEvent = useCallback((event: any, touchableOpacityProps: any) => {
-    const { key, ...touchableProps } = touchableOpacityProps;
+    const { key } = touchableOpacityProps;
+    const libStyle = StyleSheet.flatten(touchableOpacityProps.style) as any;
     return (
       <TimeGridEvent
         key={key}
         event={event}
-        touchableProps={touchableProps}
+        top={libStyle.top}
+        height={libStyle.height}
         hourRowHeight={hourRowHeight}
-        primaryColor={theme.colors.primary}
+        onPress={handlePressEvent}
       />
     );
-  }, [hourRowHeight, theme.colors.primary]);
+  }, [hourRowHeight, handlePressEvent]);
 
   const eventCellStyle = useCallback(
     (event: any) => ({ backgroundColor: (event.color as string) || theme.colors.primary }),

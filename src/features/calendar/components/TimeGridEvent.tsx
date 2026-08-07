@@ -2,12 +2,14 @@ import { memo } from 'react';
 import { TouchableOpacity, StyleSheet, type ViewStyle } from 'react-native';
 import dayjs from 'dayjs';
 import { Typography } from '@/ui/components';
+import type { GridEvent } from '../utils/toGridEvents';
 
 interface Props {
-  event: any;
-  touchableProps: any;
+  event: GridEvent;
+  top: string;
+  height: string;
   hourRowHeight: number;
-  primaryColor: string;
+  onPress: (event: GridEvent) => void;
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
@@ -29,36 +31,30 @@ function contrastFor(hex: string) {
   }
 }
 
-function TimeGridEventImpl({ event, touchableProps, hourRowHeight, primaryColor }: Props) {
+function TimeGridEventImpl({ event, top, height, hourRowHeight, onPress }: Props) {
   const scale = Math.min(Math.max((hourRowHeight - 30) / 170, 0), 1);
   const titleSize = Math.round(11 + scale * 4);
   const timeSize = Math.round(9 + scale * 2);
   const pad = Math.round(2 + scale * 4);
-  const color = event.color ?? primaryColor;
+  const color = event.color;
   const ink = contrastFor(color);
   const durationMin = dayjs(event.end).diff(event.start, 'minute');
 
-  const leftPct: number = event._leftPct ?? 0;
-  const rightPx: number = event._rightPx ?? 3;
-  const zIdx: number = event._zIndex ?? 100;
-
-  const libStyle = StyleSheet.flatten(touchableProps.style) as any;
-
   const positionStyle: ViewStyle = {
     position: 'absolute',
-    height: libStyle.height,
-    top: libStyle.top,
-    marginTop: libStyle.marginTop ?? 2,
-    zIndex: zIdx,
-    left: `${leftPct}%` as any,
-    right: rightPx,
-    paddingLeft: leftPct > 0 ? 2 : 3,
+    top: top as ViewStyle['top'],
+    height: height as ViewStyle['height'],
+    marginTop: 2,
+    zIndex: event._zIndex,
+    left: `${event._leftPct}%` as ViewStyle['left'],
+    right: event._rightPx,
+    paddingLeft: event._leftPct > 0 ? 2 : 3,
     paddingRight: 3,
   };
 
   return (
     <TouchableOpacity
-      {...touchableProps}
+      onPress={() => onPress(event)}
       style={[positionStyle, styles.card, { backgroundColor: color, borderColor: ink.border, paddingVertical: Math.max(pad - 1, 1) }]}
     >
       {durationMin < 30 ? (
