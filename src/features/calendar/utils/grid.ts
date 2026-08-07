@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import type { CalMode } from '../constants';
 import type { GridEvent } from './toGridEvents';
+import type { CalendarEvent } from '@/types';
 
 export const HOUR_RAIL_WIDTH = 50;
 export const DAY_HEADER_HEIGHT = 66;
@@ -110,4 +111,23 @@ export function buildDayIndex(events: GridEvent[]): Map<string, GridEvent[]> {
   }
 
   return index;
+}
+
+export function allDayEventsForDay(date: Date, allDayEvents: CalendarEvent[]): CalendarEvent[] {
+  const day = dayjs(date).startOf('day');
+  return allDayEvents.filter((event) => {
+    const start = dayjs(event.dtstart).startOf('day');
+    const end = dayjs(event.dtend).startOf('day');
+    return !day.isBefore(start) && !day.isAfter(end);
+  });
+}
+
+export function allDayRowHeight(dates: Date[], allDayEvents: CalendarEvent[]): number {
+  if (allDayEvents.length === 0) return 0;
+  let maxPerDay = 0;
+  for (const date of dates) {
+    const count = allDayEventsForDay(date, allDayEvents).length;
+    if (count > maxPerDay) maxPerDay = count;
+  }
+  return maxPerDay === 0 ? 0 : maxPerDay * ALL_DAY_ROW_HEIGHT + ALL_DAY_PAD;
 }

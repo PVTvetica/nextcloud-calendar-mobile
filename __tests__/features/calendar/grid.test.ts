@@ -1,4 +1,6 @@
 import {
+  allDayEventsForDay,
+  allDayRowHeight,
   buildDayIndex,
   daysPerPage,
   dayKey,
@@ -243,5 +245,69 @@ describe('buildDayIndex', () => {
     expect(slice._leftPct).toBe(50);
     expect(slice._rightPx).toBe(0);
     expect(slice._zIndex).toBe(101);
+  });
+});
+
+const week = [
+  new Date(2026, 7, 3), new Date(2026, 7, 4), new Date(2026, 7, 5), new Date(2026, 7, 6),
+  new Date(2026, 7, 7), new Date(2026, 7, 8), new Date(2026, 7, 9),
+];
+
+const allDay = (uid: string, from: Date, to: Date) =>
+  domainEvent({ uid, allDay: true, dtstart: from, dtend: to });
+
+describe('allDayEventsForDay', () => {
+  it('matches the day the event starts on', () => {
+    const e = allDay('a', new Date(2026, 7, 5), new Date(2026, 7, 5));
+    expect(allDayEventsForDay(new Date(2026, 7, 5), [e])).toHaveLength(1);
+    expect(allDayEventsForDay(new Date(2026, 7, 6), [e])).toHaveLength(0);
+  });
+
+  it('matches every day a multi-day event spans, inclusive', () => {
+    const e = allDay('b', new Date(2026, 7, 4), new Date(2026, 7, 6));
+    expect(allDayEventsForDay(new Date(2026, 7, 4), [e])).toHaveLength(1);
+    expect(allDayEventsForDay(new Date(2026, 7, 5), [e])).toHaveLength(1);
+    expect(allDayEventsForDay(new Date(2026, 7, 6), [e])).toHaveLength(1);
+    expect(allDayEventsForDay(new Date(2026, 7, 7), [e])).toHaveLength(0);
+  });
+
+  it('ignores the time of day', () => {
+    const e = allDay('c', new Date(2026, 7, 5, 23, 59), new Date(2026, 7, 5, 23, 59));
+    expect(allDayEventsForDay(new Date(2026, 7, 5, 0, 0), [e])).toHaveLength(1);
+  });
+});
+
+describe('allDayRowHeight', () => {
+  it('is zero with no all-day events', () => {
+    expect(allDayRowHeight(week, [])).toBe(0);
+  });
+
+  it('is one row plus padding for a single event', () => {
+    const e = allDay('a', new Date(2026, 7, 5), new Date(2026, 7, 5));
+    expect(allDayRowHeight(week, [e])).toBe(26 + 4);
+  });
+
+  it('stays one row when three events fall on different days', () => {
+    const events = [
+      allDay('a', new Date(2026, 7, 4), new Date(2026, 7, 4)),
+      allDay('b', new Date(2026, 7, 5), new Date(2026, 7, 5)),
+      allDay('c', new Date(2026, 7, 6), new Date(2026, 7, 6)),
+    ];
+    expect(allDayRowHeight(week, events)).toBe(26 + 4);
+  });
+
+  it('grows to the busiest day when events stack', () => {
+    const events = [
+      allDay('a', new Date(2026, 7, 5), new Date(2026, 7, 5)),
+      allDay('b', new Date(2026, 7, 5), new Date(2026, 7, 5)),
+      allDay('c', new Date(2026, 7, 5), new Date(2026, 7, 5)),
+      allDay('d', new Date(2026, 7, 6), new Date(2026, 7, 6)),
+    ];
+    expect(allDayRowHeight(week, events)).toBe(3 * 26 + 4);
+  });
+
+  it('is zero when every all-day event falls outside the page', () => {
+    const e = allDay('a', new Date(2026, 8, 20), new Date(2026, 8, 20));
+    expect(allDayRowHeight(week, [e])).toBe(0);
   });
 });
