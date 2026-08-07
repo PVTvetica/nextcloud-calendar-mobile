@@ -1,6 +1,8 @@
 import {
   daysPerPage,
   dayKey,
+  eventPositionStyle,
+  nowTopPct,
   pageDates,
   pageFocusDate,
 } from '@/features/calendar/utils/grid';
@@ -91,5 +93,45 @@ describe('pageFocusDate', () => {
 
   it('keeps the anchor on index 0 in day mode', () => {
     expect(pageFocusDate(friday, 0, 'day', 1)).toEqual(friday);
+  });
+});
+
+const pct = (s: string) => Number.parseFloat(s.replace('%', ''));
+
+describe('eventPositionStyle', () => {
+  it('places a midnight-to-1am event at the top with 1/24 of the height', () => {
+    const s = eventPositionStyle(new Date(2026, 7, 7, 0, 0), new Date(2026, 7, 7, 1, 0));
+    expect(pct(s.top)).toBeCloseTo(0, 6);
+    expect(pct(s.height)).toBeCloseTo((100 * 60) / 1440, 6);
+  });
+
+  it('places a 09:30-10:15 event by minutes from midnight', () => {
+    const s = eventPositionStyle(new Date(2026, 7, 7, 9, 30), new Date(2026, 7, 7, 10, 15));
+    expect(pct(s.top)).toBeCloseTo((100 * 570) / 1440, 6);
+    expect(pct(s.height)).toBeCloseTo((100 * 45) / 1440, 6);
+  });
+
+  it('keeps a 5-minute event proportionally small rather than clamping it', () => {
+    const s = eventPositionStyle(new Date(2026, 7, 7, 14, 0), new Date(2026, 7, 7, 14, 5));
+    expect(pct(s.height)).toBeCloseTo((100 * 5) / 1440, 6);
+  });
+
+  it('lets an event ending at midnight reach the bottom', () => {
+    const s = eventPositionStyle(new Date(2026, 7, 7, 23, 0), new Date(2026, 7, 8, 0, 0));
+    expect(pct(s.top)).toBeCloseTo((100 * 1380) / 1440, 6);
+    expect(pct(s.top) + pct(s.height)).toBeCloseTo(100, 6);
+  });
+
+  it('returns percentage strings', () => {
+    const s = eventPositionStyle(new Date(2026, 7, 7, 8, 0), new Date(2026, 7, 7, 9, 0));
+    expect(s.top.endsWith('%')).toBe(true);
+    expect(s.height.endsWith('%')).toBe(true);
+  });
+});
+
+describe('nowTopPct', () => {
+  it('is 0 at midnight and 50 at noon', () => {
+    expect(nowTopPct(new Date(2026, 7, 7, 0, 0))).toBeCloseTo(0, 6);
+    expect(nowTopPct(new Date(2026, 7, 7, 12, 0))).toBeCloseTo(50, 6);
   });
 });

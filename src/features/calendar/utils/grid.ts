@@ -54,3 +54,21 @@ export function pageFocusDate(
   const anchorKey = dayKey(anchor);
   return dates.some((d) => dayKey(d) === anchorKey) ? anchor : dates[0];
 }
+
+const DAY_MINUTES = 1440;
+
+function minutesFromMidnight(d: Date): number {
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+export function nowTopPct(now: Date): number {
+  return (100 * minutesFromMidnight(now)) / DAY_MINUTES;
+}
+
+export function eventPositionStyle(start: Date, end: Date): { top: string; height: string } {
+  const durationInMinutes = dayjs(end).diff(start, 'minute');
+  return {
+    top: `${nowTopPct(start)}%`,
+    height: `${100 * (1 / DAY_MINUTES) * durationInMinutes}%`,
+  };
+}
