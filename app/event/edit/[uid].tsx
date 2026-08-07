@@ -102,16 +102,7 @@ export default function EditEventScreen() {
   return (
     <ViewContainer>
       <SafeAreaView style={styles.flex}>
-        <ScreenHeader
-          title={`${t('event.editEvent')}${scopeLabel}`}
-          left={
-            <Button
-              variant="link" size="small" alignment="start"
-              title={t('common.cancel')}
-              onPress={() => router.back()}
-            />
-          }
-        />
+        <ScreenHeader title={`${t('event.editEvent')}${scopeLabel}`} onBack={() => router.back()} />
         <EventForm
           calendars={calendars}
           organizerEmail={organizerEmail}

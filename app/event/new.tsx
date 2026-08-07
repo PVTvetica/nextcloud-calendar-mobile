@@ -8,7 +8,7 @@ import { useCalendars } from '@/hooks/useCalendars';
 import { useCreateEvent } from '@/features/event/hooks/useMutateEvent';
 import { useAccountStore } from '@/stores/accountStore';
 import { EventForm } from '@/features/event/components/EventForm';
-import { ViewContainer, Stack, Typography, Button, ScreenHeader } from '@/ui/components';
+import { ViewContainer, Stack, Typography, ScreenHeader } from '@/ui/components';
 import type { CreateEventInput } from '@/types';
 
 export default function NewEventScreen() {
@@ -50,16 +50,7 @@ export default function NewEventScreen() {
   return (
     <ViewContainer>
       <SafeAreaView style={styles.flex}>
-        <ScreenHeader
-          title={t('event.newEvent')}
-          left={
-            <Button
-              variant="link" size="small" alignment="start"
-              title={t('common.cancel')}
-              onPress={() => router.back()}
-            />
-          }
-        />
+        <ScreenHeader title={t('event.newEvent')} onBack={() => router.back()} />
         <EventForm
           calendars={calendars}
           defaultDate={defaultDate}

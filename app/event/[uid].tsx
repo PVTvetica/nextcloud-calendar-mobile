@@ -200,7 +200,7 @@ export default function EventDetailScreen() {
         <ScreenHeader
           onBack={() => router.back()}
           right={canEdit ? (
-            <IconButton variant="plain" size={40} onPress={handleEdit}>
+            <IconButton glass round size={40} onPress={handleEdit} accessibilityLabel={t('event.edit')}>
               <Pencil size={20} color={theme.colors.primary} />
             </IconButton>
           ) : undefined}

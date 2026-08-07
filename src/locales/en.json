@@ -45,7 +45,6 @@
     },
     "qrCameraDenied": "Camera access is denied. Enable it in your device settings to scan the QR code.",
     "qrOpenSettings": "Open Settings",
-    "qrHeaderTitle": "Scan Nextcloud QR",
     "qrInvalidCode": "Not a valid Nextcloud login QR code. Try scanning again.",
     "qrTryAgain": "Try Again",
     "qrHint": "Open your Nextcloud dashboard → tap your avatar → \"Log in via QR code\""
@@ -163,7 +162,6 @@
       "github": "View on GitHub",
       "reportBug": "Report a Bug"
     },
-    "accountActive": "Active",
     "notifications": {
       "title": "Notifications",
       "liveActivity": "Live activity",
@@ -173,7 +171,6 @@
       "channelName": "Event alerts"
     },
     "alerts": {
-      "title": "Alerts",
       "timed": "Default alert",
       "allDay": "All-day events",
       "none": "None",
