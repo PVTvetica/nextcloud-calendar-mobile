@@ -76,11 +76,8 @@ function TimeGridViewImpl({
     };
   }, [anchorDate, mode, weekStartsOn]);
 
-  const activeDates = useMemo(
-    () => pageDates(anchorDate, 0, mode, weekStartsOn),
-    [anchorDate, mode, weekStartsOn]
-  );
-  const headerHeight = DAY_HEADER_HEIGHT + allDayRowHeight(activeDates, allDayEvents);
+  const headerHeight =
+    DAY_HEADER_HEIGHT + allDayRowHeight(datesForIndex(0), allDayEvents);
 
   // A new anchor (Today, a date picked elsewhere) or a new mode resets to page 0.
   useEffect(() => {
@@ -132,6 +129,7 @@ function TimeGridViewImpl({
           <InfinitePager
             style={styles.fill}
             pageWrapperStyle={styles.fill}
+            height={headerHeight}
             renderPage={renderHeaderPage}
             syncNode={syncNode}
             gesturesDisabled

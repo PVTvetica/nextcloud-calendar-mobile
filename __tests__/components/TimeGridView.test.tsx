@@ -104,4 +104,23 @@ describe('TimeGridView', () => {
     const { getByTestId } = render(view({ activeDate: new Date(2026, 7, 5) }));
     expect(getByTestId('day-highlight-2026-08-05')).toBeTruthy();
   });
+
+  // Regression test for the datesForIndex cache (see TimeGridView.tsx): pages are
+  // cached by index and must be invalidated when anchorDate/mode/weekStartsOn
+  // change. The pager mock always renders index 0, so a stale cache would keep
+  // showing dayA's highlight after rerendering with dayB — this would only fail
+  // if the cache leaked across the anchorDate change.
+  it('drops the stale page cache and shows the new dates after an anchorDate change', () => {
+    const dayA = new Date(2026, 7, 7);
+    const dayB = new Date(2026, 7, 21);
+    const { getByTestId, queryByTestId, rerender } = render(
+      view({ mode: 'day', anchorDate: dayA, activeDate: dayA })
+    );
+    expect(getByTestId('day-highlight-2026-08-07')).toBeTruthy();
+
+    rerender(view({ mode: 'day', anchorDate: dayB, activeDate: dayB }));
+
+    expect(queryByTestId('day-highlight-2026-08-07')).toBeNull();
+    expect(getByTestId('day-highlight-2026-08-21')).toBeTruthy();
+  });
 });
