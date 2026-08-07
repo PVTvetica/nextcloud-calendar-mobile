@@ -172,6 +172,8 @@ function TimeGridViewImpl({
 
   // The anchor only moves on a mode switch now, and the span changed with it,
   // so every cached page is invalid anyway: land on page 0 without animating.
+  /** Entry page for a re-anchor slide: +1, -1, or null for an instant land. */
+  const pendingSlide = useRef<number | null>(null);
   const firstAnchorReset = useRef(true);
   // useLayoutEffect, not useEffect: re-anchoring rebuilds datesForIndex while
   // the pager is still sitting on the old index, so the render that carries the
@@ -185,8 +187,13 @@ function TimeGridViewImpl({
       firstAnchorReset.current = false;
       return;
     }
-    setSettledIndex(0);
-    pagerRef.current?.setPage(0, { animated: false });
+    // Land one page off the target when a slide was requested, so the last leg
+    // can animate; handlePageChange finishes it once the pager's own index has
+    // caught up. Animating straight from the old index would cross unmounted
+    // pages, and animating from here would race that index update.
+    const entry = pendingSlide.current;
+    setSettledIndex(entry ?? 0);
+    pagerRef.current?.setPage(entry ?? 0, { animated: false });
   }, [localAnchor, mode]);
 
   /**
@@ -219,12 +226,25 @@ function TimeGridViewImpl({
       pagerRef.current?.setPage(target, { animated: true });
       return;
     }
-    // Re-anchor; the [localAnchor, mode] effect above lands on page 0.
+    // Re-anchor, arriving from the side the user came from so the last page
+    // still slides. The layout effect above lands on that neighbour, and
+    // handlePageChange animates the final page once the pager has settled
+    // there. Coming back from the future enters from page +1, and vice versa.
+    pendingSlide.current = target > from ? -1 : 1;
     setLocalAnchor(jump.target);
   }, [jump]);
 
   const handlePageChange = useCallback(
     (index: number) => {
+      // The pager has settled on the entry page of a re-anchor: its own index
+      // is now in step with the translate, so the final page can animate
+      // without crossing anything unmounted.
+      if (pendingSlide.current !== null && index === pendingSlide.current) {
+        pendingSlide.current = null;
+        setSettledIndex(0);
+        pagerRef.current?.setPage(0, { animated: true });
+        return;
+      }
       // Size the band from the settled page right away rather than waiting for
       // the deferred activeDate to come back around.
       setSettledIndex(index);
