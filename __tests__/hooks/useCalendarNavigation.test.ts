@@ -5,12 +5,6 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
 
-beforeAll(() => {
-  (globalThis as any).requestIdleCallback = (cb: any) =>
-    setTimeout(() => cb({ didTimeout: false, timeRemaining: () => 0 }), 0);
-  (globalThis as any).cancelIdleCallback = (id: any) => clearTimeout(id);
-});
-
 describe('useCalendarNavigation', () => {
   beforeEach(() => { jest.useFakeTimers(); });
   afterEach(() => { jest.useRealTimers(); });

@@ -47,6 +47,10 @@ export default function CalendarScreen() {
   const deferredDate = useDeferredValue(date);
   const deferredWeekStartsOn = useDeferredValue(weekStartsOn);
   const deferredIsCalendarMode = isCalMode(deferredViewMode);
+  // TimeGridView stays mounted under ViewLayer (opacity/display toggling, not
+  // unmounting) so it keeps receiving `mode` while month/schedule are active;
+  // guard explicitly rather than casting a non-CalMode past the type checker.
+  const calMode: CalMode = isCalMode(deferredViewMode) ? deferredViewMode : 'week';
 
   const { hourRowHeight, pinchGesture } = useZoom();
   const { activeAccount, calendars, allEvents, showFullOverlay, showSmallLoader } = useCalendarData(fetchDate);
@@ -143,7 +147,7 @@ export default function CalendarScreen() {
 
         <ViewLayer visible={deferredIsCalendarMode}>
           <TimeGridView
-            mode={deferredViewMode as CalMode}
+            mode={calMode}
             anchorDate={nav.anchorDate}
             activeDate={deferredDate}
             events={calendarEvents}
