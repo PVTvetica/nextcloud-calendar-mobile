@@ -96,11 +96,19 @@ function TimeGridViewImpl({
   // activeDate lands inside the page the user is actually looking at, and
   // pageDates' week alignment normalises it regardless of which day within
   // the page activeDate happens to be — exact for all three modes.
-  const visibleDates = useMemo(
-    () => pageDates(activeDate, 0, mode, weekStartsOn),
-    [activeDate, mode, weekStartsOn]
-  );
-  const headerHeight = DAY_HEADER_HEIGHT + allDayRowHeight(visibleDates, allDayEvents);
+  // Sized on the tallest of the three buffered pages, not just the visible one.
+  // activeDate only catches up once a swipe settles, so a header sized for the
+  // outgoing page alone would be too short for the incoming page's chips for the
+  // whole duration of the gesture — they would spill over the grid. Over-sizing
+  // is invisible: the header is opaque and the grid flows under it.
+  const headerHeight = useMemo(() => {
+    let tallest = 0;
+    for (const index of [-1, 0, 1]) {
+      const band = allDayRowHeight(pageDates(activeDate, index, mode, weekStartsOn), allDayEvents);
+      if (band > tallest) tallest = band;
+    }
+    return DAY_HEADER_HEIGHT + tallest;
+  }, [activeDate, mode, weekStartsOn, allDayEvents]);
 
   // A new anchor (Today, a date picked elsewhere) or a new mode resets to page 0.
   useEffect(() => {
@@ -143,14 +151,18 @@ function TimeGridViewImpl({
   return (
     <GestureDetector gesture={pinchGesture}>
       <View style={styles.fill}>
-        {/* The scroll fills the whole area and the header floats over it, so a
-            change in all-day row count only shifts the content inset — it never
-            reflows or remounts the grid underneath. Grid content slides under
-            the header, which is opaque. */}
+        {/* The scroll fills the whole area and the opaque header floats over it.
+            The content inset is the FIXED part of the header only (the day-number
+            row); the variable all-day band overlays the top of the grid instead of
+            displacing it. That is what Google Calendar does — swiping onto a week
+            that has all-day events leaves every hour line at the same pixel, the
+            header simply covers more of the grid. Insetting by the full header
+            height instead would shove the content down by the band's height on
+            every such swipe, which reads as the grid jumping back toward 00:00. */}
         <GestureDetector gesture={nativeScroll}>
           <ScrollView
             style={styles.fill}
-            contentContainerStyle={{ paddingTop: headerHeight }}
+            contentContainerStyle={styles.scrollContent}
             contentOffset={{ x: 0, y: initialScrollHour * hourRowHeight }}
             showsVerticalScrollIndicator={false}
           >
@@ -213,4 +225,6 @@ const styles = StyleSheet.create({
   },
   corner: { width: HOUR_RAIL_WIDTH, zIndex: 10 },
   gridRow: { flexDirection: 'row' },
+  // Constant, deliberately: see the comment at the ScrollView.
+  scrollContent: { paddingTop: DAY_HEADER_HEIGHT },
 });
