@@ -82,8 +82,9 @@ function alarmLines(alarmMinutes?: number): string[] {
   ];
 }
 
-function organizerLine(name: string, email: string): string {
-  return `ORGANIZER;CN=${name}:mailto:${email}`;
+function schedulingLines(name: string, email: string, attendees: Attendee[]): string[] {
+  if (attendees.length === 0) return [];
+  return [`ORGANIZER;CN=${name}:mailto:${email}`, ...attendeeLines(attendees)];
 }
 
 function attendeeLines(attendees: Attendee[]): string[] {
@@ -120,20 +121,21 @@ export interface BuildIcsParams {
   timezone: string;
   rrule?: RecurrenceRule;
   alarmMinutes?: number;
+  sequence?: number;
 }
 
 export function buildIcs(params: BuildIcsParams): string {
-  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, timezone, rrule, alarmMinutes } = params;
+  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, timezone, rrule, alarmMinutes, sequence = 0 } = params;
 
   return serialize([
     `UID:${uid}`,
     `DTSTAMP:${utcStamp(new Date())}`,
+    `SEQUENCE:${sequence}`,
     `DTSTART;TZID=${timezone}:${localStamp(dtstart, timezone)}`,
     `DTEND;TZID=${timezone}:${localStamp(dtend, timezone)}`,
     ...textLines(summary, description, location),
     ...(rrule ? [rruleLine(rrule)] : []),
-    organizerLine(organizerName, organizerEmail),
-    ...attendeeLines(attendees),
+    ...schedulingLines(organizerName, organizerEmail, attendees),
     ...alarmLines(alarmMinutes),
   ]);
 }
@@ -141,34 +143,34 @@ export function buildIcs(params: BuildIcsParams): string {
 export type BuildAllDayIcsParams = Omit<BuildIcsParams, 'timezone'>;
 
 export function buildAllDayIcs(params: BuildAllDayIcsParams): string {
-  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, rrule, alarmMinutes } = params;
+  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, rrule, alarmMinutes, sequence = 0 } = params;
   const endExclusive = new Date(dtend.getFullYear(), dtend.getMonth(), dtend.getDate() + 1);
 
   return serialize([
     `UID:${uid}`,
     `DTSTAMP:${utcStamp(new Date())}`,
+    `SEQUENCE:${sequence}`,
     `DTSTART;VALUE=DATE:${dateStamp(dtstart)}`,
     `DTEND;VALUE=DATE:${dateStamp(endExclusive)}`,
     ...textLines(summary, description, location),
     ...(rrule ? [rruleLine(rrule)] : []),
-    organizerLine(organizerName, organizerEmail),
-    ...attendeeLines(attendees),
+    ...schedulingLines(organizerName, organizerEmail, attendees),
     ...alarmLines(alarmMinutes),
   ]);
 }
 
 export function buildExceptionIcs(params: BuildIcsParams & { recurrenceId: Date }): string {
-  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, timezone, recurrenceId, alarmMinutes } = params;
+  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, timezone, recurrenceId, alarmMinutes, sequence = 0 } = params;
 
   return serialize([
     `UID:${uid}`,
     `DTSTAMP:${utcStamp(new Date())}`,
+    `SEQUENCE:${sequence}`,
     `RECURRENCE-ID;TZID=${timezone}:${localStamp(recurrenceId, timezone)}`,
     `DTSTART;TZID=${timezone}:${localStamp(dtstart, timezone)}`,
     `DTEND;TZID=${timezone}:${localStamp(dtend, timezone)}`,
     ...textLines(summary, description, location),
-    organizerLine(organizerName, organizerEmail),
-    ...attendeeLines(attendees),
+    ...schedulingLines(organizerName, organizerEmail, attendees),
     ...alarmLines(alarmMinutes),
   ]);
 }

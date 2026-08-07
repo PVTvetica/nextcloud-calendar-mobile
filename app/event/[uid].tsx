@@ -178,6 +178,15 @@ export default function EventDetailScreen() {
   }
 
   if (!event) {
+    if (deleteMutation.isPending) {
+      return (
+        <ViewContainer>
+          <Stack flex vAlign="center" hAlign="center">
+            <Spinner size="large" />
+          </Stack>
+        </ViewContainer>
+      );
+    }
     return (
       <ViewContainer>
         <Stack flex vAlign="center" hAlign="center" gap={16}>

@@ -51,8 +51,6 @@ function makeBigCalendarTheme(colors: ThemeColors) {
   };
 }
 
-const BIG_CAL_THEME_LIGHT = makeBigCalendarTheme(lightTheme.colors);
-const BIG_CAL_THEME_DARK = makeBigCalendarTheme(darkTheme.colors);
 
 export default function CalendarScreen() {
   const router = useRouter();
@@ -137,20 +135,24 @@ export default function CalendarScreen() {
     [theme.colors.primary]
   );
 
-  const bigCalendarTheme = theme.dark ? BIG_CAL_THEME_DARK : BIG_CAL_THEME_LIGHT;
-
-  const isToday = viewMode === 'schedule'
-    ? dayjs(agendaVisibleDate).isSame(dayjs(), 'day')
-    : dayjs(date).isSame(dayjs(), 'day');
+  const activeDate = viewMode === 'schedule' ? agendaVisibleDate : date;
 
   const headerTitle = useMemo(() => {
-    const d = dayjs(viewMode === 'schedule' ? agendaVisibleDate : date);
+    const d = dayjs(activeDate);
     const monthYear = d.locale(language).format('MMMM YYYY');
     if (viewMode === 'week' || viewMode === '3days' || viewMode === 'day') {
       return `${monthYear}  ·  ${t('calendar.weekAbbr')}${d.isoWeek()}`;
     }
     return monthYear;
-  }, [date, agendaVisibleDate, viewMode, language, t]);
+  }, [activeDate, viewMode, language, t]);
+
+  const handleCreateEvent = useCallback(() => {
+    const now = dayjs();
+    const start = dayjs(activeDate)
+      .startOf('day')
+      .add(Math.min(now.hour() * 60 + (now.minute() < 30 ? 30 : 60), 23 * 60), 'minute');
+    navGuard(() => router.push({ pathname: '/event/new', params: { date: start.toISOString() } }));
+  }, [activeDate, router, navGuard]);
 
 
   const calendarKeyFull = String(calendarKey);
@@ -159,7 +161,7 @@ export default function CalendarScreen() {
     <ViewContainer>
       <CalendarTopBar
         headerTitle={headerTitle}
-        isToday={isToday}
+        isToday={dayjs(activeDate).isSame(dayjs(), 'day')}
         todayLoading={todayPending}
         viewMode={viewMode}
         onOpenDrawer={drawer.openDrawer}
@@ -214,7 +216,7 @@ export default function CalendarScreen() {
             onSwipeEndHandlers={nav.onSwipeEndHandlers}
             renderEvent={renderEvent}
             eventCellStyle={eventCellStyle}
-            bigCalendarTheme={bigCalendarTheme}
+            bigCalendarTheme={theme.dark ? makeBigCalendarTheme(darkTheme.colors) : makeBigCalendarTheme(lightTheme.colors)}
           />
         </ViewLayer>
       </View>
@@ -222,7 +224,7 @@ export default function CalendarScreen() {
       {showFullOverlay && <CalendarLoadingOverlay label={t('calendar.loadingCalendar')} />}
       {showSmallLoader && <Spinner size="small" color="secondary" style={styles.smallLoader} />}
 
-      <CalendarFab onPress={() => navGuard(() => router.push('/event/new'))} />
+      <CalendarFab onPress={handleCreateEvent} />
 
       <CalendarDrawer
         open={drawer.drawerOpen}

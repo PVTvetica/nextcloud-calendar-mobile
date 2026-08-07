@@ -373,9 +373,8 @@ export async function deleteEvent(
   account: Account,
   href: string
 ): Promise<void> {
-  console.log('[deleteEvent] DELETE', href);
   const res = await davFetch(href, account, { method: 'DELETE' });
-  console.log('[deleteEvent] status:', res.status);
+  if (res.status === 404) console.warn('[deleteEvent] 404, nothing deleted at', href);
   if (!res.ok && res.status !== 404) throw httpErrorFrom(res, 'deleteEvent');
 }
 
