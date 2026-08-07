@@ -5,9 +5,14 @@ const FREQS: RecurrenceFreq[] = ['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'];
 /** Exactly the parts `rruleLine` in src/utils/ics.ts can write back. */
 const SUPPORTED = new Set(['FREQ', 'INTERVAL', 'BYDAY', 'COUNT', 'UNTIL']);
 
-/** `20260815T093000Z` or `20260815`, the two forms iCalendar allows for UNTIL. */
+/**
+ * `20260815T093000Z` or `20260815`, the two forms `rruleLine`'s `utcStamp` can
+ * produce. A date-time without the trailing `Z` is RFC 5545 floating/local
+ * time, not UTC, and `utcStamp` always appends `Z` — so a Z-less date-time is
+ * refused rather than misread as UTC.
+ */
 function parseUntil(raw: string): Date | undefined {
-  const m = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})Z?)?$/.exec(raw);
+  const m = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})Z)?$/.exec(raw);
   if (!m) return undefined;
   const [, y, mo, d, h = '0', mi = '0', s = '0'] = m;
   const date = new Date(
@@ -45,6 +50,8 @@ export function parseRrule(raw: string | undefined): RecurrenceRule | undefined 
     if (eq === -1) return undefined;
     const key = chunk.slice(0, eq).toUpperCase();
     if (!SUPPORTED.has(key)) return undefined;
+    // A duplicate key makes the rule malformed rather than "last value wins".
+    if (parts.has(key)) return undefined;
     parts.set(key, chunk.slice(eq + 1));
   }
 
@@ -69,6 +76,10 @@ export function parseRrule(raw: string | undefined): RecurrenceRule | undefined 
     if (byDay.some((d) => !/^(MO|TU|WE|TH|FR|SA|SU)$/.test(d))) return undefined;
     rule.byDay = byDay;
   }
+
+  // rruleLine only ever writes one of the two (`if (rule.count) ... else if
+  // (rule.until)`), so a rule carrying both cannot round-trip exactly.
+  if (parts.has('COUNT') && parts.has('UNTIL')) return undefined;
 
   const rawCount = parts.get('COUNT');
   if (rawCount !== undefined) {

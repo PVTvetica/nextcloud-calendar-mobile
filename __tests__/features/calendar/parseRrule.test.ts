@@ -69,4 +69,33 @@ describe('parseRrule', () => {
   it('omits an interval of 1, matching what the writer emits', () => {
     expect(parseRrule('RRULE:FREQ=DAILY;INTERVAL=1')).toEqual({ freq: 'DAILY' });
   });
+
+  it('refuses a rule with both COUNT and UNTIL', () => {
+    // rruleLine only ever writes one of the two (`if (rule.count) ... else if
+    // (rule.until)`), so a rule with both cannot be reproduced exactly: the
+    // next write would silently drop UNTIL.
+    expect(
+      parseRrule('RRULE:FREQ=DAILY;COUNT=5;UNTIL=20260815T093000Z')
+    ).toBeUndefined();
+  });
+
+  it('refuses a Z-less UNTIL date-time as floating/local, not UTC', () => {
+    // Per RFC 5545 a DATE-TIME without a trailing Z is floating time, not UTC.
+    // rruleLine's utcStamp always appends Z, so treating a Z-less stamp as UTC
+    // would shift the recurrence end by the timezone offset on the next write.
+    expect(parseRrule('RRULE:FREQ=DAILY;UNTIL=20260815T093000')).toBeUndefined();
+  });
+
+  it('still reads the date-only and Z-suffixed UNTIL forms', () => {
+    expect(parseRrule('RRULE:FREQ=DAILY;UNTIL=20260815')?.until?.toISOString()).toBe(
+      '2026-08-15T00:00:00.000Z'
+    );
+    expect(
+      parseRrule('RRULE:FREQ=DAILY;UNTIL=20260815T093000Z')?.until?.toISOString()
+    ).toBe('2026-08-15T09:30:00.000Z');
+  });
+
+  it('refuses a duplicate key rather than taking the last value', () => {
+    expect(parseRrule('RRULE:FREQ=WEEKLY;FREQ=DAILY')).toBeUndefined();
+  });
 });
