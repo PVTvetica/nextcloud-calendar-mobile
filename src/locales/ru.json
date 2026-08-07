@@ -206,5 +206,16 @@
     "durationHour": "ч",
     "durationMinute": "м",
     "emptyAgenda": "Нет предстоящих событий"
+  },
+  "notifications": {
+    "lead": {
+      "now": "Сейчас",
+      "minutes": "через {{value}} мин",
+      "hours": "через {{value}} ч",
+      "hoursMinutes": "через {{value}} ч {{minutes}}",
+      "days": "через {{value}} дн.",
+      "today": "Сегодня",
+      "tomorrow": "Завтра"
+    }
   }
 }

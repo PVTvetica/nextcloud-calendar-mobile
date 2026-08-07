@@ -206,5 +206,16 @@
     "durationHour": "u",
     "durationMinute": "m",
     "emptyAgenda": "Geen aankomende afspraken"
+  },
+  "notifications": {
+    "lead": {
+      "now": "Nu",
+      "minutes": "over {{value}} min",
+      "hours": "over {{value}} u",
+      "hoursMinutes": "over {{value}} u {{minutes}}",
+      "days": "over {{value}} dagen",
+      "today": "Vandaag",
+      "tomorrow": "Morgen"
+    }
   }
 }
