@@ -46,7 +46,6 @@ export function useEventDrag({
   onMoveEvent,
 }: Args) {
   const [drag, setDrag] = useState<DragState | null>(null);
-  const gridHeight = hourRowHeight * 24;
 
   const top = useSharedValue(0);
   const height = useSharedValue(0);
@@ -66,6 +65,10 @@ export function useEventDrag({
 
   const begin = useCallback((x: number, y: number) => {
     const s = live.current;
+    // Before the page's first onLayout, columnWidth is 0 and x / 0 is NaN,
+    // which fails both bounds checks below (NaN < 0 and NaN >= length are
+    // both false) and would otherwise fall through to hitTestEvent with NaN.
+    if (s.columnWidth <= 0) return;
     const columnIndex = Math.floor(x / s.columnWidth);
     if (columnIndex < 0 || columnIndex >= s.dates.length) return;
 
@@ -100,6 +103,19 @@ export function useEventDrag({
 
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setDrag({ event: hit.event, mode: hit.mode, columnIndex });
+    // top/height/left/topBase/heightBase/leftBase/modeFlag are listed here (and
+    // below, on `gesture`) even though nothing reads their *identity* — every
+    // access is a `.value` read or write, so any instance of the container
+    // works equally well. Real Reanimated's useSharedValue always returns the
+    // same ref, so in production these deps never change and this memo never
+    // re-runs. This project's Reanimated test mock hands back a fresh object
+    // per render, so under test they do change every render, recreating
+    // `begin`/`gesture` on every render. That's wasted work, not a bug: the
+    // earlier `syncNode`-in-a-layout-effect incident (see TimeGridView.tsx)
+    // came from an *effect* keyed on a churning shared value calling setState
+    // every run, which schedules another render, which churns it again --
+    // there is no effect here keyed on any of these, so there is nothing to
+    // loop.
   }, [top, height, left, topBase, heightBase, leftBase, modeFlag]);
 
   const commit = useCallback((deltaMinutes: number, deltaColumns: number) => {
@@ -110,6 +126,23 @@ export function useEventDrag({
     if (deltaMinutes === 0 && deltaColumns === 0) return;
 
     const deltaDays = deltaColumns * DAY_MINUTES;
+    const durationMin = (current.event.end.getTime() - current.event.start.getTime()) / 60_000;
+
+    // Mirror onUpdate's pixel clamp (which never lets the ghost's height fall
+    // below one SNAP_MINUTES step) in minutes, so the delta handed to
+    // resolveDraggedBounds always matches what the ghost showed. Without
+    // this, an overshoot the ghost quietly floors mid-drag hits
+    // resolveDraggedBounds' own "shrank below one step" rejection on commit
+    // and the event snaps back to its original size with no explanation.
+    // resolveDraggedBounds itself is untouched: it's a ported contract with
+    // its own tests, and other callers may rely on its rejection behaviour.
+    const clampedDelta =
+      current.mode === 'resizeStart'
+        ? Math.min(deltaMinutes, durationMin - SNAP_MINUTES)
+        : current.mode === 'resizeEnd'
+          ? Math.max(deltaMinutes, SNAP_MINUTES - durationMin)
+          : deltaMinutes;
+
     const bounds =
       current.mode === 'move'
         ? resolveDraggedBounds(
@@ -120,8 +153,8 @@ export function useEventDrag({
             SNAP_MINUTES,
           )
         : current.mode === 'resizeStart'
-          ? resolveDraggedBounds(current.event.start, current.event.end, deltaMinutes, 0, SNAP_MINUTES)
-          : resolveDraggedBounds(current.event.start, current.event.end, 0, deltaMinutes, SNAP_MINUTES);
+          ? resolveDraggedBounds(current.event.start, current.event.end, clampedDelta, 0, SNAP_MINUTES)
+          : resolveDraggedBounds(current.event.start, current.event.end, 0, clampedDelta, SNAP_MINUTES);
 
     if (!bounds) return;
     s.onMoveEvent(current.event, bounds.start, bounds.end);
@@ -168,6 +201,10 @@ export function useEventDrag({
         .onFinalize(() => {
           scheduleOnRN(cancel);
         }),
+    // The shared values below are safe to list despite the mock-vs-production
+    // gap explained on `begin`'s own dependency list above: no effect here is
+    // keyed on any of them, so a churning identity under test just rebuilds
+    // this gesture, it does not loop.
     [
       begin, commit, cancel, hourRowHeight, columnWidth,
       top, height, left, topBase, heightBase, leftBase, modeFlag,
