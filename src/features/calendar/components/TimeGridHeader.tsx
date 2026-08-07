@@ -14,12 +14,17 @@ import {
 
 interface Props {
   dates: Date[];
-  activeDate: Date;
+  /**
+   * Ticks once a minute from TimeGridView. Only today gets the pill, and
+   * reading the clock at render inside a memo'd component would strand the
+   * highlight on yesterday past midnight — same trap as the now-indicator.
+   */
+  now: Date;
   allDayEvents: CalendarEvent[];
   onPressEvent: (event: CalendarEvent) => void;
 }
 
-function TimeGridHeaderImpl({ dates, activeDate, allDayEvents, onPressEvent }: Props) {
+function TimeGridHeaderImpl({ dates, now, allDayEvents, onPressEvent }: Props) {
   const theme = useTheme();
   const language = useSettingsStore((s) => s.language);
 
@@ -34,7 +39,7 @@ function TimeGridHeaderImpl({ dates, activeDate, allDayEvents, onPressEvent }: P
   return (
     <View style={{ flexDirection: 'row', flex: 1 }}>
       {dates.map((date, i) => {
-        const isHighlight = dayjs(activeDate).isSame(date, 'date');
+        const isHighlight = dayjs(now).isSame(date, 'day');
         return (
           <View key={dayKey(date)} style={{ flex: 1, paddingTop: 8 }}>
             <View style={{ height: 56, justifyContent: 'space-between' }}>

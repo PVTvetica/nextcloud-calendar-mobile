@@ -22,7 +22,7 @@ const holiday: CalendarEvent = {
 describe('TimeGridHeader', () => {
   it('renders one day number per date', () => {
     const { getByText } = render(
-      <TimeGridHeader dates={dates} activeDate={dates[0]} allDayEvents={[]} onPressEvent={jest.fn()} />
+      <TimeGridHeader dates={dates} now={dates[0]} allDayEvents={[]} onPressEvent={jest.fn()} />
     );
     expect(getByText('3')).toBeTruthy();
     expect(getByText('4')).toBeTruthy();
@@ -31,7 +31,7 @@ describe('TimeGridHeader', () => {
 
   it('renders an all-day event on the day it covers', () => {
     const { getByText } = render(
-      <TimeGridHeader dates={dates} activeDate={dates[0]} allDayEvents={[holiday]} onPressEvent={jest.fn()} />
+      <TimeGridHeader dates={dates} now={dates[0]} allDayEvents={[holiday]} onPressEvent={jest.fn()} />
     );
     expect(getByText('Public holiday')).toBeTruthy();
   });
@@ -39,7 +39,7 @@ describe('TimeGridHeader', () => {
   it('reports the pressed all-day event', () => {
     const onPressEvent = jest.fn();
     const { getByText } = render(
-      <TimeGridHeader dates={dates} activeDate={dates[0]} allDayEvents={[holiday]} onPressEvent={onPressEvent} />
+      <TimeGridHeader dates={dates} now={dates[0]} allDayEvents={[holiday]} onPressEvent={onPressEvent} />
     );
 
     fireEvent.press(getByText('Public holiday'));
@@ -47,11 +47,23 @@ describe('TimeGridHeader', () => {
     expect(onPressEvent).toHaveBeenCalledWith(holiday);
   });
 
-  it('highlights the active date only', () => {
+  it('highlights today and nothing else', () => {
     const { getByTestId, queryByTestId } = render(
-      <TimeGridHeader dates={dates} activeDate={dates[1]} allDayEvents={[]} onPressEvent={jest.fn()} />
+      <TimeGridHeader dates={dates} now={dates[1]} allDayEvents={[]} onPressEvent={jest.fn()} />
     );
     expect(getByTestId('day-highlight-2026-08-04')).toBeTruthy();
     expect(queryByTestId('day-highlight-2026-08-03')).toBeNull();
+    expect(queryByTestId('day-highlight-2026-08-05')).toBeNull();
+  });
+
+  it('highlights nothing on a page that does not contain today', () => {
+    // Swiping away must leave the whole page unmarked, not move the pill onto
+    // the page's first day.
+    const { queryByTestId } = render(
+      <TimeGridHeader dates={dates} now={new Date(2026, 0, 15)} allDayEvents={[]} onPressEvent={jest.fn()} />
+    );
+    expect(queryByTestId('day-highlight-2026-08-03')).toBeNull();
+    expect(queryByTestId('day-highlight-2026-08-04')).toBeNull();
+    expect(queryByTestId('day-highlight-2026-08-05')).toBeNull();
   });
 });

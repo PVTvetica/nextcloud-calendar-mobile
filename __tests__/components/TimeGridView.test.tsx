@@ -10,6 +10,7 @@ import {
   ALL_DAY_PAD,
   ALL_DAY_ROW_HEIGHT,
   DAY_HEADER_HEIGHT,
+  dayKey,
   pageFocusDate,
 } from '@/features/calendar/utils/grid';
 import type { CalendarEvent } from '@/types';
@@ -118,9 +119,20 @@ describe('TimeGridView', () => {
     expect(getByText('Public holiday')).toBeTruthy();
   });
 
-  it('highlights the active date', () => {
-    const { getByTestId } = render(view({ activeDate: new Date(2026, 7, 5) }));
-    expect(getByTestId('day-highlight-2026-08-05')).toBeTruthy();
+  it('highlights today, and no day at all on a page without it', () => {
+    const today = new Date();
+    const todayKey = `day-highlight-${dayKey(today)}`;
+
+    const onToday = render(view({ anchorDate: today, activeDate: today }));
+    expect(onToday.getByTestId(todayKey)).toBeTruthy();
+
+    // A week that cannot contain today: nothing in it is marked, and in
+    // particular the pill does not fall back onto the page's first day.
+    const past = new Date(2020, 0, 8); // Wednesday
+    const elsewhere = render(view({ anchorDate: past, activeDate: past }));
+    expect(elsewhere.queryByTestId(todayKey)).toBeNull();
+    expect(elsewhere.queryByTestId('day-highlight-2020-01-06')).toBeNull();
+    expect(elsewhere.queryByTestId('day-highlight-2020-01-08')).toBeNull();
   });
 
   // Regression test for the datesForIndex cache (see TimeGridView.tsx): pages are
@@ -131,15 +143,17 @@ describe('TimeGridView', () => {
   it('drops the stale page cache and shows the new dates after an anchorDate change', () => {
     const dayA = new Date(2026, 7, 7);
     const dayB = new Date(2026, 7, 21);
-    const { getByTestId, queryByTestId, rerender } = render(
+    // The rendered day number is the observable here: the highlight pill only
+    // ever marks today, so it cannot witness which page is on screen.
+    const { getByText, queryByText, rerender } = render(
       view({ mode: 'day', anchorDate: dayA, activeDate: dayA })
     );
-    expect(getByTestId('day-highlight-2026-08-07')).toBeTruthy();
+    expect(getByText('7')).toBeTruthy();
 
     rerender(view({ mode: 'day', anchorDate: dayB, activeDate: dayB }));
 
-    expect(queryByTestId('day-highlight-2026-08-07')).toBeNull();
-    expect(getByTestId('day-highlight-2026-08-21')).toBeTruthy();
+    expect(queryByText('7')).toBeNull();
+    expect(getByText('21')).toBeTruthy();
   });
 
   // Finding 1: headerHeight must track the page the user is actually looking

@@ -121,6 +121,9 @@ function TimeGridViewImpl({
   );
   const [settledIndex, setSettledIndex] = useState(activeIndex);
   useEffect(() => { setSettledIndex(activeIndex); }, [activeIndex]);
+  // The jump effect needs the current index without re-running when it moves.
+  const settledIndexRef = useRef(settledIndex);
+  settledIndexRef.current = settledIndex;
 
   const headerHeight = useMemo(
     () => DAY_HEADER_HEIGHT + allDayRowHeight(datesForIndex(settledIndex), allDayEvents),
@@ -172,7 +175,25 @@ function TimeGridViewImpl({
       return;
     }
     const { anchorDate: a, mode: m, weekStartsOn: w } = jumpInputs.current;
-    pagerRef.current?.setPage(pageIndexForDate(a, jump.target, m, w), { animated: true });
+    const target = pageIndexForDate(a, jump.target, m, w);
+    const from = settledIndexRef.current;
+    if (target === from) return;
+
+    setSettledIndex(target);
+
+    // Animating across a large gap drags the pager through every index in
+    // between, and only pageBuffer pages around the current one are mounted —
+    // so a jump from a distant scroll position sweeps across blank space.
+    // Teleport to the target's neighbour first, then animate the last page, so
+    // the motion is always exactly one page wide whatever the distance.
+    if (Math.abs(target - from) > 1) {
+      pagerRef.current?.setPage(target + (target > from ? -1 : 1), { animated: false });
+      const frame = requestAnimationFrame(() => {
+        pagerRef.current?.setPage(target, { animated: true });
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+    pagerRef.current?.setPage(target, { animated: true });
   }, [jump]);
 
   const handlePageChange = useCallback(
@@ -189,12 +210,12 @@ function TimeGridViewImpl({
     ({ index }: { index: number }) => (
       <TimeGridHeader
         dates={datesForIndex(index)}
-        activeDate={activeDate}
+        now={now}
         allDayEvents={allDayEvents}
         onPressEvent={onPressAllDayEvent}
       />
     ),
-    [datesForIndex, activeDate, allDayEvents, onPressAllDayEvent]
+    [datesForIndex, now, allDayEvents, onPressAllDayEvent]
   );
 
   const renderGridPage = useCallback(
