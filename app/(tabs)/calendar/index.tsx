@@ -41,7 +41,11 @@ export default function CalendarScreen() {
   const toggleCalendarVisibility = useCalendarStore((s) => s.toggleCalendarVisibility);
 
   const nav = useCalendarNavigation();
-  const { viewMode, date, fetchDate, agendaVisibleDate } = nav;
+  // navigateMonth is destructured, not read as nav.navigateMonth: a worklet
+  // closure captures the base object of a member expression, so `nav.x` inside
+  // the pan handler below would drag the whole nav object — Dates included —
+  // onto the UI runtime, where Worklets cannot copy them.
+  const { viewMode, date, fetchDate, agendaVisibleDate, navigateMonth } = nav;
 
   const deferredViewMode = useDeferredValue(viewMode);
   const deferredDate = useDeferredValue(date);
@@ -93,10 +97,10 @@ export default function CalendarScreen() {
         .activeOffsetX([-30, 30])
         .failOffsetY([-15, 15])
         .onEnd((e) => {
-          if (e.translationX < -50) scheduleOnRN(nav.navigateMonth, 1);
-          else if (e.translationX > 50) scheduleOnRN(nav.navigateMonth, -1);
+          if (e.translationX < -50) scheduleOnRN(navigateMonth, 1);
+          else if (e.translationX > 50) scheduleOnRN(navigateMonth, -1);
         }),
-    [nav.navigateMonth]
+    [navigateMonth]
   );
 
   const isToday = viewMode === 'schedule'
