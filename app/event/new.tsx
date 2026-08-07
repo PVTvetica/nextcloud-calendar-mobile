@@ -28,8 +28,7 @@ export default function NewEventScreen() {
   async function handleSubmit(input: CreateEventInput) {
     if (!activeAccount) return;
     await createMutation.mutateAsync(input);
-    if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)/calendar');
+    goBackOrHome(router);
   }
 
   if (!activeAccount || calendars.length === 0) {

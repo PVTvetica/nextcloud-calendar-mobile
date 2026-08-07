@@ -19,7 +19,8 @@ import {
   SectionHeader, Avatar, Spinner, ScreenHeader,
   IconButton,
 } from '@/ui/components';
-import type { CalendarEvent, RecurrenceEditScope } from '@/types';
+import { goBackOrHome } from '@/utils/navigationGuard';
+import type { RecurrenceEditScope } from '@/types';
 
 dayjs.extend(localizedFormat);
 
@@ -150,8 +151,7 @@ export default function EventDetailScreen() {
             text: t('event.delete'), style: 'destructive',
             onPress: async () => {
               await deleteMutation.mutateAsync({ event, scope });
-              if (router.canGoBack()) router.back();
-              else router.replace('/(tabs)/calendar');
+              goBackOrHome(router);
             },
           },
         ]
@@ -191,7 +191,7 @@ export default function EventDetailScreen() {
       <ViewContainer>
         <Stack flex vAlign="center" hAlign="center" gap={16}>
           <Typography variant="body1" color="secondary">{t('event.eventNotFound')}</Typography>
-          <Button variant="link" title={t('event.back')} onPress={() => router.back()} />
+          <Button variant="link" title={t('event.back')} onPress={() => goBackOrHome(router)} />
         </Stack>
       </ViewContainer>
     );
@@ -207,7 +207,7 @@ export default function EventDetailScreen() {
     <ViewContainer>
       <SafeAreaView edges={['top']} style={styles.flex}>
         <ScreenHeader
-          onBack={() => router.back()}
+          onBack={() => goBackOrHome(router)}
           right={canEdit ? (
             <IconButton glass round size={40} onPress={handleEdit} accessibilityLabel={t('event.edit')}>
               <Pencil size={20} color={theme.colors.primary} />
