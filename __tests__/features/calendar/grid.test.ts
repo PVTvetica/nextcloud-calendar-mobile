@@ -1,4 +1,5 @@
 import {
+  buildDayIndex,
   daysPerPage,
   dayKey,
   eventPositionStyle,
@@ -6,6 +7,8 @@ import {
   pageDates,
   pageFocusDate,
 } from '@/features/calendar/utils/grid';
+import type { GridEvent } from '@/features/calendar/utils/toGridEvents';
+import type { CalendarEvent } from '@/types';
 
 const iso = (d: Date) => dayKey(d);
 
@@ -133,5 +136,112 @@ describe('nowTopPct', () => {
   it('is 0 at midnight and 50 at noon', () => {
     expect(nowTopPct(new Date(2026, 7, 7, 0, 0))).toBeCloseTo(0, 6);
     expect(nowTopPct(new Date(2026, 7, 7, 12, 0))).toBeCloseTo(50, 6);
+  });
+});
+
+function domainEvent(over: Partial<CalendarEvent>): CalendarEvent {
+  return {
+    uid: 'u1', href: '/u1.ics', calendarId: 'c1', accountId: 'a1',
+    summary: 'Event',
+    dtstart: new Date(2026, 7, 7, 9, 0), dtend: new Date(2026, 7, 7, 10, 0),
+    allDay: false, color: '#0082c9', attendees: [], isRecurring: false,
+    ...over,
+  };
+}
+
+function gridEvent(over: Partial<CalendarEvent>): GridEvent {
+  const e = domainEvent(over);
+  return {
+    title: e.summary, start: e.dtstart, end: e.dtend, color: e.color,
+    _event: e, _leftPct: 0, _rightPx: 3, _zIndex: 100,
+  };
+}
+
+describe('buildDayIndex', () => {
+  it('files a single-day event under its day', () => {
+    const idx = buildDayIndex([gridEvent({})]);
+    expect(idx.get('2026-08-07')).toHaveLength(1);
+    expect(idx.size).toBe(1);
+  });
+
+  it('splits an event straddling two days and clamps each slice at midnight', () => {
+    const idx = buildDayIndex([
+      gridEvent({
+        uid: 'span',
+        dtstart: new Date(2026, 7, 7, 22, 0),
+        dtend: new Date(2026, 7, 8, 3, 0),
+      }),
+    ]);
+
+    const first = idx.get('2026-08-07')!;
+    const second = idx.get('2026-08-08')!;
+    expect(first).toHaveLength(1);
+    expect(second).toHaveLength(1);
+    expect(first[0].start).toEqual(new Date(2026, 7, 7, 22, 0));
+    expect(first[0].end).toEqual(new Date(2026, 7, 8, 0, 0));
+    expect(second[0].start).toEqual(new Date(2026, 7, 8, 0, 0));
+    expect(second[0].end).toEqual(new Date(2026, 7, 8, 3, 0));
+  });
+
+  it('gives a three-day event a full column on the middle day', () => {
+    const idx = buildDayIndex([
+      gridEvent({
+        uid: 'long',
+        dtstart: new Date(2026, 7, 7, 15, 0),
+        dtend: new Date(2026, 7, 9, 11, 0),
+      }),
+    ]);
+
+    const middle = idx.get('2026-08-08')!;
+    expect(middle).toHaveLength(1);
+    expect(middle[0].start).toEqual(new Date(2026, 7, 8, 0, 0));
+    expect(middle[0].end).toEqual(new Date(2026, 7, 9, 0, 0));
+  });
+
+  it('does not create an empty slice for an event ending exactly at midnight', () => {
+    const idx = buildDayIndex([
+      gridEvent({
+        uid: 'tomidnight',
+        dtstart: new Date(2026, 7, 7, 22, 0),
+        dtend: new Date(2026, 7, 8, 0, 0),
+      }),
+    ]);
+    expect(idx.get('2026-08-07')).toHaveLength(1);
+    expect(idx.has('2026-08-08')).toBe(false);
+  });
+
+  it('excludes all-day events, keyed off the domain allDay flag', () => {
+    const idx = buildDayIndex([
+      gridEvent({
+        uid: 'allday',
+        allDay: true,
+        dtstart: new Date(2026, 7, 7, 9, 0),
+        dtend: new Date(2026, 7, 7, 17, 0),
+      }),
+    ]);
+    expect(idx.size).toBe(0);
+  });
+
+  it('preserves the original uid on every slice so overlap lookups resolve', () => {
+    const idx = buildDayIndex([
+      gridEvent({
+        uid: 'keepme',
+        dtstart: new Date(2026, 7, 7, 22, 0),
+        dtend: new Date(2026, 7, 8, 3, 0),
+      }),
+    ]);
+    expect(idx.get('2026-08-07')![0]._event.uid).toBe('keepme');
+    expect(idx.get('2026-08-08')![0]._event.uid).toBe('keepme');
+  });
+
+  it('keeps the overlap layout fields on slices', () => {
+    const e = gridEvent({ uid: 'laid-out' });
+    e._leftPct = 50;
+    e._rightPx = 0;
+    e._zIndex = 101;
+    const slice = buildDayIndex([e]).get('2026-08-07')![0];
+    expect(slice._leftPct).toBe(50);
+    expect(slice._rightPx).toBe(0);
+    expect(slice._zIndex).toBe(101);
   });
 });

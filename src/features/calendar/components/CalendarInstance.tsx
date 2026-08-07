@@ -6,10 +6,10 @@ import { FixedCalendarHeader } from '@/features/calendar/components/CalendarHead
 import { resolveFrozenProps } from '../utils/resolveFrozenProps';
 import { ViewLayer } from './ViewLayer';
 import type { CalMode } from '../constants';
-import type { BigCalendarEvent } from '../utils/toCalendarEvents';
+import type { GridEvent } from '../utils/toGridEvents';
 
 interface LiveProps {
-  events: BigCalendarEvent[];
+  events: GridEvent[];
   date: Date;
   height: number;
   hourRowHeight: number;

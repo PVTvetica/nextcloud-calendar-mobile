@@ -3,7 +3,7 @@ import type { computeOverlapMap } from '@/features/calendar/utils/overlapMap';
 
 type OverlapMap = ReturnType<typeof computeOverlapMap>;
 
-export interface BigCalendarEvent {
+export interface GridEvent {
   title: string;
   start: Date;
   end: Date;
@@ -16,7 +16,7 @@ export interface BigCalendarEvent {
 
 const DEFAULT_OVERLAP = { leftPct: 0, rightPx: 3, zIndex: 100 };
 
-export function toBigCalendarEvents(events: CalendarEvent[], overlapMap: OverlapMap): BigCalendarEvent[] {
+export function toGridEvents(events: CalendarEvent[], overlapMap: OverlapMap): GridEvent[] {
   return events.map((e) => {
     const overlap = overlapMap.get(e.uid) ?? DEFAULT_OVERLAP;
     return {

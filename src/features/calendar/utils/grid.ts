@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import type { CalMode } from '../constants';
+import type { GridEvent } from './toGridEvents';
 
 export const HOUR_RAIL_WIDTH = 50;
 export const DAY_HEADER_HEIGHT = 66;
@@ -71,4 +72,42 @@ export function eventPositionStyle(start: Date, end: Date): { top: string; heigh
     top: `${nowTopPct(start)}%`,
     height: `${100 * (1 / DAY_MINUTES) * durationInMinutes}%`,
   };
+}
+
+/**
+ * One bucket per day, timed events only, multi-day events clamped to each day
+ * they overlap. Replaces the library's three-case per-column filtering: the
+ * rendered result is the same, and lookups are O(1) instead of a full scan per
+ * column.
+ */
+export function buildDayIndex(events: GridEvent[]): Map<string, GridEvent[]> {
+  const index = new Map<string, GridEvent[]>();
+
+  for (const event of events) {
+    if (event._event.allDay) continue;
+
+    let day = dayjs(event.start).startOf('day');
+    const end = dayjs(event.end);
+
+    while (day.isBefore(end)) {
+      const nextDay = day.add(1, 'day');
+      const sliceStart = dayjs(event.start).isAfter(day) ? dayjs(event.start) : day;
+      const sliceEnd = end.isBefore(nextDay) ? end : nextDay;
+
+      if (sliceStart.isBefore(sliceEnd)) {
+        const key = day.format('YYYY-MM-DD');
+        const slice: GridEvent =
+          sliceStart.isSame(event.start) && sliceEnd.isSame(event.end)
+            ? event
+            : { ...event, start: sliceStart.toDate(), end: sliceEnd.toDate() };
+        const bucket = index.get(key);
+        if (bucket) bucket.push(slice);
+        else index.set(key, [slice]);
+      }
+
+      day = nextDay;
+    }
+  }
+
+  return index;
 }

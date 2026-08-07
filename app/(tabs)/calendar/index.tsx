@@ -27,7 +27,7 @@ import { TimeGridEvent } from '@/features/calendar/components/TimeGridEvent';
 import { ViewLayer } from '@/features/calendar/components/ViewLayer';
 import { CalendarFab } from '@/features/calendar/components/CalendarFab';
 import { CalendarLoadingOverlay } from '@/features/calendar/components/CalendarLoadingOverlay';
-import { toBigCalendarEvents } from '@/features/calendar/utils/toCalendarEvents';
+import { toGridEvents } from '@/features/calendar/utils/toGridEvents';
 import { isCalMode } from '@/features/calendar/constants';
 import { lightTheme, darkTheme, type ThemeColors } from '@/theme';
 
@@ -90,7 +90,7 @@ export default function CalendarScreen() {
   const drawer = useCalendarDrawer();
 
   const overlapMap = useMemo(() => computeOverlapMap(allEvents), [allEvents]);
-  const calendarEvents = useMemo(() => toBigCalendarEvents(allEvents, overlapMap), [allEvents, overlapMap]);
+  const calendarEvents = useMemo(() => toGridEvents(allEvents, overlapMap), [allEvents, overlapMap]);
 
   const navGuard = useRef(createNavigationGuard()).current;
 

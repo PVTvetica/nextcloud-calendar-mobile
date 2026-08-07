@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import type { ViewMode } from '@/types';
 import { CAL_MODES, type CalMode } from '../constants';
-import type { BigCalendarEvent } from '../utils/toCalendarEvents';
+import type { GridEvent } from '../utils/toGridEvents';
 import { CalendarInstance } from './CalendarInstance';
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
   mountedCalModes: Set<CalMode>;
   viewMode: ViewMode;
   calendarKey: string;
-  events: BigCalendarEvent[];
+  events: GridEvent[];
   calDates: Record<CalMode, Date>;
   activeDate: Date;
   heightFor: (m: CalMode, focusDate: Date) => number;
