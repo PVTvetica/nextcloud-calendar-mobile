@@ -32,6 +32,11 @@ export interface AgendaSnapshot {
   nextEvent: AgendaEventItem | null;
 }
 
+export interface AgendaTimelineEntry {
+  atIso: string;
+  snapshot: AgendaSnapshot;
+}
+
 export interface LiveEventState {
   uid: string;
   title: string;
