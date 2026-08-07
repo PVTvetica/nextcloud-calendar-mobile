@@ -1,5 +1,6 @@
 import ICAL from 'ical.js';
 import type { CalendarEvent, Attendee } from '@/types';
+import { dedupeAttendees } from '@/utils/attendees';
 import { yieldToUI } from '@/utils/scheduling';
 import { isValidTimeZone, zonedWallTimeToUtc } from '@/utils/timezone';
 import { triggerToMinutes } from '@/features/notifications/alerts';
@@ -88,12 +89,14 @@ export function parseIcsItem(
       const icalEvent = new ICAL.Event(vevent, { strictExceptions: false });
       const tzid = eventTzid(vevent);
 
-      const attendees: Attendee[] = vevent.getAllProperties('attendee').map((prop: ICAL.Property) => {
-        const value = (prop.getFirstValue() as string) ?? '';
-        const email = value.replace(/^mailto:/i, '');
-        const displayName = (prop.getParameter('cn') as string) ?? undefined;
-        return { email, displayName };
-      });
+      const attendees: Attendee[] = dedupeAttendees(
+        vevent.getAllProperties('attendee').map((prop: ICAL.Property) => {
+          const value = (prop.getFirstValue() as string) ?? '';
+          const email = value.replace(/^mailto:/i, '');
+          const displayName = (prop.getParameter('cn') as string) ?? undefined;
+          return { email, displayName };
+        })
+      );
 
       const location = icalEvent.location ?? undefined;
       const talkUrl = location && TALK_URL_PATTERN.test(location) ? location : undefined;
