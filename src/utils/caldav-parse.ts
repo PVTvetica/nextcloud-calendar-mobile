@@ -181,6 +181,12 @@ export function extractDtstartTzid(ics: string): string | undefined {
   return tzid && isValidTimeZone(tzid) ? tzid : undefined;
 }
 
+export function extractSequence(ics: string): number {
+  const m = ics.match(/^SEQUENCE:(\d+)/m);
+  const n = m ? Number(m[1]) : 0;
+  return Number.isFinite(n) ? n : 0;
+}
+
 export function parseIcsObjects(
   items: { ics: string; href: string }[],
   meta: ParseCalMeta,

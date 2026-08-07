@@ -1,4 +1,4 @@
-import { parseIcsObjects, parseIcsObjectsAsync } from '@/utils/caldav-parse';
+import { parseIcsObjects, parseIcsObjectsAsync, extractSequence } from '@/utils/caldav-parse';
 import { buildAllDayIcs } from '@/utils/ics';
 
 const sampleIcs = `BEGIN:VCALENDAR
@@ -201,5 +201,19 @@ describe('parseIcsObjectsAsync', () => {
     const sync = parseIcsObjects(items, calMeta, rangeStart, rangeEnd);
     expect(events).toEqual(sync);
     expect(events.length).toBeGreaterThan(0);
+  });
+});
+
+describe('extractSequence', () => {
+  it('reads the SEQUENCE line', () => {
+    expect(extractSequence('BEGIN:VEVENT\r\nSEQUENCE:4\r\nEND:VEVENT\r\n')).toBe(4);
+  });
+
+  it('treats a missing SEQUENCE as 0', () => {
+    expect(extractSequence('BEGIN:VEVENT\r\nUID:x\r\nEND:VEVENT\r\n')).toBe(0);
+  });
+
+  it('ignores a SEQUENCE that is not at the start of a line', () => {
+    expect(extractSequence('DESCRIPTION:bump SEQUENCE:9\r\n')).toBe(0);
   });
 });

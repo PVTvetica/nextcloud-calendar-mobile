@@ -7,7 +7,7 @@ import { putEvent, updateEvent, deleteEvent, moveEvent, fetchEventIcs } from '@/
 import { createTalkRoom } from '@/services/nextcloud/talk';
 import { describeMutationError } from '@/services/shared/errors';
 import { buildIcs, buildAllDayIcs, buildExceptionIcs, injectExdate, truncateRruleUntil } from '@/utils/ics';
-import { parseIcsObjects, extractDtstartTzid } from '@/utils/caldav-parse';
+import { parseIcsObjects, extractDtstartTzid, extractSequence } from '@/utils/caldav-parse';
 import { isValidTimeZone } from '@/utils/timezone';
 import i18n from '@/utils/i18n';
 import {
@@ -53,20 +53,35 @@ function resolveCalendar(calendars: CalendarMeta[], calendarId: string): Calenda
   return calendars.find((c) => c.id === calendarId) ?? calendars[0];
 }
 
-function buildIcsForInput(uid: string, input: CreateEventInput, location: string, description: string, timezone: string): string {
+function buildIcsForInput(
+  uid: string,
+  input: CreateEventInput,
+  location: string,
+  description: string,
+  timezone: string,
+  sequence = 0,
+): string {
   return input.allDay
     ? buildAllDayIcs({
         uid, summary: input.summary, description, location,
         dtstart: input.dtstart, dtend: input.dtend,
         organizerEmail: input.organizerEmail, organizerName: input.organizerName,
         attendees: input.attendees, rrule: input.rrule, alarmMinutes: input.alarmMinutes,
+        sequence,
       })
     : buildIcs({
         uid, summary: input.summary, description, location,
         dtstart: input.dtstart, dtend: input.dtend,
         organizerEmail: input.organizerEmail, organizerName: input.organizerName,
         attendees: input.attendees, timezone, rrule: input.rrule, alarmMinutes: input.alarmMinutes,
+        sequence,
       });
+}
+
+function withServerOrganizer(input: CreateEventInput, event: CalendarEvent): CreateEventInput {
+  return event.organizerEmail
+    ? { ...input, organizerEmail: event.organizerEmail }
+    : input;
 }
 
 async function resolveLocationAndDescription(
@@ -200,16 +215,17 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
       try {
         const { location, description } = await resolveLocationAndDescription(account, input);
         let timezone = resolveTimezone(account);
+        const scheduled = withServerOrganizer(input, event);
 
         if (!event.isRecurring || scope === 'all') {
-          if (event.isRecurring) {
-            try {
-              const masterIcs = await fetchEventIcs(account, event.href);
-              timezone = extractDtstartTzid(masterIcs) ?? timezone;
-            } catch {
-            }
+          let sequence = 0;
+          try {
+            const masterIcs = await fetchEventIcs(account, event.href);
+            sequence = extractSequence(masterIcs) + 1;
+            if (event.isRecurring) timezone = extractDtstartTzid(masterIcs) ?? timezone;
+          } catch {
           }
-          const ics = buildIcsForInput(event.uid, input, location, description, timezone);
+          const ics = buildIcsForInput(event.uid, scheduled, location, description, timezone, sequence);
           await updateEvent(account, event.href, ics);
           if (!event.isRecurring && input.calendarId !== event.calendarId) {
             const cal = calendars.find((c) => c.id === input.calendarId);
@@ -225,8 +241,9 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
           const exIcs = buildExceptionIcs({
             uid: event.uid, summary: input.summary, description, location,
             dtstart: input.dtstart, dtend: input.dtend,
-            organizerEmail: input.organizerEmail, organizerName: input.organizerName,
+            organizerEmail: scheduled.organizerEmail, organizerName: input.organizerName,
             attendees: input.attendees, timezone, recurrenceId: event.dtstart,
+            sequence: extractSequence(masterIcs) + 1,
           });
           await putEvent(account, cal, exceptionUid, exIcs);
         } else if (scope === 'thisAndFollowing') {
@@ -236,7 +253,7 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
           const cal = calendars.find((c) => c.id === event.calendarId) ?? calendars.find((c) => c.id === input.calendarId);
           if (!cal) throw new Error('Calendar not found for new series');
           const newUid = Crypto.randomUUID();
-          await putEvent(account, cal, newUid, buildIcsForInput(newUid, input, location, description, timezone));
+          await putEvent(account, cal, newUid, buildIcsForInput(newUid, scheduled, location, description, timezone));
         }
       } catch (error) {
         await restoreSeries(account.id, base, snapshot);
