@@ -57,6 +57,82 @@ export function pageFocusDate(
   return dates.some((d) => dayKey(d) === anchorKey) ? anchor : dates[0];
 }
 
+/**
+ * Inverse of pageDates: which page index shows `target`, given `anchor`.
+ *
+ * The pager is infinite, so a date jump never needs to move the anchor — it can
+ * animate to the right index instead. Moving the anchor invalidates every cached
+ * page and rebuilds the whole grid, which is what made "Today" feel like a
+ * remount.
+ *
+ * Both dates are reduced to the first day of their page before differencing, so
+ * the result is exact regardless of which day within a page either falls on.
+ */
+export function pageIndexForDate(
+  anchor: Date,
+  target: Date,
+  mode: CalMode,
+  weekStartsOn: 0 | 1,
+): number {
+  const span = daysPerPage(mode);
+  const startOfPage = (d: Date) => {
+    const day = dayjs(d).startOf('day');
+    return mode === 'week' ? day.add(weekStartOffset(day.day(), weekStartsOn), 'day') : day;
+  };
+  const from = startOfPage(anchor);
+  const to = startOfPage(target);
+  // floor, not round: pages tile forward from the anchor, so a target part-way
+  // into a page belongs to that page, not the nearest boundary. In week mode
+  // both sides are week-aligned and the difference is an exact multiple of the
+  // span anyway. 'day' diff is calendar-day based, so DST does not skew it.
+  return Math.floor(to.diff(from, 'day') / span);
+}
+
+function sameSlice(a: GridEvent, b: GridEvent): boolean {
+  if (a === b) return true;
+  return (
+    a._event.uid === b._event.uid &&
+    a.start.getTime() === b.start.getTime() &&
+    a.end.getTime() === b.end.getTime() &&
+    a.title === b.title &&
+    a.color === b.color &&
+    a._leftPct === b._leftPct &&
+    a._rightPx === b._rightPx &&
+    a._zIndex === b._zIndex
+  );
+}
+
+/**
+ * Carry over the previous array for any day whose contents are unchanged.
+ *
+ * buildDayIndex allocates a fresh array per day on every rebuild, so a sync that
+ * touches one day hands every DayColumn a new `events` reference and defeats
+ * their memo — the whole grid re-renders for one changed event. Reusing the old
+ * array where nothing changed keeps that re-render down to the days that
+ * actually differ.
+ *
+ * Returns `next`, mutated in place; `next` is freshly built by buildDayIndex and
+ * owned by the caller.
+ */
+export function stabilizeDayIndex(
+  next: Map<string, GridEvent[]>,
+  prev: Map<string, GridEvent[]>,
+): Map<string, GridEvent[]> {
+  for (const [key, slices] of next) {
+    const before = prev.get(key);
+    if (!before || before.length !== slices.length) continue;
+    let identical = true;
+    for (let i = 0; i < slices.length; i++) {
+      if (!sameSlice(before[i], slices[i])) {
+        identical = false;
+        break;
+      }
+    }
+    if (identical) next.set(key, before);
+  }
+  return next;
+}
+
 const DAY_MINUTES = 1440;
 
 function minutesFromMidnight(d: Date): number {

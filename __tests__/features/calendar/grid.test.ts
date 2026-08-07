@@ -8,6 +8,8 @@ import {
   nowTopPct,
   pageDates,
   pageFocusDate,
+  pageIndexForDate,
+  stabilizeDayIndex,
 } from '@/features/calendar/utils/grid';
 import type { GridEvent } from '@/features/calendar/utils/toGridEvents';
 import type { CalendarEvent } from '@/types';
@@ -309,5 +311,130 @@ describe('allDayRowHeight', () => {
   it('is zero when every all-day event falls outside the page', () => {
     const e = allDay('a', new Date(2026, 8, 20), new Date(2026, 8, 20));
     expect(allDayRowHeight(week, [e])).toBe(0);
+  });
+});
+
+describe('pageIndexForDate', () => {
+  // 2026-08-07 is a Friday.
+  const friday = new Date(2026, 7, 7);
+
+  it('is 0 for the anchor itself', () => {
+    expect(pageIndexForDate(friday, friday, 'week', 1)).toBe(0);
+    expect(pageIndexForDate(friday, friday, '3days', 1)).toBe(0);
+    expect(pageIndexForDate(friday, friday, 'day', 1)).toBe(0);
+  });
+
+  it('is 0 for any other day inside the anchor week', () => {
+    expect(pageIndexForDate(friday, new Date(2026, 7, 3), 'week', 1)).toBe(0);
+    expect(pageIndexForDate(friday, new Date(2026, 7, 9), 'week', 1)).toBe(0);
+  });
+
+  it('counts whole weeks in both directions', () => {
+    expect(pageIndexForDate(friday, new Date(2026, 7, 10), 'week', 1)).toBe(1);
+    expect(pageIndexForDate(friday, new Date(2026, 7, 16), 'week', 1)).toBe(1);
+    expect(pageIndexForDate(friday, new Date(2026, 6, 27), 'week', 1)).toBe(-1);
+    expect(pageIndexForDate(friday, new Date(2026, 6, 20), 'week', 1)).toBe(-2);
+  });
+
+  it('respects weekStartsOn when assigning a date to a page', () => {
+    const sunday = new Date(2026, 7, 9);
+    // weekStartsOn=1: Sunday the 9th closes the anchor week.
+    expect(pageIndexForDate(friday, sunday, 'week', 1)).toBe(0);
+    // weekStartsOn=0: the same Sunday opens the next one.
+    expect(pageIndexForDate(friday, sunday, 'week', 0)).toBe(1);
+  });
+
+  it('counts spans of three in 3days mode', () => {
+    expect(pageIndexForDate(friday, new Date(2026, 7, 9), '3days', 1)).toBe(0);
+    expect(pageIndexForDate(friday, new Date(2026, 7, 10), '3days', 1)).toBe(1);
+    expect(pageIndexForDate(friday, new Date(2026, 7, 4), '3days', 1)).toBe(-1);
+  });
+
+  it('counts single days in day mode', () => {
+    expect(pageIndexForDate(friday, new Date(2026, 7, 8), 'day', 1)).toBe(1);
+    expect(pageIndexForDate(friday, new Date(2026, 7, 6), 'day', 1)).toBe(-1);
+  });
+
+  it('ignores the time of day on either side', () => {
+    expect(pageIndexForDate(new Date(2026, 7, 7, 23, 59), new Date(2026, 7, 8, 0, 1), 'day', 1)).toBe(1);
+  });
+
+  it('round-trips with pageDates across month and year boundaries', () => {
+    for (const target of [new Date(2026, 11, 31), new Date(2027, 0, 1), new Date(2025, 5, 15)]) {
+      const index = pageIndexForDate(friday, target, 'week', 1);
+      const dates = pageDates(friday, index, 'week', 1);
+      expect(dates.map(dayKey)).toContain(dayKey(target));
+    }
+  });
+});
+
+describe('stabilizeDayIndex', () => {
+  const timed = (uid: string, hour: number) =>
+    gridEvent({
+      uid,
+      dtstart: new Date(2026, 7, 7, hour, 0),
+      dtend: new Date(2026, 7, 7, hour + 1, 0),
+    });
+
+  it('reuses the previous array when a day is unchanged', () => {
+    const prev = buildDayIndex([timed('a', 9)]);
+    const before = prev.get('2026-08-07')!;
+    const next = stabilizeDayIndex(buildDayIndex([timed('a', 9)]), prev);
+    expect(next.get('2026-08-07')).toBe(before);
+  });
+
+  it('keeps the new array when an event moved', () => {
+    const prev = buildDayIndex([timed('a', 9)]);
+    const before = prev.get('2026-08-07')!;
+    const next = stabilizeDayIndex(buildDayIndex([timed('a', 10)]), prev);
+    expect(next.get('2026-08-07')).not.toBe(before);
+    expect(next.get('2026-08-07')![0].start).toEqual(new Date(2026, 7, 7, 10, 0));
+  });
+
+  it('keeps the new array when a day gained an event', () => {
+    const prev = buildDayIndex([timed('a', 9)]);
+    const before = prev.get('2026-08-07')!;
+    const next = stabilizeDayIndex(buildDayIndex([timed('a', 9), timed('b', 14)]), prev);
+    expect(next.get('2026-08-07')).not.toBe(before);
+    expect(next.get('2026-08-07')).toHaveLength(2);
+  });
+
+  it('reuses untouched days while replacing the one that changed', () => {
+    const other = gridEvent({
+      uid: 'z',
+      dtstart: new Date(2026, 7, 8, 9, 0),
+      dtend: new Date(2026, 7, 8, 10, 0),
+    });
+    const prev = buildDayIndex([timed('a', 9), other]);
+    const untouched = prev.get('2026-08-08')!;
+    const changed = prev.get('2026-08-07')!;
+
+    const next = stabilizeDayIndex(buildDayIndex([timed('a', 11), other]), prev);
+
+    expect(next.get('2026-08-08')).toBe(untouched);
+    expect(next.get('2026-08-07')).not.toBe(changed);
+  });
+
+  it('detects a colour change even though start and end are identical', () => {
+    const prev = buildDayIndex([timed('a', 9)]);
+    const before = prev.get('2026-08-07')!;
+    const recoloured = timed('a', 9);
+    recoloured.color = '#ff0000';
+    const next = stabilizeDayIndex(buildDayIndex([recoloured]), prev);
+    expect(next.get('2026-08-07')).not.toBe(before);
+  });
+
+  it('detects an overlap-layout change even though the times are identical', () => {
+    const prev = buildDayIndex([timed('a', 9)]);
+    const before = prev.get('2026-08-07')!;
+    const relaid = timed('a', 9);
+    relaid._leftPct = 50;
+    const next = stabilizeDayIndex(buildDayIndex([relaid]), prev);
+    expect(next.get('2026-08-07')).not.toBe(before);
+  });
+
+  it('is a no-op against an empty previous index', () => {
+    const next = stabilizeDayIndex(buildDayIndex([timed('a', 9)]), new Map());
+    expect(next.get('2026-08-07')).toHaveLength(1);
   });
 });

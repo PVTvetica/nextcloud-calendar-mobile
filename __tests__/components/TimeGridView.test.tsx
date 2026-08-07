@@ -60,6 +60,7 @@ function view(over: Partial<React.ComponentProps<typeof TimeGridView>> = {}) {
       mode="week"
       anchorDate={anchor}
       activeDate={anchor}
+      jump={{ nonce: 0, target: anchor }}
       events={events}
       allDayEvents={[]}
       hourRowHeight={60}

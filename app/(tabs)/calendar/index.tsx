@@ -165,6 +165,7 @@ export default function CalendarScreen() {
             allDayEvents={allDayEvents}
             hourRowHeight={hourRowHeight}
             weekStartsOn={deferredWeekStartsOn}
+            jump={nav.jump}
             pinchGesture={pinchGesture}
             initialScrollHour={nowHour}
             onPageChange={nav.onPageChange}

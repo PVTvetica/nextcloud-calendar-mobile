@@ -23,6 +23,8 @@ import {
   buildDayIndex,
   pageDates,
   pageFocusDate,
+  pageIndexForDate,
+  stabilizeDayIndex,
 } from '../utils/grid';
 import type { GridEvent } from '../utils/toGridEvents';
 import { HourRail } from './HourRail';
@@ -37,6 +39,8 @@ interface Props {
   allDayEvents: CalendarEvent[];
   hourRowHeight: number;
   weekStartsOn: 0 | 1;
+  /** Bumped only by a date jump, never by a swipe. See useCalendarNavigation. */
+  jump: { nonce: number; target: Date };
   pinchGesture: ComposedGesture | GestureType;
   initialScrollHour: number;
   onPageChange: (focusDate: Date) => void;
@@ -46,7 +50,7 @@ interface Props {
 }
 
 function TimeGridViewImpl({
-  mode, anchorDate, activeDate, events, allDayEvents, hourRowHeight, weekStartsOn,
+  mode, anchorDate, activeDate, events, allDayEvents, hourRowHeight, weekStartsOn, jump,
   pinchGesture, initialScrollHour, onPageChange, onPressSlot, onPressEvent, onPressAllDayEvent,
 }: Props) {
   const { colors } = useTheme();
@@ -62,7 +66,16 @@ function TimeGridViewImpl({
     [nativeScroll, pinchGesture]
   );
 
-  const dayIndex = useMemo(() => buildDayIndex(events), [events]);
+  // buildDayIndex allocates a fresh array per day, so a sync touching one day
+  // would otherwise hand every DayColumn a new `events` reference and re-render
+  // the whole grid. Carrying over the previous array for unchanged days keeps
+  // the re-render to the days that actually differ.
+  const prevDayIndex = useRef<Map<string, GridEvent[]>>(new Map());
+  const dayIndex = useMemo(() => {
+    const next = stabilizeDayIndex(buildDayIndex(events), prevDayIndex.current);
+    prevDayIndex.current = next;
+    return next;
+  }, [events]);
   const gridHeight = hourRowHeight * 24;
 
   // A single interval for the whole grid drives the now-indicator's position
@@ -110,10 +123,27 @@ function TimeGridViewImpl({
     return DAY_HEADER_HEIGHT + tallest;
   }, [activeDate, mode, weekStartsOn, allDayEvents]);
 
-  // A new anchor (Today, a date picked elsewhere) or a new mode resets to page 0.
+  // The anchor only moves on a mode switch now, and the span changed with it,
+  // so every cached page is invalid anyway: land on page 0 without animating.
   useEffect(() => {
     pagerRef.current?.setPage(0, { animated: false });
   }, [anchorDate, mode]);
+
+  // A jump (Today, a date picked in the month view) animates to the target's
+  // index instead of re-anchoring. The anchor stays put, so datesForIndex keeps
+  // its cache and nothing rebuilds — the grid slides to the date.
+  const jumpInputs = useRef({ anchorDate, mode, weekStartsOn });
+  jumpInputs.current = { anchorDate, mode, weekStartsOn };
+  const firstJump = useRef(true);
+  useEffect(() => {
+    // The initial value is the mount state, not a jump.
+    if (firstJump.current) {
+      firstJump.current = false;
+      return;
+    }
+    const { anchorDate: a, mode: m, weekStartsOn: w } = jumpInputs.current;
+    pagerRef.current?.setPage(pageIndexForDate(a, jump.target, m, w), { animated: true });
+  }, [jump]);
 
   const handlePageChange = useCallback(
     (index: number) => {

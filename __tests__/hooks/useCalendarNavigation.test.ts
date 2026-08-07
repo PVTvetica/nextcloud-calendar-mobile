@@ -47,28 +47,32 @@ describe('useCalendarNavigation', () => {
     expect(result.current.anchorDate).toBe(before);
   });
 
-  it('setDate moves the anchor so the grid re-pages around the new date', () => {
+  it('setDate leaves the anchor put and publishes the jump instead', () => {
     const { result } = renderHook(() => useCalendarNavigation());
+    const anchorBefore = result.current.anchorDate;
+    const nonceBefore = result.current.jump.nonce;
     const target = new Date('2026-09-09T00:00:00Z');
 
     act(() => { result.current.setDate(target); });
 
-    expect(result.current.anchorDate).toEqual(target);
+    // The pager is infinite: the grid animates to the target's index rather
+    // than re-anchoring, which would invalidate every cached page.
+    expect(result.current.anchorDate).toBe(anchorBefore);
     expect(result.current.date).toEqual(target);
+    expect(result.current.jump.nonce).toBe(nonceBefore + 1);
+    expect(result.current.jump.target).toEqual(target);
   });
 
-  it('goToday moves both date and anchor to now', () => {
+  it('a swipe does not publish a jump', () => {
     const { result } = renderHook(() => useCalendarNavigation());
+    const jumpBefore = result.current.jump;
 
-    act(() => { result.current.onPageChange(new Date('2026-01-01T00:00:00Z')); });
-    act(() => { result.current.goToday(); });
+    act(() => { result.current.onPageChange(new Date('2026-06-01T00:00:00Z')); });
 
-    const today = new Date().toDateString();
-    expect(result.current.date.toDateString()).toBe(today);
-    expect(result.current.anchorDate.toDateString()).toBe(today);
+    expect(result.current.jump).toBe(jumpBefore);
   });
 
-  it('switchMode re-anchors on the current date', () => {
+  it('switchMode re-anchors, because the page span changed', () => {
     const { result } = renderHook(() => useCalendarNavigation());
     const swiped = new Date('2026-07-04T00:00:00Z');
 
@@ -77,5 +81,20 @@ describe('useCalendarNavigation', () => {
 
     expect(result.current.viewMode).toBe('day');
     expect(result.current.anchorDate).toEqual(swiped);
+  });
+
+  it('goToday returns the date to now and publishes it as a jump', () => {
+    const { result } = renderHook(() => useCalendarNavigation());
+    const anchorBefore = result.current.anchorDate;
+
+    act(() => { result.current.onPageChange(new Date('2026-01-01T00:00:00Z')); });
+    act(() => { result.current.goToday(); });
+
+    const today = new Date().toDateString();
+    expect(result.current.date.toDateString()).toBe(today);
+    expect(result.current.jump.target.toDateString()).toBe(today);
+    // Deliberately unchanged: the grid animates to today's index. Re-anchoring
+    // is what used to make Today feel like a remount.
+    expect(result.current.anchorDate).toBe(anchorBefore);
   });
 });

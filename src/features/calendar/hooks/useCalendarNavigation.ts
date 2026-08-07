@@ -17,6 +17,7 @@ export function useCalendarNavigation() {
   const [anchorDate, setAnchorDate] = useState(date);
   const [fetchDate, setFetchDate] = useState(date);
   const [agendaVisibleDate, setAgendaVisibleDate] = useState(date);
+  const [jump, setJump] = useState<{ nonce: number; target: Date }>(() => ({ nonce: 0, target: date }));
   const agendaRef = useRef<AgendaViewHandle>(null);
 
   const fetchDebounce = useRef(
@@ -28,12 +29,21 @@ export function useCalendarNavigation() {
   const agendaVisibleDateRef = useRef(agendaVisibleDate);
   agendaVisibleDateRef.current = agendaVisibleDate;
 
-  /** A jump: move the view and re-anchor the pager on the target. */
+  /**
+   * A jump (Today, a date picked in the month view, month navigation).
+   *
+   * The anchor deliberately does NOT move. The pager is infinite, so any date
+   * is reachable as an index from a fixed anchor, and moving the anchor would
+   * invalidate every cached page and rebuild the whole grid — which is what
+   * made Today feel like a remount. `jump` carries the target to the grid,
+   * which animates to it. It changes only on a jump, never on a swipe, so it
+   * does not churn the grid's props while paging.
+   */
   const setDate = useCallback((d: Date) => {
     fetchDebounce.cancel();
     setDateState(d);
-    setAnchorDate(d);
     setFetchDate(d);
+    setJump((j) => ({ nonce: j.nonce + 1, target: d }));
   }, [fetchDebounce]);
 
   /** A swipe: the anchor stays put so the pager keeps its index. */
@@ -48,7 +58,13 @@ export function useCalendarNavigation() {
     const focus = viewModeRef.current === 'schedule'
       ? agendaVisibleDateRef.current
       : dateRef.current;
-    if (target !== 'schedule') setDate(focus);
+    // Mode switch is the one case that re-anchors: the page span changes, so
+    // every cached page is invalid regardless, and making page 0 the focus page
+    // means the grid lands on it without animating from an unrelated index.
+    if (target !== 'schedule') {
+      setAnchorDate(focus);
+      setDate(focus);
+    }
     setViewMode(target);
   }, [setViewMode, setDate]);
 
@@ -70,6 +86,7 @@ export function useCalendarNavigation() {
     isCalendarMode,
     date,
     anchorDate,
+    jump,
     fetchDate,
     setDate,
     agendaVisibleDate,
