@@ -9,6 +9,7 @@ import { useEventByUid } from '@/database/useEventByUid';
 import { useCalendars } from '@/hooks/useCalendars';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useUpdateEvent } from '@/features/event/hooks/useMutateEvent';
+import { parseRrule } from '@/features/calendar/utils/parseRrule';
 import { useAccountStore } from '@/stores/accountStore';
 import { EventForm } from '@/features/event/components/EventForm';
 import {
@@ -92,6 +93,7 @@ export default function EditEventScreen() {
     location: event.location ?? '',
     attendees: event.attendees,
     alarmMinutes: event.alarmMinutes,
+    rrule: parseRrule(event.rrule),
   };
 
   const scopeLabel =

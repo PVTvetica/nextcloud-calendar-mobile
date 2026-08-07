@@ -36,9 +36,22 @@ describe('eventToInput', () => {
     expect(eventToInput(base).withTalkRoom).toBe(false);
   });
 
-  it('leaves rrule undefined so a drag does not rewrite recurrence', () => {
-    const recurring: CalendarEvent = { ...base, isRecurring: true, rrule: 'RRULE:FREQ=WEEKLY' };
-    expect(eventToInput(recurring).rrule).toBeUndefined();
+  it('reads the stored recurrence rule back so a drag does not destroy the series', () => {
+    const recurring: CalendarEvent = {
+      ...base,
+      isRecurring: true,
+      rrule: 'RRULE:FREQ=WEEKLY;BYDAY=MO',
+    };
+    expect(eventToInput(recurring).rrule).toEqual({ freq: 'WEEKLY', byDay: ['MO'] });
+  });
+
+  it('leaves rrule undefined when the stored rule cannot be represented exactly', () => {
+    const exotic: CalendarEvent = {
+      ...base,
+      isRecurring: true,
+      rrule: 'RRULE:FREQ=MONTHLY;BYMONTHDAY=15',
+    };
+    expect(eventToInput(exotic).rrule).toBeUndefined();
   });
 
   it('tolerates an event with no optional fields', () => {
