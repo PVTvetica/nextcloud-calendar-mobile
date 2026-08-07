@@ -206,5 +206,16 @@
     "durationHour": "h",
     "durationMinute": "m",
     "emptyAgenda": "Keine anstehenden Termine"
+  },
+  "notifications": {
+    "lead": {
+      "now": "Jetzt",
+      "minutes": "in {{value}} Min.",
+      "hours": "in {{value}} Std.",
+      "hoursMinutes": "in {{value}} Std. {{minutes}}",
+      "days": "in {{value}} Tagen",
+      "today": "Heute",
+      "tomorrow": "Morgen"
+    }
   }
 }

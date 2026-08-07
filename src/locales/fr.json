@@ -206,5 +206,16 @@
     "durationHour": "h",
     "durationMinute": "m",
     "emptyAgenda": "Aucun événement à venir"
+  },
+  "notifications": {
+    "lead": {
+      "now": "Maintenant",
+      "minutes": "dans {{value}} min",
+      "hours": "dans {{value}} h",
+      "hoursMinutes": "dans {{value}} h {{minutes}}",
+      "days": "dans {{value}} jours",
+      "today": "Aujourd'hui",
+      "tomorrow": "Demain"
+    }
   }
 }
