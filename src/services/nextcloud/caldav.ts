@@ -193,7 +193,7 @@ export async function fetchCalendars(account: Account): Promise<CalendarMeta[]> 
     const slug = extractSlug(path);
 
     const displayNameMatch = chunk.match(/<d:displayname>([^<]*)<\/d:displayname>/);
-    const displayName = displayNameMatch?.[1]?.trim() || slug;
+    const displayName = decodeXmlEntities(displayNameMatch?.[1] ?? '').trim() || slug;
 
     const colorMatch = chunk.match(/<\w+:calendar-color[^>]*>([^<]+)<\/\w+:calendar-color>/);
     const rawColor = colorMatch?.[1]?.trim() || '';
@@ -203,7 +203,7 @@ export async function fetchCalendars(account: Account): Promise<CalendarMeta[]> 
     const ctag = ctagMatch?.[1]?.trim() || '';
 
     const sourceMatch = chunk.match(/<cs:source[^>]*>[\s\S]*?<d:href>([^<]+)<\/d:href>[\s\S]*?<\/cs:source>/);
-    const sourceUrl = sourceMatch?.[1]?.trim();
+    const sourceUrl = sourceMatch ? decodeXmlEntities(sourceMatch[1]).trim() : undefined;
 
     const hasPrivilegeSet = chunk.includes('current-user-privilege-set');
     const hasAll = chunk.includes('<d:all');
