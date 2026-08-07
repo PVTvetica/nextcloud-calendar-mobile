@@ -1,7 +1,7 @@
 import React from 'react';
 import { HStack, Image, ProgressView, RoundedRectangle, Spacer, Text, VStack, ZStack } from '@expo/ui/swift-ui';
 import { clipShape, font, foregroundStyle, frame, opacity, padding, progressViewStyle, tint } from '@expo/ui/swift-ui/modifiers';
-import { createLiveActivity, type LiveActivity } from 'expo-widgets';
+import { after, createLiveActivity, type LiveActivity } from 'expo-widgets';
 import dayjs from 'dayjs';
 
 import type { LiveEventState, WidgetSurface } from '../../core/types';
@@ -146,7 +146,10 @@ const CalendarLiveActivity = (props: ActivityProps) => {
 
 const activity = createLiveActivity<ActivityProps>(ACTIVITY_NAME, CalendarLiveActivity);
 
+const DISMISS_WINDOW_MS = 4 * 60 * 60 * 1000;
+
 let instance: LiveActivity<ActivityProps> | null = null;
+let scheduledEnd = false;
 
 function trackedInstance(): LiveActivity<ActivityProps> | null {
   if (!instance) instance = activity.getInstances()[0] ?? null;
@@ -158,11 +161,21 @@ export const liveActivity: WidgetSurface<LiveEventState> = {
   isSupported: () => typeof activity?.start === 'function',
   update: async (state) => {
     const previous = readLiveEvent();
-    writeLiveEvent(state);
     const props = toProps(state);
+    const sameEvent = !!previous && previous.deepLink === state.deepLink;
     let current = trackedInstance();
 
-    if (current && previous && previous.deepLink !== state.deepLink) {
+    if (sameEvent && current) {
+      if (scheduledEnd) return;
+      try {
+        await current.update(props);
+        writeLiveEvent(state);
+        return;
+      } catch {
+        instance = null;
+        current = null;
+      }
+    } else if (current) {
       try {
         await current.end('immediate');
       } catch {
@@ -171,24 +184,28 @@ export const liveActivity: WidgetSurface<LiveEventState> = {
       current = null;
     }
 
-    if (current) {
-      try {
-        await current.update(props);
-        return;
-      } catch {
-        instance = null;
-      }
-    }
+    writeLiveEvent(state);
+    const now = Date.now();
+    const canSchedule = props.endMs > now && props.endMs - now <= DISMISS_WINDOW_MS;
     try {
-      instance = activity.start(props, state.deepLink);
+      const started = activity.start(props, state.deepLink);
+      instance = started;
+      if (canSchedule) {
+        await started.end(after(new Date(props.endMs)), props, new Date(props.endMs));
+        scheduledEnd = true;
+      } else {
+        scheduledEnd = false;
+      }
     } catch (error) {
       instance = null;
+      scheduledEnd = false;
       throw error;
     }
   },
   clear: async () => {
     writeLiveEvent(null);
     const current = trackedInstance();
+    scheduledEnd = false;
     if (!current) return;
     try {
       await current.end('immediate');
