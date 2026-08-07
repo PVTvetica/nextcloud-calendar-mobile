@@ -1,9 +1,13 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+// React Native's ScrollView, deliberately, not gesture-handler's: RNGH's is
+// createNativeWrapper(RNScrollView, { disallowInterruption: true }), so wrapping
+// it in our own GestureDetector puts two NativeViewGestureHandlers on one view
+// and the inner one — which refuses interruption — never lets the scroll start.
+// One native handler, ours, composed with the pager via simultaneousGestures.
+import { View, ScrollView, StyleSheet } from 'react-native';
 import {
   Gesture,
   GestureDetector,
-  ScrollView,
   type ComposedGesture,
   type GestureType,
 } from 'react-native-gesture-handler';
@@ -139,28 +143,14 @@ function TimeGridViewImpl({
   return (
     <GestureDetector gesture={pinchGesture}>
       <View style={styles.fill}>
-        <View
-          testID="time-grid-header-row"
-          style={[
-            styles.headerRow,
-            { height: headerHeight, borderBottomColor: colors.border },
-          ]}
-        >
-          <View style={styles.corner} />
-          <InfinitePager
-            style={styles.fill}
-            pageWrapperStyle={styles.fill}
-            height={headerHeight}
-            renderPage={renderHeaderPage}
-            syncNode={syncNode}
-            gesturesDisabled
-            pageBuffer={1}
-          />
-        </View>
-
+        {/* The scroll fills the whole area and the header floats over it, so a
+            change in all-day row count only shifts the content inset — it never
+            reflows or remounts the grid underneath. Grid content slides under
+            the header, which is opaque. */}
         <GestureDetector gesture={nativeScroll}>
           <ScrollView
             style={styles.fill}
+            contentContainerStyle={{ paddingTop: headerHeight }}
             contentOffset={{ x: 0, y: initialScrollHour * hourRowHeight }}
             showsVerticalScrollIndicator={false}
           >
@@ -180,6 +170,29 @@ function TimeGridViewImpl({
             </View>
           </ScrollView>
         </GestureDetector>
+
+        <View
+          testID="time-grid-header-row"
+          style={[
+            styles.headerRow,
+            {
+              height: headerHeight,
+              borderBottomColor: colors.border,
+              backgroundColor: colors.background,
+            },
+          ]}
+        >
+          <View style={[styles.corner, { backgroundColor: colors.background }]} />
+          <InfinitePager
+            style={styles.fill}
+            pageWrapperStyle={styles.fill}
+            height={headerHeight}
+            renderPage={renderHeaderPage}
+            syncNode={syncNode}
+            gesturesDisabled
+            pageBuffer={1}
+          />
+        </View>
       </View>
     </GestureDetector>
   );
@@ -189,7 +202,15 @@ export const TimeGridView = memo(TimeGridViewImpl);
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  headerRow: { flexDirection: 'row', borderBottomWidth: 2 },
+  headerRow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    borderBottomWidth: 2,
+    zIndex: 20,
+  },
   corner: { width: HOUR_RAIL_WIDTH, zIndex: 10 },
   gridRow: { flexDirection: 'row' },
 });
