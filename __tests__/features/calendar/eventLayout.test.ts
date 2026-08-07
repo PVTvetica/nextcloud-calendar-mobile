@@ -69,6 +69,20 @@ describe('layoutDay', () => {
     expect(out.get('b')!.widthPct).toBe(50);
   });
 
+  it('legitimately expands an event when freed columns do not overlap it', () => {
+    // A 9:00-10:00, B 9:00-10:00, D 9:30-10:30, C 10:00-11:00.
+    // D chains A/B to C (all in one group). Columns: A=0, B=1, D=2, C=0 (after A).
+    // C at 10:00-11:00 does not overlap B (ends at 10:00) or A (ends at 10:00),
+    // so C can expand into columns 1 and 2. Expansion blocked only by D (9:30 < 11:00).
+    // C expands: leftPct=0, widthPct=66.67 (2 out of 3 columns).
+    const out = byUid(layoutDay([ev('a', 9, 10), ev('b', 9, 10), evAt('d', 570, 630), ev('c', 10, 11)]));
+    expect(out.get('c')!.leftPct).toBe(0);
+    expect(out.get('c')!.widthPct).toBeCloseTo(100 * (2 / 3), 6);
+    expect(out.get('a')!.widthPct).toBeCloseTo(100 / 3, 6);
+    expect(out.get('b')!.widthPct).toBeCloseTo(100 / 3, 6);
+    expect(out.get('d')!.widthPct).toBeCloseTo(100 / 3, 6);
+  });
+
   it('lets an event span every column when nothing overlaps it', () => {
     // A 8:00-9:00 alone, then B 10:00-11:00 and C 10:30-11:30 overlapping.
     // A is its own group and takes the full width.
