@@ -172,8 +172,21 @@ function TimeGridViewImpl({
 
   // The anchor only moves on a mode switch now, and the span changed with it,
   // so every cached page is invalid anyway: land on page 0 without animating.
-  /** Entry page for a re-anchor slide: +1, -1, or null for an instant land. */
-  const pendingSlide = useRef<number | null>(null);
+  /**
+   * Remount key for both pagers, bumped on every re-anchor.
+   *
+   * setPage writes `translate` immediately while the pager's own curIndex only
+   * catches up through an animated reaction and a React state update. Across a
+   * large gap that leaves the mounted pages positioned several widths
+   * off-screen for as long as the re-render takes — a second and a half with a
+   * heavy month, showing first the wrong week and then nothing at all.
+   *
+   * Remounting sidesteps the desync: a fresh pager starts at index 0 with
+   * translate 0, consistent from its first commit. React also builds the new
+   * subtree before committing it, so the previous week stays on screen until
+   * the new one is ready to replace it, rather than blanking while it works.
+   */
+  const [pagerKey, setPagerKey] = useState(0);
   const firstAnchorReset = useRef(true);
   // useLayoutEffect, not useEffect: re-anchoring rebuilds datesForIndex while
   // the pager is still sitting on the old index, so the render that carries the
@@ -187,13 +200,17 @@ function TimeGridViewImpl({
       firstAnchorReset.current = false;
       return;
     }
-    // Land one page off the target when a slide was requested, so the last leg
-    // can animate; handlePageChange finishes it once the pager's own index has
-    // caught up. Animating straight from the old index would cross unmounted
-    // pages, and animating from here would race that index update.
-    const entry = pendingSlide.current;
-    setSettledIndex(entry ?? 0);
-    pagerRef.current?.setPage(entry ?? 0, { animated: false });
+    // The pagers remount on this key, so they come up at index 0 on their own.
+    // Only the shared translate has to be cleared, or the fresh pagers would
+    // read the departed page's offset.
+    syncNode.value = 0;
+    setSettledIndex(0);
+    setPagerKey((k) => k + 1);
+    // syncNode is deliberately not a dependency: it is a mutable container, not
+    // a value, and the project's Reanimated test mock hands back a fresh object
+    // on every render — listing it would re-run this effect every render and
+    // bump the key forever.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localAnchor, mode]);
 
   /**
@@ -226,25 +243,14 @@ function TimeGridViewImpl({
       pagerRef.current?.setPage(target, { animated: true });
       return;
     }
-    // Re-anchor, arriving from the side the user came from so the last page
-    // still slides. The layout effect above lands on that neighbour, and
-    // handlePageChange animates the final page once the pager has settled
-    // there. Coming back from the future enters from page +1, and vice versa.
-    pendingSlide.current = target > from ? -1 : 1;
+    // Too far to animate: re-anchor. The layout effect above remounts the
+    // pagers at index 0 on the new anchor, swapping the old week for the new
+    // one in a single commit instead of blanking while the pager catches up.
     setLocalAnchor(jump.target);
   }, [jump]);
 
   const handlePageChange = useCallback(
     (index: number) => {
-      // The pager has settled on the entry page of a re-anchor: its own index
-      // is now in step with the translate, so the final page can animate
-      // without crossing anything unmounted.
-      if (pendingSlide.current !== null && index === pendingSlide.current) {
-        pendingSlide.current = null;
-        setSettledIndex(0);
-        pagerRef.current?.setPage(0, { animated: true });
-        return;
-      }
       // Size the band from the settled page right away rather than waiting for
       // the deferred activeDate to come back around.
       setSettledIndex(index);
@@ -303,6 +309,7 @@ function TimeGridViewImpl({
             <View style={[styles.gridRow, { height: gridHeight }]}>
               <HourRail hourRowHeight={hourRowHeight} />
               <InfinitePager
+                key={pagerKey}
                 ref={pagerRef}
                 style={styles.fill}
                 pageWrapperStyle={styles.fill}
@@ -330,6 +337,7 @@ function TimeGridViewImpl({
         >
           <View style={[styles.corner, { backgroundColor: colors.background }]} />
           <InfinitePager
+            key={pagerKey}
             style={styles.fill}
             pageWrapperStyle={styles.fill}
             height={headerHeight}
