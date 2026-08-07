@@ -20,6 +20,7 @@ import {
   IconButton,
 } from '@/ui/components';
 import type { CalendarEvent, RecurrenceEditScope } from '@/types';
+import { askRecurrenceScope, type RecurrenceScopeStrings } from '@/features/event/recurrenceScope';
 
 dayjs.extend(localizedFormat);
 
@@ -35,40 +36,6 @@ async function openTalkRoom(talkUrl: string) {
     return;
   }
   await Linking.openURL(talkUrl);
-}
-
-interface RecurrenceScopeStrings {
-  message: string;
-  thisOnly: string;
-  thisAndFollowing: string;
-  all: string;
-  cancel: string;
-}
-
-function askRecurrenceScope(
-  title: string,
-  strings: RecurrenceScopeStrings,
-  onSelect: (scope: RecurrenceEditScope) => void,
-) {
-  Alert.alert(title, strings.message, [
-    {
-      text: strings.thisOnly,
-      onPress: () => onSelect('this'),
-    },
-    {
-      text: strings.thisAndFollowing,
-      onPress: () => onSelect('thisAndFollowing'),
-    },
-    {
-      text: strings.all,
-      onPress: () => onSelect('all'),
-    },
-    { text: strings.cancel, style: 'cancel' },
-  ],
-    {
-      cancelable: true,
-    },
- );
 }
 
 export default function EventDetailScreen() {
