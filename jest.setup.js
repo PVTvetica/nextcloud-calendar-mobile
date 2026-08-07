@@ -20,6 +20,9 @@ jest.mock('react-native-reanimated', () => {
     createAnimatedComponent: (c) => c,
     useSharedValue: (v) => ({ value: v }),
     useAnimatedStyle: () => ({}),
+    // Needed by react-native-gesture-handler's GestureDetector (useAnimatedGesture),
+    // which calls this on every render regardless of which gesture is attached.
+    useEvent: () => null,
     withTiming: (v) => v,
     withSpring: (v) => v,
     LinearTransition: {},

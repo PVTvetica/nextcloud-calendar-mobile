@@ -92,6 +92,13 @@ export default function CalendarScreen() {
   const overlapMap = useMemo(() => computeOverlapMap(allEvents), [allEvents]);
   const calendarEvents = useMemo(() => toGridEvents(allEvents, overlapMap), [allEvents, overlapMap]);
 
+  // Temporary bridge for the new TimeGridView (single mode, single anchor date).
+  // Task 9 rewires navigation state (nav.anchorDate, per-mode all-day filtering, etc.)
+  // and this block goes away.
+  const calMode = isCalMode(deferredViewMode) ? deferredViewMode : 'week';
+  const allDayCalendarEvents = useMemo(() => allEvents.filter((e) => e.allDay), [allEvents]);
+  const initialScrollHour = useMemo(() => Math.max(0, new Date().getHours() - 1), []);
+
   const navGuard = useRef(createNavigationGuard()).current;
 
   const handlePressEvent = useCallback(
@@ -201,23 +208,19 @@ export default function CalendarScreen() {
 
         <ViewLayer visible={deferredIsCalendarMode}>
           <TimeGridView
-            pinchGesture={pinchGesture}
-            mountedCalModes={nav.mountedCalModes}
-            viewMode={deferredViewMode}
-            calendarKey={calendarKeyFull}
-            events={calendarEvents}
-            calDates={deferredCalDates}
+            mode={calMode}
+            anchorDate={deferredDate}
             activeDate={deferredDate}
-            heightFor={heightFor}
+            events={calendarEvents}
+            allDayEvents={allDayCalendarEvents}
             hourRowHeight={hourRowHeight}
             weekStartsOn={deferredWeekStartsOn}
-            scrollOffset={scrollOffset}
+            pinchGesture={pinchGesture}
+            initialScrollHour={initialScrollHour}
+            onPageChange={nav.onSwipeEndHandlers[calMode]}
+            onPressSlot={handlePressCell}
             onPressEvent={handlePressEvent}
-            onPressCell={handlePressCell}
-            onSwipeEndHandlers={nav.onSwipeEndHandlers}
-            renderEvent={renderEvent}
-            eventCellStyle={eventCellStyle}
-            bigCalendarTheme={bigCalendarTheme}
+            onPressAllDayEvent={handlePressEventFromMonth}
           />
         </ViewLayer>
       </View>
