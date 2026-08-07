@@ -15,7 +15,7 @@ import { OfflineBanner } from '@/features/calendar/components/OfflineBanner';
 import { MonthDayView } from '@/features/calendar/components/MonthDayView';
 import { AgendaView } from '@/features/calendar/components/AgendaView';
 import { createNavigationGuard } from '@/utils/navigationGuard';
-import type { CalendarEvent } from '@/types';
+import type { CalendarEvent, RecurrenceEditScope } from '@/types';
 import { useCalendarNavigation } from '@/features/calendar/hooks/useCalendarNavigation';
 import { useCalendarData } from '@/features/calendar/hooks/useCalendarData';
 import { useCalendarDrawer } from '@/features/calendar/hooks/useCalendarDrawer';
@@ -25,8 +25,12 @@ import { TimeGridView } from '@/features/calendar/components/TimeGridView';
 import { ViewLayer } from '@/features/calendar/components/ViewLayer';
 import { CalendarFab } from '@/features/calendar/components/CalendarFab';
 import { CalendarLoadingOverlay } from '@/features/calendar/components/CalendarLoadingOverlay';
-import { toGridEvents } from '@/features/calendar/utils/toGridEvents';
+import { toGridEvents, type GridEvent } from '@/features/calendar/utils/toGridEvents';
+import { eventToInput } from '@/features/calendar/utils/eventToInput';
+import { decideMoveEventScope } from '@/features/calendar/utils/moveEventScope';
 import { isCalMode, type CalMode } from '@/features/calendar/constants';
+import { useUpdateEvent } from '@/features/event/hooks/useMutateEvent';
+import { askRecurrenceScope } from '@/features/event/recurrenceScope';
 
 dayjs.extend(isoWeek);
 
@@ -87,6 +91,47 @@ export default function CalendarScreen() {
   const handlePressCell = useCallback(
     (d: Date) => { navGuard(() => router.push({ pathname: '/event/new', params: { date: d.toISOString() } })); },
     [router, navGuard]
+  );
+
+  // activeAccount is only used inside the mutation's callback, which the
+  // early return in handleMoveEvent below always guards, so `!` here is safe
+  // in the same way the edit screen uses it.
+  const updateMutation = useUpdateEvent(activeAccount!, calendars);
+
+  const recurrenceScopeStrings = useMemo(
+    () => ({
+      message: t('event.recurrenceScopeMessage'),
+      thisOnly: t('event.scopeThisOnly'),
+      thisAndFollowing: t('event.scopeThisAndFollowingBtn'),
+      all: t('event.scopeAllEvents'),
+      cancel: t('common.cancel'),
+    }),
+    [t]
+  );
+
+  const handleMoveEvent = useCallback(
+    (gridEvent: GridEvent, nextStart: Date, nextEnd: Date) => {
+      // activeAccount can be null on first launch, before any account has
+      // been added — nothing to commit the drag to yet.
+      if (!activeAccount) return;
+      const event = gridEvent._event;
+      const apply = (scope: RecurrenceEditScope) => {
+        void updateMutation.mutateAsync({
+          event,
+          input: { ...eventToInput(event), dtstart: nextStart, dtend: nextEnd },
+          scope,
+        });
+      };
+      const decision = decideMoveEventScope(event);
+      if (decision.kind === 'prompt') {
+        // Cancelling the prompt leaves the event where it was: the local
+        // patch only happens inside apply, which cancelling never reaches.
+        askRecurrenceScope(t('event.editEvent'), recurrenceScopeStrings, apply);
+        return;
+      }
+      apply(decision.scope);
+    },
+    [activeAccount, updateMutation, t, recurrenceScopeStrings]
   );
 
   const monthSwipeGesture = useMemo(
@@ -170,6 +215,7 @@ export default function CalendarScreen() {
             onPressSlot={handlePressCell}
             onPressEvent={handlePressGridEvent}
             onPressAllDayEvent={handlePressEventFromMonth}
+            onMoveEvent={handleMoveEvent}
           />
         </ViewLayer>
       </View>
