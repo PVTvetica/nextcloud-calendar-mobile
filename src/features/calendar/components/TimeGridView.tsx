@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 // React Native's ScrollView, deliberately, not gesture-handler's: RNGH's is
 // createNativeWrapper(RNScrollView, { disallowInterruption: true }), so wrapping
 // it in our own GestureDetector puts two NativeViewGestureHandlers on one view
@@ -109,20 +109,22 @@ function TimeGridViewImpl({
     };
   }, [anchorDate, mode, weekStartsOn]);
 
-  // Derived from activeDate rather than datesForIndex(0): datesForIndex(0) is
-  // page 0 relative to anchorDate, which onPageChange deliberately leaves
-  // untouched on swipe (see useCalendarNavigation). pageFocusDate guarantees
-  // activeDate lands inside the page the user is actually looking at, and
-  // pageDates' week alignment normalises it regardless of which day within
-  // the page activeDate happens to be — exact for all three modes.
-  // Sized on the settled page only. activeDate catches up when a swipe lands, so
-  // the band resizes once on arrival rather than pre-empting the tallest of the
-  // buffered pages; mid-swipe overflow is clipped by the header's overflow:hidden.
+  // Which page the band is sized for. activeDate is deferred, so sizing off it
+  // directly makes the band resize several frames after the swipe has landed —
+  // very visible in day and 3days mode, where consecutive pages rarely share a
+  // band height. handlePageChange knows the settled index immediately, so it
+  // drives this; the effect below only re-syncs when the date changes from
+  // outside (a jump, or mount).
+  const activeIndex = useMemo(
+    () => pageIndexForDate(anchorDate, activeDate, mode, weekStartsOn),
+    [anchorDate, activeDate, mode, weekStartsOn]
+  );
+  const [settledIndex, setSettledIndex] = useState(activeIndex);
+  useEffect(() => { setSettledIndex(activeIndex); }, [activeIndex]);
+
   const headerHeight = useMemo(
-    () =>
-      DAY_HEADER_HEIGHT +
-      allDayRowHeight(pageDates(activeDate, 0, mode, weekStartsOn), allDayEvents),
-    [activeDate, mode, weekStartsOn, allDayEvents]
+    () => DAY_HEADER_HEIGHT + allDayRowHeight(datesForIndex(settledIndex), allDayEvents),
+    [datesForIndex, settledIndex, allDayEvents]
   );
 
   // The content is inset by the FULL header height so 00:00 sits just below the
@@ -134,7 +136,11 @@ function TimeGridViewImpl({
   const scrollRef = useRef<ScrollView>(null);
   const scrollY = useRef(initialScrollHour * hourRowHeight);
   const prevHeaderHeight = useRef(headerHeight);
-  useEffect(() => {
+  // useLayoutEffect, not useEffect: the padding change lands in the render
+  // commit, so a passive effect corrects the scroll one frame later and that
+  // frame shows the grid displaced by the band's height. Compensating before
+  // paint keeps the two in the same frame.
+  useLayoutEffect(() => {
     const delta = headerHeight - prevHeaderHeight.current;
     prevHeaderHeight.current = headerHeight;
     if (delta === 0) return;
@@ -171,6 +177,9 @@ function TimeGridViewImpl({
 
   const handlePageChange = useCallback(
     (index: number) => {
+      // Size the band from the settled page right away rather than waiting for
+      // the deferred activeDate to come back around.
+      setSettledIndex(index);
       onPageChange(pageFocusDate(anchorDate, index, mode, weekStartsOn));
     },
     [anchorDate, mode, weekStartsOn, onPageChange]
