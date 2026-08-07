@@ -68,9 +68,14 @@ function TimeGridHeaderImpl({ dates, activeDate, allDayEvents, onPressEvent }: P
 
             {byDate[i].length > 0 && (
               <View style={{ borderLeftWidth: 1, borderLeftColor: theme.colors.border, height: sectionHeight }}>
-                {byDate[i].map((event) => (
+                {byDate[i].map((event, chipIndex) => (
                   <TouchableOpacity
-                    key={event.uid}
+                    // uid is indexed but not unique (schema.ts): recurrence
+                    // instances share a UID by iCalendar design, so two
+                    // occurrences landing on the same day collide on a bare
+                    // uid key. DayColumn already keys on uid + start; the index
+                    // closes the remaining case of a true duplicate row.
+                    key={`${event.uid}-${event.dtstart.getTime()}-${chipIndex}`}
                     // Explicit height and gap rather than letting text metrics
                     // decide: allDayRowHeight reserves exactly this much per
                     // chip, so any drift here reopens the gap under the band.
