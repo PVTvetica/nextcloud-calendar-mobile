@@ -5,7 +5,19 @@ import type { CalendarEvent } from '@/types';
 
 export const HOUR_RAIL_WIDTH = 50;
 export const DAY_HEADER_HEIGHT = 66;
-export const ALL_DAY_ROW_HEIGHT = 26;
+/**
+ * All-day chip geometry, kept exact rather than approximate.
+ *
+ * The reserved band used to be 26 per row, inherited from the old library,
+ * while a chip actually occupies CHIP_HEIGHT + CHIP_GAP. The difference piled
+ * up as dead space between the last chip and the grid. These three constants
+ * are the single source of truth: TimeGridHeader lays chips out from them, so
+ * the band is exactly as tall as its contents.
+ */
+export const ALL_DAY_CHIP_HEIGHT = 18;
+export const ALL_DAY_CHIP_GAP = 4;
+export const ALL_DAY_ROW_HEIGHT = ALL_DAY_CHIP_HEIGHT + ALL_DAY_CHIP_GAP;
+/** Breathing room between the last chip and the grid below. */
 export const ALL_DAY_PAD = 4;
 
 export function daysPerPage(mode: CalMode): number {

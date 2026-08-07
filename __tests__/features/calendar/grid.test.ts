@@ -286,7 +286,7 @@ describe('allDayRowHeight', () => {
 
   it('is one row plus padding for a single event', () => {
     const e = allDay('a', new Date(2026, 7, 5), new Date(2026, 7, 5));
-    expect(allDayRowHeight(week, [e])).toBe(26 + 4);
+    expect(allDayRowHeight(week, [e])).toBe(22 + 4);
   });
 
   it('stays one row when three events fall on different days', () => {
@@ -295,7 +295,7 @@ describe('allDayRowHeight', () => {
       allDay('b', new Date(2026, 7, 5), new Date(2026, 7, 5)),
       allDay('c', new Date(2026, 7, 6), new Date(2026, 7, 6)),
     ];
-    expect(allDayRowHeight(week, events)).toBe(26 + 4);
+    expect(allDayRowHeight(week, events)).toBe(22 + 4);
   });
 
   it('grows to the busiest day when events stack', () => {
@@ -305,7 +305,7 @@ describe('allDayRowHeight', () => {
       allDay('c', new Date(2026, 7, 5), new Date(2026, 7, 5)),
       allDay('d', new Date(2026, 7, 6), new Date(2026, 7, 6)),
     ];
-    expect(allDayRowHeight(week, events)).toBe(3 * 26 + 4);
+    expect(allDayRowHeight(week, events)).toBe(3 * 22 + 4);
   });
 
   it('is zero when every all-day event falls outside the page', () => {

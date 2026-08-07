@@ -4,7 +4,13 @@ import { useTheme } from 'expo-router';
 import dayjs from 'dayjs';
 import { useSettingsStore } from '@/stores/settingsStore';
 import type { CalendarEvent } from '@/types';
-import { allDayEventsForDay, allDayRowHeight, dayKey } from '../utils/grid';
+import {
+  ALL_DAY_CHIP_GAP,
+  ALL_DAY_CHIP_HEIGHT,
+  allDayEventsForDay,
+  allDayRowHeight,
+  dayKey,
+} from '../utils/grid';
 
 interface Props {
   dates: Date[];
@@ -65,13 +71,25 @@ function TimeGridHeaderImpl({ dates, activeDate, allDayEvents, onPressEvent }: P
                 {byDate[i].map((event) => (
                   <TouchableOpacity
                     key={event.uid}
+                    // Explicit height and gap rather than letting text metrics
+                    // decide: allDayRowHeight reserves exactly this much per
+                    // chip, so any drift here reopens the gap under the band.
                     style={{
-                      backgroundColor: event.color, borderRadius: 2, paddingHorizontal: 4,
-                      paddingVertical: 2, marginTop: 4, marginHorizontal: 2,
+                      backgroundColor: event.color,
+                      borderRadius: 2,
+                      paddingHorizontal: 4,
+                      height: ALL_DAY_CHIP_HEIGHT,
+                      justifyContent: 'center',
+                      marginTop: ALL_DAY_CHIP_GAP,
+                      marginHorizontal: 2,
                     }}
                     onPress={() => onPressEvent(event)}
                   >
-                    <Text style={{ fontSize: 12, color: '#fff' }} numberOfLines={1}>
+                    <Text
+                      style={{ fontSize: 12, lineHeight: 14, color: '#fff' }}
+                      numberOfLines={1}
+                      allowFontScaling={false}
+                    >
                       {event.summary}
                     </Text>
                   </TouchableOpacity>
