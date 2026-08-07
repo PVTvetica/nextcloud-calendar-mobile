@@ -14,7 +14,6 @@ import { CalendarDrawer } from '@/features/calendar/components/CalendarDrawer';
 import { OfflineBanner } from '@/features/calendar/components/OfflineBanner';
 import { MonthDayView } from '@/features/calendar/components/MonthDayView';
 import { AgendaView } from '@/features/calendar/components/AgendaView';
-import { computeOverlapMap } from '@/features/calendar/utils/overlapMap';
 import { createNavigationGuard } from '@/utils/navigationGuard';
 import type { CalendarEvent } from '@/types';
 import { useCalendarNavigation } from '@/features/calendar/hooks/useCalendarNavigation';
@@ -68,8 +67,7 @@ export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
   const drawer = useCalendarDrawer();
 
-  const overlapMap = useMemo(() => computeOverlapMap(allEvents), [allEvents]);
-  const calendarEvents = useMemo(() => toGridEvents(allEvents, overlapMap), [allEvents, overlapMap]);
+  const calendarEvents = useMemo(() => toGridEvents(allEvents), [allEvents]);
 
   const allDayEvents = useMemo(() => allEvents.filter((e) => e.allDay), [allEvents]);
   const nowHour = useMemo(() => Math.max(0, new Date().getHours() - 1), []);

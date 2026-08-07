@@ -4,20 +4,22 @@ import { useTheme } from 'expo-router';
 import dayjs from 'dayjs';
 import { eventPositionStyle, nowTopPct } from '../utils/grid';
 import type { GridEvent } from '../utils/toGridEvents';
+import type { PositionedEvent } from '../utils/eventLayout';
 import { TimeGridEvent } from './TimeGridEvent';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 interface Props {
   date: Date;
-  events: GridEvent[];
+  positioned: PositionedEvent[];
   hourRowHeight: number;
   now: Date;
   onPressSlot: (d: Date) => void;
   onPressEvent: (e: GridEvent) => void;
+  dimmedUid?: string;
 }
 
-function DayColumnImpl({ date, events, hourRowHeight, now, onPressSlot, onPressEvent }: Props) {
+function DayColumnImpl({ date, positioned, hourRowHeight, now, onPressSlot, onPressEvent, dimmedUid }: Props) {
   const { colors } = useTheme();
   const isToday = dayjs(now).isSame(date, 'day');
 
@@ -56,7 +58,7 @@ function DayColumnImpl({ date, events, hourRowHeight, now, onPressSlot, onPressE
 
       <Pressable testID="day-column-surface" style={StyleSheet.absoluteFill} onPress={handlePress} />
 
-      {events.map((event) => {
+      {positioned.map(({ event, leftPct, widthPct, zIndex }) => {
         const { top, height } = eventPositionStyle(event.start, event.end);
         return (
           <TimeGridEvent
@@ -64,7 +66,11 @@ function DayColumnImpl({ date, events, hourRowHeight, now, onPressSlot, onPressE
             event={event}
             top={top}
             height={height}
+            leftPct={leftPct}
+            widthPct={widthPct}
+            zIndex={zIndex}
             hourRowHeight={hourRowHeight}
+            dimmed={dimmedUid === event._event.uid}
             onPress={onPressEvent}
           />
         );

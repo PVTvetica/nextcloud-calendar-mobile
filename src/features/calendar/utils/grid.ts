@@ -107,10 +107,7 @@ function sameSlice(a: GridEvent, b: GridEvent): boolean {
     a.start.getTime() === b.start.getTime() &&
     a.end.getTime() === b.end.getTime() &&
     a.title === b.title &&
-    a.color === b.color &&
-    a._leftPct === b._leftPct &&
-    a._rightPx === b._rightPx &&
-    a._zIndex === b._zIndex
+    a.color === b.color
   );
 }
 

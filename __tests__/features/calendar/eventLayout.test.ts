@@ -12,7 +12,7 @@ function ev(uid: string, startHour: number, endHour: number): GridEvent {
   };
   return {
     title: e.summary, start: e.dtstart, end: e.dtend, color: e.color,
-    _event: e, _leftPct: 0, _rightPx: 3, _zIndex: 100,
+    _event: e,
   };
 }
 
@@ -129,5 +129,32 @@ describe('layoutDay', () => {
 
   it('returns an empty list for an empty day', () => {
     expect(layoutDay([])).toEqual([]);
+  });
+
+  // Ported from the old per-cluster overlap test suite: zIndex = 100 + column,
+  // and nothing in the tests above pinned that down.
+  it('assigns the base zIndex to a lone event', () => {
+    const out = byUid(layoutDay([ev('a', 9, 10), ev('b', 11, 12)]));
+    expect(out.get('a')!.zIndex).toBe(100);
+    expect(out.get('b')!.zIndex).toBe(100);
+  });
+
+  it('increments zIndex per column for overlapping events', () => {
+    const out = byUid(layoutDay([evAt('a', 540, 630), evAt('b', 600, 660)]));
+    expect(out.get('a')!.zIndex).toBe(100);
+    expect(out.get('b')!.zIndex).toBe(101);
+  });
+
+  // Ported from the old per-cluster overlap test suite: a-b overlap, b-c
+  // overlap, but a and c do not overlap each other. The three still chain
+  // into one group, and c reuses a's column once it frees up at 10:00.
+  it('reuses a freed column across a chain even when its endpoints are disjoint', () => {
+    const out = byUid(layoutDay([ev('a', 9, 10), evAt('b', 570, 660), evAt('c', 630, 690)]));
+    expect(out.get('a')!.leftPct).toBe(0);
+    expect(out.get('b')!.leftPct).toBe(50);
+    expect(out.get('c')!.leftPct).toBe(0);
+    expect(out.get('a')!.widthPct).toBe(50);
+    expect(out.get('b')!.widthPct).toBe(50);
+    expect(out.get('c')!.widthPct).toBe(50);
   });
 });

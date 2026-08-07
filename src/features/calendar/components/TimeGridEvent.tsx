@@ -8,7 +8,11 @@ interface Props {
   event: GridEvent;
   top: string;
   height: string;
+  leftPct: number;
+  widthPct: number;
+  zIndex: number;
   hourRowHeight: number;
+  dimmed?: boolean;
   onPress: (event: GridEvent) => void;
 }
 
@@ -31,7 +35,7 @@ function contrastFor(hex: string) {
   }
 }
 
-function TimeGridEventImpl({ event, top, height, hourRowHeight, onPress }: Props) {
+function TimeGridEventImpl({ event, top, height, leftPct, widthPct, zIndex, hourRowHeight, dimmed, onPress }: Props) {
   const scale = Math.min(Math.max((hourRowHeight - 30) / 170, 0), 1);
   const titleSize = Math.round(11 + scale * 4);
   const timeSize = Math.round(9 + scale * 2);
@@ -45,15 +49,17 @@ function TimeGridEventImpl({ event, top, height, hourRowHeight, onPress }: Props
     top: top as ViewStyle['top'],
     height: height as ViewStyle['height'],
     marginTop: 2,
-    zIndex: event._zIndex,
-    left: `${event._leftPct}%` as ViewStyle['left'],
-    right: event._rightPx,
-    paddingLeft: event._leftPct > 0 ? 2 : 3,
+    zIndex,
+    left: `${leftPct}%` as ViewStyle['left'],
+    width: `${widthPct}%` as ViewStyle['width'],
+    paddingLeft: leftPct > 0 ? 2 : 3,
     paddingRight: 3,
+    opacity: dimmed ? 0.35 : 1,
   };
 
   return (
     <TouchableOpacity
+      testID={`event-box-${event._event.uid}`}
       onPress={() => onPress(event)}
       style={[positionStyle, styles.card, { backgroundColor: color, borderColor: ink.border, paddingVertical: Math.max(pad - 1, 1) }]}
     >

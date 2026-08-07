@@ -155,10 +155,7 @@ function domainEvent(over: Partial<CalendarEvent>): CalendarEvent {
 
 function gridEvent(over: Partial<CalendarEvent>): GridEvent {
   const e = domainEvent(over);
-  return {
-    title: e.summary, start: e.dtstart, end: e.dtend, color: e.color,
-    _event: e, _leftPct: 0, _rightPx: 3, _zIndex: 100,
-  };
+  return { title: e.summary, start: e.dtstart, end: e.dtend, color: e.color, _event: e };
 }
 
 describe('buildDayIndex', () => {
@@ -236,17 +233,6 @@ describe('buildDayIndex', () => {
     ]);
     expect(idx.get('2026-08-07')![0]._event.uid).toBe('keepme');
     expect(idx.get('2026-08-08')![0]._event.uid).toBe('keepme');
-  });
-
-  it('keeps the overlap layout fields on slices', () => {
-    const e = gridEvent({ uid: 'laid-out' });
-    e._leftPct = 50;
-    e._rightPx = 0;
-    e._zIndex = 101;
-    const slice = buildDayIndex([e]).get('2026-08-07')![0];
-    expect(slice._leftPct).toBe(50);
-    expect(slice._rightPx).toBe(0);
-    expect(slice._zIndex).toBe(101);
   });
 });
 
@@ -421,15 +407,6 @@ describe('stabilizeDayIndex', () => {
     const recoloured = timed('a', 9);
     recoloured.color = '#ff0000';
     const next = stabilizeDayIndex(buildDayIndex([recoloured]), prev);
-    expect(next.get('2026-08-07')).not.toBe(before);
-  });
-
-  it('detects an overlap-layout change even though the times are identical', () => {
-    const prev = buildDayIndex([timed('a', 9)]);
-    const before = prev.get('2026-08-07')!;
-    const relaid = timed('a', 9);
-    relaid._leftPct = 50;
-    const next = stabilizeDayIndex(buildDayIndex([relaid]), prev);
     expect(next.get('2026-08-07')).not.toBe(before);
   });
 

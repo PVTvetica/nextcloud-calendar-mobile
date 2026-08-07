@@ -5,7 +5,6 @@ import { Gesture } from 'react-native-gesture-handler';
 import { ThemeWrapper } from '../helpers/theme';
 import { TimeGridView } from '@/features/calendar/components/TimeGridView';
 import { toGridEvents } from '@/features/calendar/utils/toGridEvents';
-import { computeOverlapMap } from '@/features/calendar/utils/overlapMap';
 import {
   ALL_DAY_PAD,
   ALL_DAY_ROW_HEIGHT,
@@ -55,7 +54,7 @@ const holiday: CalendarEvent = {
 };
 
 function view(over: Partial<React.ComponentProps<typeof TimeGridView>> = {}) {
-  const events = over.events ?? toGridEvents([timed], computeOverlapMap([timed]));
+  const events = over.events ?? toGridEvents([timed]);
   return (
     <TimeGridView
       mode="week"
@@ -111,7 +110,7 @@ describe('TimeGridView', () => {
   it('puts an all-day event in the header and not in the grid', () => {
     const { getByText } = render(
       view({
-        events: toGridEvents([holiday], computeOverlapMap([holiday])),
+        events: toGridEvents([holiday]),
         allDayEvents: [holiday],
       })
     );
