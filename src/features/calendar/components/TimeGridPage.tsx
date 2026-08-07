@@ -1,8 +1,8 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { dayKey } from '../utils/grid';
 import type { GridEvent } from '../utils/toGridEvents';
-import { layoutDay } from '../utils/eventLayout';
+import { layoutDay, type PositionedEvent } from '../utils/eventLayout';
 import { DayColumn } from './DayColumn';
 
 const EMPTY: GridEvent[] = [];
@@ -17,10 +17,25 @@ interface Props {
 }
 
 function TimeGridPageImpl({ dates, dayIndex, hourRowHeight, now, onPressSlot, onPressEvent }: Props) {
-  // layoutDay runs per column per render; memoising it keeps a `now` tick from
-  // recomputing every column when neither dates nor dayIndex actually changed.
+  // layoutDay runs per column per render. dayIndex itself is a fresh Map on
+  // every rebuild (see grid.ts), so keying the memo on [dates, dayIndex] alone
+  // still recomputes every column whenever anything in the whole page changed,
+  // defeating stabilizeDayIndex's whole point of preserving unchanged days'
+  // array identity. Caching layoutDay's result per slices-array instead means
+  // a day whose array was reused by stabilizeDayIndex also reuses its
+  // PositionedEvent[] here, so its DayColumn's memo can actually bail out. A
+  // WeakMap keyed on the array lets entries die with it — no manual eviction.
+  const layoutCache = useRef(new WeakMap<GridEvent[], PositionedEvent[]>());
   const layouts = useMemo(
-    () => dates.map((d) => layoutDay(dayIndex.get(dayKey(d)) ?? EMPTY)),
+    () =>
+      dates.map((d) => {
+        const slices = dayIndex.get(dayKey(d)) ?? EMPTY;
+        const cached = layoutCache.current.get(slices);
+        if (cached) return cached;
+        const laid = layoutDay(slices);
+        layoutCache.current.set(slices, laid);
+        return laid;
+      }),
     [dates, dayIndex]
   );
 

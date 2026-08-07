@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { TouchableOpacity, StyleSheet, type ViewStyle } from 'react-native';
+import { TouchableOpacity, View, StyleSheet, type ViewStyle } from 'react-native';
 import dayjs from 'dayjs';
 import { Typography } from '@/ui/components';
 import type { GridEvent } from '../utils/toGridEvents';
@@ -44,6 +44,8 @@ function TimeGridEventImpl({ event, top, height, leftPct, widthPct, zIndex, hour
   const ink = contrastFor(color);
   const durationMin = dayjs(event.end).diff(event.start, 'minute');
 
+  // Absolute-positioned touch target only: no background here, so it cannot
+  // paint over the 3px gap the inner card view reserves via marginRight.
   const positionStyle: ViewStyle = {
     position: 'absolute',
     top: top as ViewStyle['top'],
@@ -52,31 +54,45 @@ function TimeGridEventImpl({ event, top, height, leftPct, widthPct, zIndex, hour
     zIndex,
     left: `${leftPct}%` as ViewStyle['left'],
     width: `${widthPct}%` as ViewStyle['width'],
-    paddingLeft: leftPct > 0 ? 2 : 3,
-    paddingRight: 3,
     opacity: dimmed ? 0.35 : 1,
   };
 
   return (
-    <TouchableOpacity
-      testID={`event-box-${event._event.uid}`}
-      onPress={() => onPress(event)}
-      style={[positionStyle, styles.card, { backgroundColor: color, borderColor: ink.border, paddingVertical: Math.max(pad - 1, 1) }]}
-    >
-      {durationMin < 30 ? (
-        <Typography variant="body2" weight="600" color={ink.text} style={{ fontSize: titleSize, lineHeight: Math.round(titleSize * 1.25) }} numberOfLines={1}>
-          {event.title}
-        </Typography>
-      ) : (
-        <>
-          <Typography variant="body2" weight="600" color={ink.text} style={{ fontSize: titleSize, lineHeight: Math.round(titleSize * 1.25) }} numberOfLines={2}>
+    <TouchableOpacity testID={`event-box-${event._event.uid}`} onPress={() => onPress(event)} style={positionStyle}>
+      {/* The background/border box, inset from the touch target's right edge by
+          marginRight so neighbouring events keep a visible 3px gap — width-based
+          sizing (unlike the old right-anchored box) paints to the touch target's
+          full width otherwise. */}
+      <View
+        testID={`event-card-${event._event.uid}`}
+        style={[
+          styles.card,
+          {
+            flex: 1,
+            marginRight: 3,
+            backgroundColor: color,
+            borderColor: ink.border,
+            paddingLeft: leftPct > 0 ? 2 : 3,
+            paddingRight: 3,
+            paddingVertical: Math.max(pad - 1, 1),
+          },
+        ]}
+      >
+        {durationMin < 30 ? (
+          <Typography variant="body2" weight="600" color={ink.text} style={{ fontSize: titleSize, lineHeight: Math.round(titleSize * 1.25) }} numberOfLines={1}>
             {event.title}
           </Typography>
-          <Typography color={ink.subtext} weight="400" style={{ fontSize: timeSize, lineHeight: Math.round(timeSize * 1.25) }} numberOfLines={1}>
-            {dayjs(event.start).format('H:mm')}–{dayjs(event.end).format('H:mm')}
-          </Typography>
-        </>
-      )}
+        ) : (
+          <>
+            <Typography variant="body2" weight="600" color={ink.text} style={{ fontSize: titleSize, lineHeight: Math.round(titleSize * 1.25) }} numberOfLines={2}>
+              {event.title}
+            </Typography>
+            <Typography color={ink.subtext} weight="400" style={{ fontSize: timeSize, lineHeight: Math.round(timeSize * 1.25) }} numberOfLines={1}>
+              {dayjs(event.start).format('H:mm')}–{dayjs(event.end).format('H:mm')}
+            </Typography>
+          </>
+        )}
+      </View>
     </TouchableOpacity>
   );
 }

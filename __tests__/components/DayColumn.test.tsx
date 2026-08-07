@@ -122,4 +122,18 @@ describe('DayColumn', () => {
     expect(style.left).toBe('50%');
     expect(style.width).toBe('50%');
   });
+
+  // Regression test for the lost 3px gap: the touch target now spans the full
+  // widthPct, so the background/border box must be a separate inner view
+  // inset by marginRight, not the touch target itself.
+  it('reserves a 3px gap on the card via marginRight, not the touch target', () => {
+    const { getByTestId } = render(
+      <DayColumn date={date} positioned={positioned(gridEvent())} hourRowHeight={60} now={now} onPressSlot={jest.fn()} onPressEvent={jest.fn()} />
+    );
+    const cardStyle = StyleSheet.flatten(getByTestId('event-card-u1').props.style);
+    expect(cardStyle.marginRight).toBe(3);
+
+    const boxStyle = StyleSheet.flatten(getByTestId('event-box-u1').props.style);
+    expect(boxStyle.marginRight).toBeUndefined();
+  });
 });
