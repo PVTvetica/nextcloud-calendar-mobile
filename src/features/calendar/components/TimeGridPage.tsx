@@ -1,9 +1,12 @@
-import { memo, useMemo, useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { memo, useMemo, useRef, useState } from 'react';
+import { View, StyleSheet, type LayoutChangeEvent } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { dayKey } from '../utils/grid';
 import type { GridEvent } from '../utils/toGridEvents';
 import { layoutDay, type PositionedEvent } from '../utils/eventLayout';
+import { useEventDrag } from '../hooks/useEventDrag';
 import { DayColumn } from './DayColumn';
+import { DragGhost } from './DragGhost';
 
 const EMPTY: GridEvent[] = [];
 
@@ -14,9 +17,18 @@ interface Props {
   now: Date;
   onPressSlot: (d: Date) => void;
   onPressEvent: (e: GridEvent) => void;
+  onMoveEvent?: (event: GridEvent, nextStart: Date, nextEnd: Date) => void;
 }
 
-function TimeGridPageImpl({ dates, dayIndex, hourRowHeight, now, onPressSlot, onPressEvent }: Props) {
+function TimeGridPageImpl({
+  dates,
+  dayIndex,
+  hourRowHeight,
+  now,
+  onPressSlot,
+  onPressEvent,
+  onMoveEvent,
+}: Props) {
   // layoutDay runs per column per render. dayIndex itself is a fresh Map on
   // every rebuild (see grid.ts), so keying the memo on [dates, dayIndex] alone
   // still recomputes every column whenever anything in the whole page changed,
@@ -39,20 +51,47 @@ function TimeGridPageImpl({ dates, dayIndex, hourRowHeight, now, onPressSlot, on
     [dates, dayIndex]
   );
 
+  // The gesture needs the target column from a raw x, which needs the page's
+  // measured width — it is not known until the first layout pass.
+  const [pageWidth, setPageWidth] = useState(0);
+  const columnWidth = dates.length > 0 ? pageWidth / dates.length : 0;
+  const handleLayout = (e: LayoutChangeEvent) => setPageWidth(e.nativeEvent.layout.width);
+
+  const { gesture, drag, top, height, left } = useEventDrag({
+    dates,
+    layouts,
+    hourRowHeight,
+    columnWidth,
+    onMoveEvent,
+  });
+
   return (
-    <View style={styles.row}>
-      {dates.map((date, i) => (
-        <DayColumn
-          key={dayKey(date)}
-          date={date}
-          positioned={layouts[i]}
-          hourRowHeight={hourRowHeight}
-          now={now}
-          onPressSlot={onPressSlot}
-          onPressEvent={onPressEvent}
-        />
-      ))}
-    </View>
+    <GestureDetector gesture={gesture}>
+      <View style={styles.row} onLayout={handleLayout}>
+        {dates.map((date, i) => (
+          <DayColumn
+            key={dayKey(date)}
+            date={date}
+            positioned={layouts[i]}
+            hourRowHeight={hourRowHeight}
+            now={now}
+            onPressSlot={onPressSlot}
+            onPressEvent={onPressEvent}
+            dimmedUid={drag?.event._event.uid}
+          />
+        ))}
+        {drag && (
+          <DragGhost
+            event={drag.event}
+            mode={drag.mode}
+            top={top}
+            height={height}
+            left={left}
+            width={columnWidth}
+          />
+        )}
+      </View>
+    </GestureDetector>
   );
 }
 

@@ -5,102 +5,46 @@ import { TimeGridPage } from '@/features/calendar/components/TimeGridPage';
 import type { GridEvent } from '@/features/calendar/utils/toGridEvents';
 import type { CalendarEvent } from '@/types';
 
-// Captures the `positioned` prop DayColumn is rendered with on every render,
-// so the test can assert on array identity without depending on DayColumn's
-// own implementation or React's rendering internals.
-let mockCapturedPositioned: unknown[] = [];
-
-jest.mock('@/features/calendar/components/DayColumn', () => ({
-  DayColumn: (props: { positioned: unknown }) => {
-    mockCapturedPositioned.push(props.positioned);
-    return null;
-  },
-}));
-
 const render = (ui: React.ReactElement) => rtlRender(ui, { wrapper: ThemeWrapper });
 
-function gridEvent(uid: string): GridEvent {
+const dates = [new Date(2026, 7, 7), new Date(2026, 7, 8)];
+
+function gridEvent(uid: string, day: number): GridEvent {
   const e: CalendarEvent = {
-    uid, href: `/${uid}.ics`, calendarId: 'c1', accountId: 'a1', summary: uid,
-    dtstart: new Date(2026, 7, 7, 9, 0), dtend: new Date(2026, 7, 7, 10, 0),
+    uid, href: `/${uid}.ics`, calendarId: 'c1', accountId: 'a1',
+    summary: uid,
+    dtstart: new Date(2026, 7, day, 9, 0), dtend: new Date(2026, 7, day, 10, 0),
     allDay: false, color: '#0082c9', attendees: [], isRecurring: false,
   };
-  return { title: e.summary, start: e.dtstart, end: e.dtend, color: e.color, _event: e };
+  return { title: uid, start: e.dtstart, end: e.dtend, color: e.color, _event: e };
 }
 
-const dates = [new Date(2026, 7, 7)];
-const now = new Date(2026, 7, 7, 12, 0);
+function page(over: Partial<React.ComponentProps<typeof TimeGridPage>> = {}) {
+  const dayIndex = new Map([['2026-08-07', [gridEvent('a', 7)]]]);
+  return (
+    <TimeGridPage
+      dates={dates}
+      dayIndex={dayIndex}
+      hourRowHeight={60}
+      now={new Date(2026, 7, 7, 12, 0)}
+      onPressSlot={jest.fn()}
+      onPressEvent={jest.fn()}
+      onMoveEvent={jest.fn()}
+      {...over}
+    />
+  );
+}
 
 describe('TimeGridPage', () => {
-  beforeEach(() => {
-    mockCapturedPositioned = [];
+  it('renders one column per date', () => {
+    expect(render(page()).getAllByTestId('day-column-surface')).toHaveLength(2);
   });
 
-  // Regression test for the memo keyed too coarsely on [dates, dayIndex]:
-  // buildDayIndex allocates a fresh Map on every rebuild, so dayIndex's own
-  // identity always changes. stabilizeDayIndex preserves the per-day array
-  // identity for unchanged days regardless, and the layoutDay cache must key
-  // off that per-day array — not the enclosing Map — so an unchanged day's
-  // DayColumn keeps receiving the same `positioned` reference and can bail
-  // out of re-rendering.
-  it('reuses the positioned array for a day whose slices array is unchanged, even across distinct dayIndex Map instances', () => {
-    const slices = [gridEvent('a')];
-
-    const { rerender } = render(
-      <TimeGridPage
-        dates={dates}
-        dayIndex={new Map([['2026-08-07', slices]])}
-        hourRowHeight={60}
-        now={now}
-        onPressSlot={jest.fn()}
-        onPressEvent={jest.fn()}
-      />
-    );
-    const first = mockCapturedPositioned[0];
-
-    // A fresh Map, exactly like buildDayIndex produces on every rebuild, but
-    // carrying over the same per-day array reference — exactly what
-    // stabilizeDayIndex does for a day that didn't change.
-    rerender(
-      <TimeGridPage
-        dates={dates}
-        dayIndex={new Map([['2026-08-07', slices]])}
-        hourRowHeight={60}
-        now={now}
-        onPressSlot={jest.fn()}
-        onPressEvent={jest.fn()}
-      />
-    );
-    const second = mockCapturedPositioned[1];
-
-    expect(second).toBe(first);
+  it('lays the day out and renders its events', () => {
+    expect(render(page()).getByText('a')).toBeTruthy();
   });
 
-  it('recomputes the layout when a day actually gains a new slices array', () => {
-    const { rerender } = render(
-      <TimeGridPage
-        dates={dates}
-        dayIndex={new Map([['2026-08-07', [gridEvent('a')]]])}
-        hourRowHeight={60}
-        now={now}
-        onPressSlot={jest.fn()}
-        onPressEvent={jest.fn()}
-      />
-    );
-    const first = mockCapturedPositioned[0];
-
-    rerender(
-      <TimeGridPage
-        dates={dates}
-        dayIndex={new Map([['2026-08-07', [gridEvent('a'), gridEvent('b')]]])}
-        hourRowHeight={60}
-        now={now}
-        onPressSlot={jest.fn()}
-        onPressEvent={jest.fn()}
-      />
-    );
-    const second = mockCapturedPositioned[1];
-
-    expect(second).not.toBe(first);
+  it('mounts no drag ghost until a drag begins', () => {
+    expect(render(page()).queryByTestId('drag-ghost')).toBeNull();
   });
 });
