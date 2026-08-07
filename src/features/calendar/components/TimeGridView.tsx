@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import {
   Gesture,
@@ -61,6 +61,16 @@ function TimeGridViewImpl({
   const dayIndex = useMemo(() => buildDayIndex(events), [events]);
   const gridHeight = hourRowHeight * 24;
 
+  // A single interval for the whole grid drives the now-indicator's position
+  // *and* which column it's drawn on. Previously each DayColumn evaluated
+  // `new Date()` at render time and, being memo'd on props that don't change
+  // with the clock, never advanced once mounted.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
   // TimeGridHeader and DayColumn are memoised on the `dates` array reference;
   // pageDates(...) allocates a new array every call, so pages are cached by
   // index and invalidated only when the paging inputs themselves change.
@@ -76,8 +86,17 @@ function TimeGridViewImpl({
     };
   }, [anchorDate, mode, weekStartsOn]);
 
-  const headerHeight =
-    DAY_HEADER_HEIGHT + allDayRowHeight(datesForIndex(0), allDayEvents);
+  // Derived from activeDate rather than datesForIndex(0): datesForIndex(0) is
+  // page 0 relative to anchorDate, which onPageChange deliberately leaves
+  // untouched on swipe (see useCalendarNavigation). pageFocusDate guarantees
+  // activeDate lands inside the page the user is actually looking at, and
+  // pageDates' week alignment normalises it regardless of which day within
+  // the page activeDate happens to be — exact for all three modes.
+  const visibleDates = useMemo(
+    () => pageDates(activeDate, 0, mode, weekStartsOn),
+    [activeDate, mode, weekStartsOn]
+  );
+  const headerHeight = DAY_HEADER_HEIGHT + allDayRowHeight(visibleDates, allDayEvents);
 
   // A new anchor (Today, a date picked elsewhere) or a new mode resets to page 0.
   useEffect(() => {
@@ -109,17 +128,19 @@ function TimeGridViewImpl({
         dates={datesForIndex(index)}
         dayIndex={dayIndex}
         hourRowHeight={hourRowHeight}
+        now={now}
         onPressSlot={onPressSlot}
         onPressEvent={onPressEvent}
       />
     ),
-    [datesForIndex, dayIndex, hourRowHeight, onPressSlot, onPressEvent]
+    [datesForIndex, dayIndex, hourRowHeight, now, onPressSlot, onPressEvent]
   );
 
   return (
     <GestureDetector gesture={pinchGesture}>
       <View style={styles.fill}>
         <View
+          testID="time-grid-header-row"
           style={[
             styles.headerRow,
             { height: headerHeight, borderBottomColor: colors.border },

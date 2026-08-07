@@ -45,12 +45,19 @@ export default function CalendarScreen() {
 
   const deferredViewMode = useDeferredValue(viewMode);
   const deferredDate = useDeferredValue(date);
+  const deferredAnchorDate = useDeferredValue(nav.anchorDate);
   const deferredWeekStartsOn = useDeferredValue(weekStartsOn);
   const deferredIsCalendarMode = isCalMode(deferredViewMode);
   // TimeGridView stays mounted under ViewLayer (opacity/display toggling, not
   // unmounting) so it keeps receiving `mode` while month/schedule are active;
   // guard explicitly rather than casting a non-CalMode past the type checker.
-  const calMode: CalMode = isCalMode(deferredViewMode) ? deferredViewMode : 'week';
+  // Latch the last real CalMode in a ref rather than falling back to a fixed
+  // default: falling back to 'week' while month/schedule are active flips the
+  // still-mounted grid's mode on every navigation into and out of those views,
+  // invalidating datesForIndex and re-rendering every column for nothing.
+  const lastCalModeRef = useRef<CalMode>('week');
+  if (isCalMode(deferredViewMode)) lastCalModeRef.current = deferredViewMode;
+  const calMode: CalMode = lastCalModeRef.current;
 
   const { hourRowHeight, pinchGesture } = useZoom();
   const { activeAccount, calendars, allEvents, showFullOverlay, showSmallLoader } = useCalendarData(fetchDate);
@@ -148,7 +155,7 @@ export default function CalendarScreen() {
         <ViewLayer visible={deferredIsCalendarMode}>
           <TimeGridView
             mode={calMode}
-            anchorDate={nav.anchorDate}
+            anchorDate={deferredAnchorDate}
             activeDate={deferredDate}
             events={calendarEvents}
             allDayEvents={allDayEvents}

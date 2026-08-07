@@ -10,11 +10,12 @@ interface Props {
   dates: Date[];
   dayIndex: Map<string, GridEvent[]>;
   hourRowHeight: number;
+  now: Date;
   onPressSlot: (d: Date) => void;
   onPressEvent: (e: GridEvent) => void;
 }
 
-function TimeGridPageImpl({ dates, dayIndex, hourRowHeight, onPressSlot, onPressEvent }: Props) {
+function TimeGridPageImpl({ dates, dayIndex, hourRowHeight, now, onPressSlot, onPressEvent }: Props) {
   return (
     <View style={styles.row}>
       {dates.map((date) => (
@@ -23,6 +24,7 @@ function TimeGridPageImpl({ dates, dayIndex, hourRowHeight, onPressSlot, onPress
           date={date}
           events={dayIndex.get(dayKey(date)) ?? EMPTY}
           hourRowHeight={hourRowHeight}
+          now={now}
           onPressSlot={onPressSlot}
           onPressEvent={onPressEvent}
         />

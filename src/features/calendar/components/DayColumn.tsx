@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { View, Pressable, StyleSheet, type GestureResponderEvent } from 'react-native';
 import { useTheme } from 'expo-router';
 import dayjs from 'dayjs';
@@ -12,13 +12,30 @@ interface Props {
   date: Date;
   events: GridEvent[];
   hourRowHeight: number;
+  now: Date;
   onPressSlot: (d: Date) => void;
   onPressEvent: (e: GridEvent) => void;
 }
 
-function DayColumnImpl({ date, events, hourRowHeight, onPressSlot, onPressEvent }: Props) {
+function DayColumnImpl({ date, events, hourRowHeight, now, onPressSlot, onPressEvent }: Props) {
   const { colors } = useTheme();
-  const isToday = dayjs().isSame(date, 'day');
+  const isToday = dayjs(now).isSame(date, 'day');
+
+  const cellStyle = useMemo(
+    () => ({
+      borderLeftWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: colors.border,
+      height: hourRowHeight,
+      justifyContent: 'space-evenly' as const,
+    }),
+    [colors.border, hourRowHeight]
+  );
+
+  const subCellStyle = useMemo(
+    () => ({ borderLeftWidth: 1, borderBottomWidth: 1, borderColor: colors.borderSubtle, height: 1 }),
+    [colors.borderSubtle]
+  );
 
   const handlePress = useCallback(
     (e: GestureResponderEvent) => {
@@ -32,18 +49,8 @@ function DayColumnImpl({ date, events, hourRowHeight, onPressSlot, onPressEvent 
   return (
     <View style={styles.column}>
       {HOURS.map((hour) => (
-        <View
-          key={hour}
-          testID={`hour-cell-${hour}`}
-          style={{
-            borderLeftWidth: 1,
-            borderBottomWidth: 1,
-            borderColor: colors.border,
-            height: hourRowHeight,
-            justifyContent: 'space-evenly',
-          }}
-        >
-          <View style={{ borderLeftWidth: 1, borderBottomWidth: 1, borderColor: colors.borderSubtle, height: 1 }} />
+        <View key={hour} testID={`hour-cell-${hour}`} style={cellStyle}>
+          <View style={subCellStyle} />
         </View>
       ))}
 
@@ -67,7 +74,7 @@ function DayColumnImpl({ date, events, hourRowHeight, onPressSlot, onPressEvent 
         <View
           testID="now-indicator"
           pointerEvents="none"
-          style={[styles.nowIndicator, { top: `${nowTopPct(new Date())}%` }]}
+          style={[styles.nowIndicator, { top: `${nowTopPct(now)}%` }]}
         />
       )}
     </View>
