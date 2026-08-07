@@ -9,6 +9,7 @@ import { useCreateEvent } from '@/features/event/hooks/useMutateEvent';
 import { useAccountStore } from '@/stores/accountStore';
 import { EventForm } from '@/features/event/components/EventForm';
 import { ViewContainer, Stack, Typography, ScreenHeader } from '@/ui/components';
+import { goBackOrHome } from '@/utils/navigationGuard';
 import type { CreateEventInput } from '@/types';
 
 export default function NewEventScreen() {

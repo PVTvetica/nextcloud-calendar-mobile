@@ -202,7 +202,8 @@
     "liveRemainingShort": "{{duration}}",
     "durationHour": "ч",
     "durationMinute": "м",
-    "emptyAgenda": "Нет предстоящих событий"
+    "emptyAgenda": "Нет предстоящих событий",
+    "videoConference": "Видеоконференция: {{provider}}"
   },
   "notifications": {
     "lead": {

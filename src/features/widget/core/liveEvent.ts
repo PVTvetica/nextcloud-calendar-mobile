@@ -1,15 +1,39 @@
 import type { CalendarEvent } from '@/types';
+import i18n from '@/utils/i18n';
 import { type LiveEventState, eventDeepLink } from './types';
 
 export function displayLocation(raw: string | undefined): string {
   if (!raw) return '';
-  return raw
+  const cleaned = raw
     .replace(/(?:[a-z][a-z0-9+.-]*:\/\/|www\.)[^\s)\]}>]+/gi, ' ')
     .replace(/(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s)\]}>]*)?/gi, ' ')
     .replace(/[([{<]\s*[)\]}>]/g, ' ')
     .replace(/\s+/g, ' ')
     .replace(/^[\s\-–—|,;:·•]+|[\s\-–—|,;:·•]+$/g, '')
     .trim();
+  if (cleaned) return cleaned;
+  const provider = meetingProvider(raw);
+  return provider ? i18n.t('widget.videoConference', { provider }) : '';
+}
+
+
+const MEETING_PROVIDERS: [RegExp, string][] = [
+  [/\/call\//i, 'Talk'], // Nextcloud Talk
+  [/teams\.(?:microsoft\.(?:com|us)|live\.com)/i, 'Teams'],
+  [/meet\.google\.com/i, 'Google Meet'],
+  [/(?:\.|\/\/)zoom\.us\//i, 'Zoom'],
+  [/whereby\.com/i, 'Whereby'],
+  [/jit\.si/i, 'Jitsi'],
+  [/webex\.com/i, 'Webex'],
+];
+
+
+export function meetingProvider(raw: string | undefined): string | null {
+  if (!raw) return null;
+  for (const [pattern, name] of MEETING_PROVIDERS) {
+    if (pattern.test(raw)) return name;
+  }
+  return null;
 }
 
 export function selectOngoingEvent(events: CalendarEvent[], now: Date = new Date()): LiveEventState | null {

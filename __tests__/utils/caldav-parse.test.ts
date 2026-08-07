@@ -75,6 +75,16 @@ describe('parseIcsObjects', () => {
     expect(event.attendees[0].displayName).toBe('Alice');
   });
 
+  it('drops duplicate attendees sharing the same email (case-insensitive)', () => {
+    const ics = sampleIcs.replace(
+      'ATTENDEE;CN=Alice;RSVP=TRUE:mailto:alice@example.com',
+      'ATTENDEE;CN=Alice;RSVP=TRUE:mailto:alice@example.com\r\nATTENDEE;CN=Alice B;RSVP=TRUE:mailto:Alice@example.com',
+    );
+    const [event] = parseIcsObjects([{ ics, href: '/cal/event.ics' }], calMeta);
+    expect(event.attendees).toHaveLength(1);
+    expect(event.attendees[0].displayName).toBe('Alice');
+  });
+
   it('extracts Talk URL from location matching /call/ pattern', () => {
     const [event] = parseIcsObjects([{ ics: sampleIcs, href: '/cal/event.ics' }], calMeta);
     expect(event.talkUrl).toBe('https://cloud.example.com/call/tok1');

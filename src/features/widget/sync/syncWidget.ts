@@ -6,7 +6,8 @@ import { useAccountStore } from '@/stores/accountStore';
 
 import { readUpcomingEvents } from '../core/readEvents';
 import { buildAgendaTimeline } from '../core/agendaSnapshot';
-import { selectOngoingEvent } from '../core/liveEvent';
+import { selectOngoingEvent, shouldClearLiveEvent } from '../core/liveEvent';
+import { readLiveEvent } from '../storage/widgetStore';
 import { homeWidget } from '../surfaces/homeWidget';
 import { liveActivity } from '../surfaces/liveActivity';
 

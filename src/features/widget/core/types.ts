@@ -45,6 +45,7 @@ export interface LiveEventState {
   color: string;
   deepLink: string;
   location: string;
+  videoProvider?: string;
   attendees: string[];
 }
 

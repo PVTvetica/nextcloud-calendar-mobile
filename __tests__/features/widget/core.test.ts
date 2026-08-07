@@ -1,5 +1,5 @@
 import { buildAgendaSnapshot, buildAgendaTimeline } from '@/features/widget/core/agendaSnapshot';
-import { selectOngoingEvent, eventProgress, formatRemaining, remainingMinutes } from '@/features/widget/core/liveEvent';
+import { selectOngoingEvent, eventProgress, formatRemaining, remainingMinutes, displayLocation, shouldClearLiveEvent, meetingProvider } from '@/features/widget/core/liveEvent';
 import type { CalendarEvent } from '@/types';
 
 function ev(partial: Partial<CalendarEvent> & { dtstart: Date; dtend: Date }): CalendarEvent {
@@ -14,7 +14,7 @@ function ev(partial: Partial<CalendarEvent> & { dtstart: Date; dtend: Date }): C
 const TZ = 'Europe/Berlin';
 
 describe('buildAgendaSnapshot', () => {
-  const now = new Date('2026-08-01T09:00:00Z'); // 11:00 Berlin
+  const now = new Date('2026-08-01T09:00:00Z');
 
   it('keeps only today\'s not-yet-finished events, sorted by start', () => {
     const events = [
@@ -100,15 +100,19 @@ describe('selectOngoingEvent', () => {
 });
 
 describe('displayLocation', () => {
-  it('drops a bare meeting link', () => {
-    expect(displayLocation('https://meet.google.com/xqz-mkpv-rwd')).toBe('');
-    expect(displayLocation('https://talk.soluce.example/call/a1b2c3d4e5f6g7h8')).toBe('');
-    expect(displayLocation('https://teams.microsoft.com/l/meetup-join/19%3ameeting_ZmE4@thread.v2/0?context=%7b%22Tid%22%3a%22a1b2%22%7d')).toBe('');
+  it('labels a bare meeting link with its provider', () => {
+    expect(displayLocation('https://meet.google.com/xqz-mkpv-rwd')).toBe('Video conference: Google Meet');
+    expect(displayLocation('https://talk.soluce.example/call/a1b2c3d4e5f6g7h8')).toBe('Video conference: Talk');
+    expect(displayLocation('https://teams.microsoft.com/l/meetup-join/19%3ameeting_ZmE4@thread.v2/0?context=%7b%22Tid%22%3a%22a1b2%22%7d')).toBe('Video conference: Teams');
   });
 
-  it('drops a link written without a scheme', () => {
-    expect(displayLocation('meet.google.com/xqz-mkpv-rwd')).toBe('');
-    expect(displayLocation('www.cloud.soluce.example/index.php/call/abc')).toBe('');
+  it('labels a link written without a scheme', () => {
+    expect(displayLocation('meet.google.com/xqz-mkpv-rwd')).toBe('Video conference: Google Meet');
+    expect(displayLocation('www.cloud.soluce.example/index.php/call/abc')).toBe('Video conference: Talk');
+  });
+
+  it('drops a non-conferencing link without a human part', () => {
+    expect(displayLocation('https://example.com/some/page')).toBe('');
   });
 
   it('keeps the human part next to a link', () => {
@@ -124,6 +128,23 @@ describe('displayLocation', () => {
   it('handles missing and blank values', () => {
     expect(displayLocation(undefined)).toBe('');
     expect(displayLocation('   ')).toBe('');
+  });
+});
+
+describe('meetingProvider', () => {
+  it('names the supported conferencing providers', () => {
+    expect(meetingProvider('https://nc.example/call/abc')).toBe('Talk');
+    expect(meetingProvider('https://teams.microsoft.com/l/meetup-join/x')).toBe('Teams');
+    expect(meetingProvider('https://meet.google.com/xqz-mkpv-rwd')).toBe('Google Meet');
+    expect(meetingProvider('https://us02web.zoom.us/j/123')).toBe('Zoom');
+    expect(meetingProvider('https://whereby.com/room')).toBe('Whereby');
+    expect(meetingProvider('https://meet.jit.si/room')).toBe('Jitsi');
+    expect(meetingProvider('https://acme.webex.com/meet/x')).toBe('Webex');
+  });
+
+  it('returns null for plain locations and blanks', () => {
+    expect(meetingProvider('12 rue des Lilas')).toBeNull();
+    expect(meetingProvider(undefined)).toBeNull();
   });
 });
 

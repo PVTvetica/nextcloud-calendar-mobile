@@ -202,7 +202,8 @@
     "liveRemainingShort": "{{duration}}",
     "durationHour": "h",
     "durationMinute": "m",
-    "emptyAgenda": "Aucun événement à venir"
+    "emptyAgenda": "Aucun événement à venir",
+    "videoConference": "Visioconférence : {{provider}}"
   },
   "notifications": {
     "lead": {

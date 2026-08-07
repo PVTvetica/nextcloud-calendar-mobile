@@ -282,14 +282,16 @@ export default function EventDetailScreen() {
               <Stack gap={8}>
                 <SectionHeader title={t('event.attendees')} />
                 <List>
-                  {event.attendees.map((att) => (
-                    <Item
-                      key={att.email}
-                      leading={<Avatar name={att.displayName ?? att.email} size={36} />}
-                      title={att.displayName ?? att.email}
-                      description={att.displayName ? att.email : undefined}
-                    />
-                  ))}
+                  {event.attendees
+                    .filter((a, i, arr) => arr.findIndex((b) => (b.email ?? '').toLowerCase() === (a.email ?? '').toLowerCase()) === i)
+                    .map((att, i) => (
+                      <Item
+                        key={att.email || `attendee-${i}`}
+                        leading={<Avatar name={att.displayName ?? att.email} size={36} />}
+                        title={att.displayName ?? att.email}
+                        description={att.displayName ? att.email : undefined}
+                      />
+                    ))}
                 </List>
               </Stack>
             )}

@@ -202,7 +202,8 @@
     "liveRemainingShort": "{{duration}}",
     "durationHour": "u",
     "durationMinute": "m",
-    "emptyAgenda": "Geen aankomende afspraken"
+    "emptyAgenda": "Geen aankomende afspraken",
+    "videoConference": "Videovergadering: {{provider}}"
   },
   "notifications": {
     "lead": {

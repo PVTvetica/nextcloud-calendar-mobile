@@ -88,12 +88,19 @@ export function parseIcsItem(
       const icalEvent = new ICAL.Event(vevent, { strictExceptions: false });
       const tzid = eventTzid(vevent);
 
-      const attendees: Attendee[] = vevent.getAllProperties('attendee').map((prop: ICAL.Property) => {
+      const seenAttendees = new Set<string>();
+      const attendees: Attendee[] = [];
+      for (const prop of vevent.getAllProperties('attendee')) {
         const value = (prop.getFirstValue() as string) ?? '';
         const email = value.replace(/^mailto:/i, '');
         const displayName = (prop.getParameter('cn') as string) ?? undefined;
-        return { email, displayName };
-      });
+        // ICS can repeat the same ATTENDEE (e.g. organizer listed again) — a
+        // duplicate email would collide as a React key downstream. Keep first.
+        const key = email.toLowerCase();
+        if (email && seenAttendees.has(key)) continue;
+        if (email) seenAttendees.add(key);
+        attendees.push({ email, displayName });
+      }
 
       const location = icalEvent.location ?? undefined;
       const talkUrl = location && TALK_URL_PATTERN.test(location) ? location : undefined;
