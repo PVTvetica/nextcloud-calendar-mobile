@@ -5,7 +5,7 @@ import { createLiveActivity, type LiveActivity } from 'expo-widgets';
 import dayjs from 'dayjs';
 
 import type { LiveEventState, WidgetSurface } from '../../core/types';
-import { writeLiveEvent } from '../../storage/widgetStore';
+import { readLiveEvent, writeLiveEvent } from '../../storage/widgetStore';
 
 const ACTIVITY_NAME = 'NextcloudCalendarLiveActivity';
 
@@ -157,9 +157,20 @@ export const liveActivity: WidgetSurface<LiveEventState> = {
   id: 'liveActivity',
   isSupported: () => typeof activity?.start === 'function',
   update: async (state) => {
+    const previous = readLiveEvent();
     writeLiveEvent(state);
     const props = toProps(state);
-    const current = trackedInstance();
+    let current = trackedInstance();
+
+    if (current && previous && previous.deepLink !== state.deepLink) {
+      try {
+        await current.end('immediate');
+      } catch {
+      }
+      instance = null;
+      current = null;
+    }
+
     if (current) {
       try {
         await current.update(props);

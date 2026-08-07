@@ -10,7 +10,11 @@ jest.mock('@expo/ui/swift-ui/modifiers', () => ({
   padding: jest.fn(),
 }));
 jest.mock('@/utils/i18n', () => ({ t: (key: string) => key }));
-jest.mock('@/features/widget/storage/widgetStore', () => ({ writeLiveEvent: jest.fn() }));
+const mockReadLiveEvent = jest.fn();
+jest.mock('@/features/widget/storage/widgetStore', () => ({
+  writeLiveEvent: jest.fn(),
+  readLiveEvent: () => mockReadLiveEvent(),
+}));
 
 const mockStart = jest.fn();
 const mockGetInstances = jest.fn();
@@ -38,6 +42,8 @@ describe('liveActivity (ios)', () => {
     jest.resetModules();
     mockStart.mockReset();
     mockGetInstances.mockReset();
+    mockReadLiveEvent.mockReset();
+    mockReadLiveEvent.mockReturnValue(null);
   });
 
   it('starts a new activity when none is tracked and none exist natively', async () => {
@@ -76,6 +82,36 @@ describe('liveActivity (ios)', () => {
 
     expect(mockStart).toHaveBeenCalledTimes(1);
     expect(fresh.update).toHaveBeenCalledTimes(1);
+  });
+
+  it('restarts the activity when the tracked event changed, so the deep link points at the new event', async () => {
+    const stale = { update: jest.fn().mockResolvedValue(undefined), end: jest.fn().mockResolvedValue(undefined) };
+    mockGetInstances.mockReturnValue([stale]);
+    mockReadLiveEvent.mockReturnValue(makeState());
+    const fresh = { update: jest.fn(), end: jest.fn() };
+    mockStart.mockReturnValue(fresh);
+
+    const moved = makeState({ uid: 'evt-2', deepLink: 'nextcloud-calendar://event/evt-2' });
+    const { liveActivity } = require('@/features/widget/surfaces/liveActivity/liveActivity.ios');
+    await liveActivity.update(moved);
+
+    expect(stale.end).toHaveBeenCalledWith('immediate');
+    expect(stale.update).not.toHaveBeenCalled();
+    expect(mockStart).toHaveBeenCalledTimes(1);
+    expect(mockStart.mock.calls[0][1]).toBe('nextcloud-calendar://event/evt-2');
+  });
+
+  it('updates in place while the tracked event is unchanged', async () => {
+    const existing = { update: jest.fn().mockResolvedValue(undefined), end: jest.fn() };
+    mockGetInstances.mockReturnValue([existing]);
+    mockReadLiveEvent.mockReturnValue(makeState());
+
+    const { liveActivity } = require('@/features/widget/surfaces/liveActivity/liveActivity.ios');
+    await liveActivity.update(makeState({ title: 'Renamed' }));
+
+    expect(existing.end).not.toHaveBeenCalled();
+    expect(mockStart).not.toHaveBeenCalled();
+    expect(existing.update).toHaveBeenCalledTimes(1);
   });
 
   it('clear() ends a native activity reconciled via getInstances() even with no local reference', async () => {

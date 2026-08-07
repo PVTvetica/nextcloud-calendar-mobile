@@ -14,6 +14,7 @@ import { EventForm } from '@/features/event/components/EventForm';
 import {
   ViewContainer, Stack, Typography, Button, Spinner, ScreenHeader,
 } from '@/ui/components';
+import { goBackOrHome } from '@/utils/navigationGuard';
 import type { CreateEventInput, RecurrenceEditScope } from '@/types';
 
 export default function EditEventScreen() {
@@ -50,8 +51,7 @@ export default function EditEventScreen() {
   async function handleSubmit(input: CreateEventInput) {
     if (!activeAccount || !event) return;
     await updateMutation.mutateAsync({ event, input, scope });
-    if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)/calendar');
+    goBackOrHome(router);
   }
 
   const isLoading = eventsLoading;
@@ -71,7 +71,7 @@ export default function EditEventScreen() {
       <ViewContainer>
         <Stack flex vAlign="center" hAlign="center" gap={16}>
           <Typography variant="body1" color="secondary">{t('event.eventNotFound')}</Typography>
-          <Button variant="link" title={t('event.back')} onPress={() => router.back()} />
+          <Button variant="link" title={t('event.back')} onPress={() => goBackOrHome(router)} />
         </Stack>
       </ViewContainer>
     );
@@ -108,7 +108,7 @@ export default function EditEventScreen() {
             <Button
               variant="link" size="small" alignment="start"
               title={t('common.cancel')}
-              onPress={() => router.back()}
+              onPress={() => goBackOrHome(router)}
             />
           }
         />

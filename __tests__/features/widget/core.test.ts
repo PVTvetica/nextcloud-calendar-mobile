@@ -1,5 +1,5 @@
 import { buildAgendaSnapshot } from '@/features/widget/core/agendaSnapshot';
-import { selectOngoingEvent, eventProgress, formatRemaining, remainingMinutes } from '@/features/widget/core/liveEvent';
+import { selectOngoingEvent, eventProgress, formatRemaining, remainingMinutes, shouldClearLiveEvent, displayLocation } from '@/features/widget/core/liveEvent';
 import type { CalendarEvent } from '@/types';
 
 function ev(partial: Partial<CalendarEvent> & { dtstart: Date; dtend: Date }): CalendarEvent {
@@ -96,6 +96,59 @@ describe('selectOngoingEvent', () => {
       ev({ uid: 'past', dtstart: new Date('2026-08-01T08:00:00Z'), dtend: new Date('2026-08-01T09:00:00Z') }),
     ];
     expect(selectOngoingEvent(events, now)).toBeNull();
+  });
+});
+
+describe('displayLocation', () => {
+  it('drops a bare meeting link', () => {
+    expect(displayLocation('https://meet.google.com/xqz-mkpv-rwd')).toBe('');
+    expect(displayLocation('https://talk.soluce.example/call/a1b2c3d4e5f6g7h8')).toBe('');
+    expect(displayLocation('https://teams.microsoft.com/l/meetup-join/19%3ameeting_ZmE4@thread.v2/0?context=%7b%22Tid%22%3a%22a1b2%22%7d')).toBe('');
+  });
+
+  it('drops a link written without a scheme', () => {
+    expect(displayLocation('meet.google.com/xqz-mkpv-rwd')).toBe('');
+    expect(displayLocation('www.cloud.soluce.example/index.php/call/abc')).toBe('');
+  });
+
+  it('keeps the human part next to a link', () => {
+    expect(displayLocation('Salle Jupiter — https://meet.google.com/xqz-mkpv-rwd')).toBe('Salle Jupiter');
+    expect(displayLocation('Microsoft Teams Meeting (https://teams.microsoft.com/l/meetup-join/19%3ameeting_x)')).toBe('Microsoft Teams Meeting');
+  });
+
+  it('leaves a plain address untouched', () => {
+    expect(displayLocation('12 rue des Lilas, 59000 Lille')).toBe('12 rue des Lilas, 59000 Lille');
+    expect(displayLocation('Salle 3.14')).toBe('Salle 3.14');
+  });
+
+  it('handles missing and blank values', () => {
+    expect(displayLocation(undefined)).toBe('');
+    expect(displayLocation('   ')).toBe('');
+  });
+});
+
+describe('shouldClearLiveEvent', () => {
+  const now = new Date('2026-08-01T12:30:00Z');
+  const live = {
+    uid: 'u', title: 'T', color: '#000', deepLink: 'x',
+    startIso: '2026-08-01T12:00:00Z', endIso: '2026-08-01T13:00:00Z',
+    location: '', attendees: [],
+  };
+
+  it('keeps a running activity when the read came back empty', () => {
+    expect(shouldClearLiveEvent(live, 0, now)).toBe(false);
+  });
+
+  it('clears once the tracked event has ended', () => {
+    expect(shouldClearLiveEvent(live, 0, new Date('2026-08-01T13:00:00Z'))).toBe(true);
+  });
+
+  it('clears when real data proves the event is no longer ongoing', () => {
+    expect(shouldClearLiveEvent(live, 4, now)).toBe(true);
+  });
+
+  it('does nothing when no activity is tracked', () => {
+    expect(shouldClearLiveEvent(null, 4, now)).toBe(false);
   });
 });
 
