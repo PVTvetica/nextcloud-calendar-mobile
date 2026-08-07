@@ -37,6 +37,13 @@ import { HourRail } from './HourRail';
 import { TimeGridHeader } from './TimeGridHeader';
 import { TimeGridPage } from './TimeGridPage';
 
+/**
+ * Beyond this many pages, a jump re-anchors instead of animating. The pager
+ * only mounts pageBuffer pages either side of the current index, so sliding
+ * further than that crosses unmounted space.
+ */
+const MAX_ANIMATED_JUMP_PAGES = 2;
+
 interface Props {
   mode: CalMode;
   anchorDate: Date;
@@ -94,6 +101,13 @@ function TimeGridViewImpl({
     return () => clearInterval(id);
   }, []);
 
+  // The grid keeps its own anchor. It starts from the prop and follows it on a
+  // mode switch, but a long jump re-anchors locally (see the jump effect): the
+  // pager cannot animate across an arbitrary index gap, and re-anchoring is how
+  // a distant date becomes page 0 again.
+  const [localAnchor, setLocalAnchor] = useState(anchorDate);
+  useEffect(() => { setLocalAnchor(anchorDate); }, [anchorDate]);
+
   // TimeGridHeader and DayColumn are memoised on the `dates` array reference;
   // pageDates(...) allocates a new array every call, so pages are cached by
   // index and invalidated only when the paging inputs themselves change.
@@ -102,12 +116,12 @@ function TimeGridViewImpl({
     return (index: number) => {
       let dates = cache.get(index);
       if (!dates) {
-        dates = pageDates(anchorDate, index, mode, weekStartsOn);
+        dates = pageDates(localAnchor, index, mode, weekStartsOn);
         cache.set(index, dates);
       }
       return dates;
     };
-  }, [anchorDate, mode, weekStartsOn]);
+  }, [localAnchor, mode, weekStartsOn]);
 
   // Which page the band is sized for. activeDate is deferred, so sizing off it
   // directly makes the band resize several frames after the swipe has landed —
@@ -116,8 +130,8 @@ function TimeGridViewImpl({
   // drives this; the effect below only re-syncs when the date changes from
   // outside (a jump, or mount).
   const activeIndex = useMemo(
-    () => pageIndexForDate(anchorDate, activeDate, mode, weekStartsOn),
-    [anchorDate, activeDate, mode, weekStartsOn]
+    () => pageIndexForDate(localAnchor, activeDate, mode, weekStartsOn),
+    [localAnchor, activeDate, mode, weekStartsOn]
   );
   const [settledIndex, setSettledIndex] = useState(activeIndex);
   useEffect(() => { setSettledIndex(activeIndex); }, [activeIndex]);
@@ -158,15 +172,32 @@ function TimeGridViewImpl({
 
   // The anchor only moves on a mode switch now, and the span changed with it,
   // so every cached page is invalid anyway: land on page 0 without animating.
+  const firstAnchorReset = useRef(true);
   useEffect(() => {
+    // Skip the mount run: the pager is already at 0, and settledIndex is
+    // already seeded from activeDate. Resetting here would size the header for
+    // the anchor page rather than the page actually on screen.
+    if (firstAnchorReset.current) {
+      firstAnchorReset.current = false;
+      return;
+    }
+    setSettledIndex(0);
     pagerRef.current?.setPage(0, { animated: false });
-  }, [anchorDate, mode]);
+  }, [localAnchor, mode]);
 
-  // A jump (Today, a date picked in the month view) animates to the target's
-  // index instead of re-anchoring. The anchor stays put, so datesForIndex keeps
-  // its cache and nothing rebuilds — the grid slides to the date.
-  const jumpInputs = useRef({ anchorDate, mode, weekStartsOn });
-  jumpInputs.current = { anchorDate, mode, weekStartsOn };
+  /**
+   * A jump: Today, or a date picked in the month view.
+   *
+   * Near targets slide. Far ones re-anchor and land, because the pager cannot
+   * cross an arbitrary gap: only pageBuffer pages around the current index are
+   * mounted, and driving `translate` across dozens of indices leaves the
+   * mounted pages positioned off-screen — the blank grid. Re-anchoring makes
+   * the target page 0 again and the reset effect above lands on it directly.
+   * Nothing is lost visually: a slide across fifty weeks is not readable
+   * anyway.
+   */
+  const jumpInputs = useRef({ localAnchor, mode, weekStartsOn });
+  jumpInputs.current = { localAnchor, mode, weekStartsOn };
   const firstJump = useRef(true);
   useEffect(() => {
     // The initial value is the mount state, not a jump.
@@ -174,26 +205,18 @@ function TimeGridViewImpl({
       firstJump.current = false;
       return;
     }
-    const { anchorDate: a, mode: m, weekStartsOn: w } = jumpInputs.current;
+    const { localAnchor: a, mode: m, weekStartsOn: w } = jumpInputs.current;
     const target = pageIndexForDate(a, jump.target, m, w);
     const from = settledIndexRef.current;
     if (target === from) return;
 
-    setSettledIndex(target);
-
-    // Animating across a large gap drags the pager through every index in
-    // between, and only pageBuffer pages around the current one are mounted —
-    // so a jump from a distant scroll position sweeps across blank space.
-    // Teleport to the target's neighbour first, then animate the last page, so
-    // the motion is always exactly one page wide whatever the distance.
-    if (Math.abs(target - from) > 1) {
-      pagerRef.current?.setPage(target + (target > from ? -1 : 1), { animated: false });
-      const frame = requestAnimationFrame(() => {
-        pagerRef.current?.setPage(target, { animated: true });
-      });
-      return () => cancelAnimationFrame(frame);
+    if (Math.abs(target - from) <= MAX_ANIMATED_JUMP_PAGES) {
+      setSettledIndex(target);
+      pagerRef.current?.setPage(target, { animated: true });
+      return;
     }
-    pagerRef.current?.setPage(target, { animated: true });
+    // Re-anchor; the [localAnchor, mode] effect above lands on page 0.
+    setLocalAnchor(jump.target);
   }, [jump]);
 
   const handlePageChange = useCallback(
@@ -201,9 +224,9 @@ function TimeGridViewImpl({
       // Size the band from the settled page right away rather than waiting for
       // the deferred activeDate to come back around.
       setSettledIndex(index);
-      onPageChange(pageFocusDate(anchorDate, index, mode, weekStartsOn));
+      onPageChange(pageFocusDate(localAnchor, index, mode, weekStartsOn));
     },
-    [anchorDate, mode, weekStartsOn, onPageChange]
+    [localAnchor, mode, weekStartsOn, onPageChange]
   );
 
   const renderHeaderPage = useCallback(
