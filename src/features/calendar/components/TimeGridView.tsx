@@ -173,7 +173,11 @@ function TimeGridViewImpl({
   // The anchor only moves on a mode switch now, and the span changed with it,
   // so every cached page is invalid anyway: land on page 0 without animating.
   const firstAnchorReset = useRef(true);
-  useEffect(() => {
+  // useLayoutEffect, not useEffect: re-anchoring rebuilds datesForIndex while
+  // the pager is still sitting on the old index, so the render that carries the
+  // new anchor paints "old index, new anchor" — a page weeks away from the
+  // target, and empty. Landing on page 0 before paint removes that frame.
+  useLayoutEffect(() => {
     // Skip the mount run: the pager is already at 0, and settledIndex is
     // already seeded from activeDate. Resetting here would size the header for
     // the anchor page rather than the page actually on screen.
