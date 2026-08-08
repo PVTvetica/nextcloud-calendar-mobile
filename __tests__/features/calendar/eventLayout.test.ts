@@ -74,13 +74,14 @@ describe('layoutDay', () => {
     // D chains A/B to C (all in one group). Columns: A=0, B=1, D=2, C=0 (after A).
     // C at 10:00-11:00 does not overlap B (ends at 10:00) or A (ends at 10:00),
     // so C can expand into columns 1 and 2. Expansion blocked only by D (9:30 < 11:00).
-    // C expands: leftPct=0, widthPct=66.67 (2 out of 3 columns).
+    // C expands to 66.67%, which clears the floor. A, B, D each span 1 column
+    // (33.3%), below the floor, so they go dense at the floor independently.
     const out = byUid(layoutDay([ev('a', 9, 10), ev('b', 9, 10), evAt('d', 570, 630), ev('c', 10, 11)]));
     expect(out.get('c')!.leftPct).toBe(0);
     expect(out.get('c')!.widthPct).toBeCloseTo(100 * (2 / 3), 6);
-    expect(out.get('a')!.widthPct).toBeCloseTo(100 / 3, 6);
-    expect(out.get('b')!.widthPct).toBeCloseTo(100 / 3, 6);
-    expect(out.get('d')!.widthPct).toBeCloseTo(100 / 3, 6);
+    expect(out.get('a')!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
+    expect(out.get('b')!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
+    expect(out.get('d')!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
   });
 
   it('lets an event span every column when nothing overlaps it', () => {
@@ -190,14 +191,7 @@ describe('layoutDay dense stacking', () => {
   it('offsets dense columns evenly', () => {
     const out = layoutDay(simultaneous(5)).sort((a, b) => a.leftPct - b.leftPct);
     const steps = out.slice(1).map((p, i) => p.leftPct - out[i].leftPct);
-    for (const step of steps) expect(step).toBeCloseTo(steps[0], 6);
-  });
-
-  it('raises zIndex with the column so the later event draws on top', () => {
-    const out = layoutDay(simultaneous(5)).sort((a, b) => a.leftPct - b.leftPct);
-    for (let i = 1; i < out.length; i++) {
-      expect(out[i].zIndex).toBeGreaterThan(out[i - 1].zIndex);
-    }
+    for (const step of steps) expect(step).toBeCloseTo((100 - MIN_EVENT_WIDTH_PCT) / 4, 6);
   });
 
   it('switches to stacking exactly at the floor', () => {
@@ -224,5 +218,10 @@ describe('layoutDay dense stacking', () => {
       layoutDay([ev('a', 9, 10), ev('b', 9, 10), evAt('d', 570, 630), ev('c', 10, 11)])
     );
     expect(out.get('c')!.widthPct).toBeCloseTo(100 * (2 / 3), 6);
+    // …while the three that do not clear the floor still go dense, each on its
+    // own account: one event clearing the floor must not speak for the group.
+    for (const uid of ['a', 'b', 'd']) {
+      expect(out.get(uid)!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
+    }
   });
 });

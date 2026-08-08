@@ -33,6 +33,12 @@ function overlaps(a: GridEvent, b: GridEvent): boolean {
  * event in a group takes 1/N of the width, so a group chained together by a
  * long event turned every box into a sliver even when only two of them were
  * ever on screen at the same minute.
+ *
+ * The floor pass checks each event's expanded width independently: if an event
+ * would be narrower than MIN_EVENT_WIDTH_PCT, it switches to dense stacking
+ * instead. This allows events in the same chain to use different strategies:
+ * an event that expands above the floor uses the regular formula, while a
+ * narrower event in the same chain uses dense stacking, so nothing gets hidden.
  */
 function layoutGroup(group: GridEvent[]): PositionedEvent[] {
   const columns: GridEvent[][] = [];
@@ -57,41 +63,25 @@ function layoutGroup(group: GridEvent[]): PositionedEvent[] {
 
   const total = columns.length;
 
-  // First pass: calculate spans and check if any event would be above the floor.
-  // If any event clears the floor, the whole group avoids dense stacking.
-  const eventSpans: Map<GridEvent, number> = new Map();
-  let hasAboveFloor = false;
-
-  for (const event of group) {
+  return group.map((event) => {
     const column = columnOf.get(event)!;
     let span = 1;
     for (let c = column + 1; c < total; c++) {
       if (columns[c].some((other) => overlaps(other, event))) break;
       span++;
     }
-    eventSpans.set(event, span);
+
     const sharedWidth = (span / total) * 100;
     if (sharedWidth >= MIN_EVENT_WIDTH_PCT) {
-      hasAboveFloor = true;
-    }
-  }
-
-  // Second pass: return positioned events using the appropriate formula.
-  return group.map((event) => {
-    const column = columnOf.get(event)!;
-    const span = eventSpans.get(event)!;
-
-    if (hasAboveFloor) {
-      // Regular formula: at least one event clears the floor.
       return {
         event,
         leftPct: (column / total) * 100,
-        widthPct: (span / total) * 100,
+        widthPct: sharedWidth,
         zIndex: 100 + column,
       };
     }
 
-    // Dense: all events in the group are below the floor. Hold the floor and
+    // Dense: this event's expanded width is below the floor. Hold the floor and
     // slide each column right instead of dividing further. total > 1 here —
     // one column is 100% wide and two are 50%, both above the floor — so the
     // divisor is safe. The last column lands exactly at the right edge, and
