@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import type { GridEvent } from '../utils/toGridEvents';
+import { contrastFor } from '../utils/eventInk';
 
 interface Props {
   event: GridEvent;
@@ -26,6 +27,7 @@ interface Props {
  * stays dimmed.
  */
 function DragGhostImpl({ event, top, height, left, width }: Props) {
+  const ink = contrastFor(event.color);
   const style = useAnimatedStyle(() => ({
     top: top.value,
     height: height.value,
@@ -38,7 +40,7 @@ function DragGhostImpl({ event, top, height, left, width }: Props) {
       pointerEvents="none"
       style={[styles.ghost, { width, backgroundColor: event.color }, style]}
     >
-      <Text numberOfLines={1} style={styles.title}>
+      <Text numberOfLines={1} style={[styles.title, { color: ink.text }]}>
         {event.title}
       </Text>
     </Animated.View>
@@ -53,7 +55,6 @@ const styles = StyleSheet.create({
     zIndex: 20000,
     // Matches TimeGridEvent's card so the lifted box is the same object.
     borderRadius: 6,
-    overflow: 'hidden',
     paddingHorizontal: 4,
     paddingVertical: 1,
     justifyContent: 'center',
@@ -64,5 +65,5 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 6,
   },
-  title: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  title: { fontSize: 12, fontWeight: '600' },
 });

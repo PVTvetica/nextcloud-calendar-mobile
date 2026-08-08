@@ -20,10 +20,11 @@ const event: GridEvent = (() => {
   return { title: e.summary, start: e.dtstart, end: e.dtend, color: e.color, _event: e };
 })();
 
-function ghost() {
+function ghost(color?: string) {
+  const eventWithColor: GridEvent = color ? { ...event, color } : event;
   return (
     <DragGhost
-      event={event}
+      event={eventWithColor}
       top={shared(100)}
       height={shared(60)}
       left={shared(0)}
@@ -52,5 +53,24 @@ describe('DragGhost', () => {
   it('carries the event colour', () => {
     const flat = StyleSheet.flatten(render(ghost()).getByTestId('drag-ghost').props.style);
     expect(flat.backgroundColor).toBe('#0082c9');
+  });
+
+  it('picks title ink colour from the event background luminance', () => {
+    // Dark background should get light text
+    const darkGhost = render(ghost('#0082c9'));
+    const darkTitle = darkGhost.getByText('Standup');
+    const darkTitleFlat = StyleSheet.flatten(darkTitle.props.style);
+
+    // Pale background should get dark text
+    const paleGhost = render(ghost('#ffe8a3'));
+    const paleTitle = paleGhost.getByText('Standup');
+    const paleTitleFlat = StyleSheet.flatten(paleTitle.props.style);
+
+    // They should be different
+    expect(darkTitleFlat.color).not.toBe(paleTitleFlat.color);
+    // Pale background should get dark text
+    expect(paleTitleFlat.color).toBe('#1c1c1e');
+    // Dark background should get light text
+    expect(darkTitleFlat.color).toBe('#ffffff');
   });
 });
