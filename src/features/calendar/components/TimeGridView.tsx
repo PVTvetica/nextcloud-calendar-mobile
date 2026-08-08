@@ -310,7 +310,7 @@ function TimeGridViewImpl({
             showsVerticalScrollIndicator={false}
           >
             <View style={[styles.gridRow, { height: gridHeight }]}>
-              <HourRail hourRowHeight={hourRowHeight} />
+              <HourRail />
               <InfinitePager
                 key={pagerKey}
                 ref={pagerRef}

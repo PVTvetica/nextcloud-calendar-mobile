@@ -1,5 +1,6 @@
 import React from 'react';
 import { render as rtlRender } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { ThemeWrapper } from '../helpers/theme';
 import { HourRail } from '@/features/calendar/components/HourRail';
 
@@ -7,15 +8,23 @@ const render = (ui: React.ReactElement) => rtlRender(ui, { wrapper: ThemeWrapper
 
 describe('HourRail', () => {
   it('renders one label per hour of the day', () => {
-    const { getByText, queryByText } = render(<HourRail hourRowHeight={60} />);
+    const { getByText, queryByText } = render(<HourRail />);
     expect(getByText('0:00')).toBeTruthy();
     expect(getByText('9:00')).toBeTruthy();
     expect(getByText('23:00')).toBeTruthy();
     expect(queryByText('24:00')).toBeNull();
   });
 
-  it('sizes each hour block from hourRowHeight', () => {
-    const { getByTestId } = render(<HourRail hourRowHeight={80} />);
-    expect(getByTestId('hour-block-9')).toHaveStyle({ height: 80 });
+  it('renders 24 blocks', () => {
+    const { getAllByTestId } = render(<HourRail />);
+    expect(getAllByTestId(/^hour-block-/)).toHaveLength(24);
+  });
+
+  it('divides the rail equally rather than sizing blocks in pixels', () => {
+    // The blocks share whatever height the animated container gives them, so
+    // the rail follows a live zoom without an animated node of its own.
+    const flat = StyleSheet.flatten(render(<HourRail />).getByTestId('hour-block-9').props.style);
+    expect(flat.flex).toBe(1);
+    expect(flat.height).toBeUndefined();
   });
 });
