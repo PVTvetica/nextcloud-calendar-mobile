@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { render as rtlRender } from '@testing-library/react-native';
 import { Gesture } from 'react-native-gesture-handler';
+import type { SharedValue } from 'react-native-reanimated';
 import { ThemeWrapper } from '../helpers/theme';
 import { TimeGridView } from '@/features/calendar/components/TimeGridView';
 import { toGridEvents } from '@/features/calendar/utils/toGridEvents';
@@ -64,6 +65,7 @@ function view(over: Partial<React.ComponentProps<typeof TimeGridView>> = {}) {
       events={events}
       allDayEvents={[]}
       hourRowHeight={60}
+      cellHeight={{ value: 60 } as SharedValue<number>}
       weekStartsOn={1}
       pinchGesture={Gesture.Pinch()}
       initialScrollHour={8}

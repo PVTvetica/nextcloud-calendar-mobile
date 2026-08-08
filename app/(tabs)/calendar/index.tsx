@@ -66,7 +66,7 @@ export default function CalendarScreen() {
   if (isCalMode(deferredViewMode)) lastCalModeRef.current = deferredViewMode;
   const calMode: CalMode = lastCalModeRef.current;
 
-  const { hourRowHeight, pinchGesture } = useZoom();
+  const { hourRowHeight, cellHeight, pinchGesture } = useZoom();
   const { activeAccount, calendars, allEvents, showFullOverlay, showSmallLoader } = useCalendarData(fetchDate);
   const insets = useSafeAreaInsets();
   const drawer = useCalendarDrawer();
@@ -216,6 +216,7 @@ export default function CalendarScreen() {
             events={calendarEvents}
             allDayEvents={allDayEvents}
             hourRowHeight={hourRowHeight}
+            cellHeight={cellHeight}
             weekStartsOn={deferredWeekStartsOn}
             jump={nav.jump}
             pinchGesture={pinchGesture}

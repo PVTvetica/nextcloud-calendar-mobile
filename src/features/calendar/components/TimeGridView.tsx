@@ -17,7 +17,7 @@ import {
   type ComposedGesture,
   type GestureType,
 } from 'react-native-gesture-handler';
-import { useSharedValue } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useTheme } from 'expo-router';
 import InfinitePager, { type InfinitePagerImperativeApi } from 'react-native-infinite-pager';
 import type { CalendarEvent } from '@/types';
@@ -51,6 +51,8 @@ interface Props {
   events: GridEvent[];
   allDayEvents: CalendarEvent[];
   hourRowHeight: number;
+  /** Live pixels-per-hour during a pinch; the grid container animates from it. */
+  cellHeight: SharedValue<number>;
   weekStartsOn: 0 | 1;
   /** Bumped only by a date jump, never by a swipe. See useCalendarNavigation. */
   jump: { nonce: number; target: Date };
@@ -64,9 +66,9 @@ interface Props {
 }
 
 function TimeGridViewImpl({
-  mode, anchorDate, activeDate, events, allDayEvents, hourRowHeight, weekStartsOn, jump,
-  pinchGesture, initialScrollHour, onPageChange, onPressSlot, onPressEvent, onPressAllDayEvent,
-  onMoveEvent,
+  mode, anchorDate, activeDate, events, allDayEvents, hourRowHeight, cellHeight, weekStartsOn,
+  jump, pinchGesture, initialScrollHour, onPageChange, onPressSlot, onPressEvent,
+  onPressAllDayEvent, onMoveEvent,
 }: Props) {
   const { colors } = useTheme();
   const pagerRef = useRef<InfinitePagerImperativeApi>(null);
@@ -91,7 +93,14 @@ function TimeGridViewImpl({
     prevDayIndex.current = next;
     return next;
   }, [events]);
-  const gridHeight = hourRowHeight * 24;
+
+  // The grid's single animated node. Every child divides this height — the rail
+  // and hour cells with flex, event boxes and the now indicator with
+  // percentages of the 24-hour span — so a pinch moves the whole grid at 60 fps
+  // without an animated node per event. A real height, not a transform:
+  // animating the layout prop keeps the ScrollView's content size in sync,
+  // where a composited transform would leave the scroll range stale.
+  const gridHeightStyle = useAnimatedStyle(() => ({ height: cellHeight.value * 24 }), [cellHeight]);
 
   // A single interval for the whole grid drives the now-indicator's position
   // *and* which column it's drawn on. Previously each DayColumn evaluated
@@ -309,21 +318,20 @@ function TimeGridViewImpl({
             scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
           >
-            <View style={[styles.gridRow, { height: gridHeight }]}>
+            <Animated.View style={[styles.gridRow, gridHeightStyle]}>
               <HourRail />
               <InfinitePager
                 key={pagerKey}
                 ref={pagerRef}
                 style={styles.fill}
                 pageWrapperStyle={styles.fill}
-                height={gridHeight}
                 renderPage={renderGridPage}
                 syncNode={syncNode}
                 onPageChange={handlePageChange}
                 simultaneousGestures={simultaneous}
                 pageBuffer={1}
               />
-            </View>
+            </Animated.View>
           </ScrollView>
         </GestureDetector>
 
