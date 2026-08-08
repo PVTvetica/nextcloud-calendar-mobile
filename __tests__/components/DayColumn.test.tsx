@@ -136,4 +136,19 @@ describe('DayColumn', () => {
     const boxStyle = StyleSheet.flatten(getByTestId('event-box-u1').props.style);
     expect(boxStyle.marginRight).toBeUndefined();
   });
+
+  it('divides the column into 24 equal hour cells rather than pixel heights', () => {
+    // The cells share whatever height the animated container gives them, so a
+    // live zoom moves them without giving each cell an animated node.
+    const { getAllByTestId } = render(
+      <DayColumn date={date} positioned={[]} hourRowHeight={60} now={now} onPressSlot={jest.fn()} onPressEvent={jest.fn()} />
+    );
+    const cells = getAllByTestId(/^hour-cell-/);
+    expect(cells).toHaveLength(24);
+    for (const cell of cells) {
+      const flat = StyleSheet.flatten(cell.props.style);
+      expect(flat.flex).toBe(1);
+      expect(flat.height).toBeUndefined();
+    }
+  });
 });

@@ -23,15 +23,18 @@ function DayColumnImpl({ date, positioned, hourRowHeight, now, onPressSlot, onPr
   const { colors } = useTheme();
   const isToday = dayjs(now).isSame(date, 'day');
 
+  // flex, not a pixel height: the cells divide the container's height, so a
+  // pinch that animates that height carries every hour line with it without
+  // an animated node per cell.
   const cellStyle = useMemo(
     () => ({
       borderLeftWidth: 1,
       borderBottomWidth: 1,
       borderColor: colors.border,
-      height: hourRowHeight,
+      flex: 1,
       justifyContent: 'space-evenly' as const,
     }),
-    [colors.border, hourRowHeight]
+    [colors.border]
   );
 
   const subCellStyle = useMemo(
