@@ -21,6 +21,7 @@ import {
 } from '@/ui/components';
 import type { CalendarEvent, RecurrenceEditScope } from '@/types';
 import { askRecurrenceScope, type RecurrenceScopeStrings } from '@/features/event/recurrenceScope';
+import { decideMoveEventScope } from '@/features/calendar/utils/moveEventScope';
 
 dayjs.extend(localizedFormat);
 
@@ -91,13 +92,25 @@ export default function EventDetailScreen() {
 
   function handleEdit() {
     if (!event) return;
-    if (event.isRecurring) {
-      askRecurrenceScope(t('event.editEvent'), recurrenceScopeStrings, (scope) => {
-        router.push({ pathname: `/event/edit/${uid}`, params: { scope } });
-      });
-    } else {
-      router.push(`/event/edit/${uid}`);
+    // Mirrors handleMoveEvent's gate on the drag path (calendar/index.tsx):
+    // a recurring event whose stored rule parseRrule cannot hold exactly must
+    // never reach the "all"/"thisAndFollowing" prompt options, because the
+    // edit screen rebuilds the master from `input.rrule === undefined` for
+    // both of those, silently destroying the recurrence on the server. For
+    // such a rule, decideMoveEventScope commits straight to scope 'this' --
+    // skip the prompt and navigate with that scope directly.
+    const decision = decideMoveEventScope(event);
+    if (decision.kind === 'commit') {
+      if (decision.scope === 'this') {
+        router.push({ pathname: `/event/edit/${uid}`, params: { scope: 'this' } });
+      } else {
+        router.push(`/event/edit/${uid}`);
+      }
+      return;
     }
+    askRecurrenceScope(t('event.editEvent'), recurrenceScopeStrings, (scope) => {
+      router.push({ pathname: `/event/edit/${uid}`, params: { scope } });
+    });
   }
 
   function handleDelete() {

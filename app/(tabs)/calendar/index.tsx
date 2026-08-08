@@ -97,6 +97,15 @@ export default function CalendarScreen() {
   // early return in handleMoveEvent below always guards, so `!` here is safe
   // in the same way the edit screen uses it.
   const updateMutation = useUpdateEvent(activeAccount!, calendars);
+  // Destructured rather than depending on `updateMutation` itself: useAction
+  // (useMutateEvent.ts) returns a fresh { mutate, mutateAsync, isPending }
+  // object literal every render, so depending on the object churns
+  // handleMoveEvent's identity on every CalendarScreen render -- which
+  // TimeGridView passes straight through to all three mounted TimeGridPages
+  // as onMoveEvent, re-rendering every one of them for nothing. `mutateAsync`
+  // itself is stable: it's wrapped in its own useCallback keyed only on
+  // [account, calendars].
+  const { mutateAsync } = updateMutation;
 
   const recurrenceScopeStrings = useMemo(
     () => ({
@@ -116,9 +125,9 @@ export default function CalendarScreen() {
       if (!activeAccount) return;
       const event = gridEvent._event;
       const apply = (scope: RecurrenceEditScope) => {
-        void updateMutation.mutateAsync({
+        void mutateAsync({
           event,
-          input: { ...eventToInput(event), dtstart: nextStart, dtend: nextEnd },
+          input: { ...eventToInput(event, activeAccount), dtstart: nextStart, dtend: nextEnd },
           scope,
         });
       };
@@ -131,7 +140,7 @@ export default function CalendarScreen() {
       }
       apply(decision.scope);
     },
-    [activeAccount, updateMutation, t, recurrenceScopeStrings]
+    [activeAccount, mutateAsync, t, recurrenceScopeStrings]
   );
 
   const monthSwipeGesture = useMemo(

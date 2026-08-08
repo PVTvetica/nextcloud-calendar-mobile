@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useCalendars } from '@/hooks/useCalendars';
 import { useCreateEvent } from '@/features/event/hooks/useMutateEvent';
+import { resolveOrganizer } from '@/features/event/utils/organizer';
 import { useAccountStore } from '@/stores/accountStore';
 import { EventForm } from '@/features/event/components/EventForm';
 import { ViewContainer, Stack, Typography, Button, ScreenHeader } from '@/ui/components';
@@ -42,10 +43,7 @@ export default function NewEventScreen() {
     );
   }
 
-  const organizerEmail = activeAccount.email
-    || (activeAccount.username.includes('@')
-      ? activeAccount.username
-      : `${activeAccount.username}@${new URL(activeAccount.baseUrl).hostname}`);
+  const { organizerEmail, organizerName } = resolveOrganizer(activeAccount);
 
   return (
     <ViewContainer>
@@ -64,7 +62,7 @@ export default function NewEventScreen() {
           calendars={calendars}
           defaultDate={defaultDate}
           organizerEmail={organizerEmail}
-          organizerName={activeAccount.displayName}
+          organizerName={organizerName}
           onSubmit={handleSubmit}
           loading={createMutation.isPending}
         />

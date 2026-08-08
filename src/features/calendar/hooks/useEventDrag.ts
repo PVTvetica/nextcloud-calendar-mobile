@@ -29,6 +29,12 @@ interface Args {
   onMoveEvent?: (event: GridEvent, nextStart: Date, nextEnd: Date) => void;
 }
 
+/** Clamp a column delta so a move can never land on a day off the page. */
+function clampColumnDelta(rawDelta: number, columnIndex: number, daysCount: number): number {
+  'worklet';
+  return Math.min(daysCount - 1 - columnIndex, Math.max(-columnIndex, rawDelta));
+}
+
 /**
  * One drag gesture for a whole page.
  *
@@ -58,6 +64,14 @@ export function useEventDrag({
   const leftBase = useSharedValue(0);
   /** The drag mode, readable from the UI thread. `drag` is React state. */
   const modeFlag = useSharedValue(MODE_MOVE);
+  // The hit column, readable from the UI thread so onUpdate can clamp the
+  // ghost's column to the page without reading `drag` (React state) in a
+  // worklet. Deliberately left out of the `begin`/`gesture` dependency
+  // arrays below, same as every other shared value here: only its `.value`
+  // is ever read, and Reanimated hands back a stable ref in production. The
+  // committed delta is clamped separately, in `commit`, off `current
+  // .columnIndex` (see the comment there) rather than off this shared value.
+  const columnIndexSV = useSharedValue(0);
 
   // Read inside callbacks without re-creating the gesture on every render.
   const live = useRef({ dates, layouts, hourRowHeight, columnWidth, onMoveEvent, drag });
@@ -81,6 +95,23 @@ export function useEventDrag({
     );
     if (!hit) return;
 
+    // buildDayIndex clamps any event crossing midnight to a per-day slice:
+    // `hit.event.start/.end` are that slice's bounds, while `hit.event._event`
+    // still points at the full, unclamped event. Arming a drag here would let
+    // `commit` compute the new bounds from the clamped slice and hand them to
+    // onMoveEvent, which writes them onto the full event -- silently
+    // truncating or shifting the rest of a multi-day event on the server.
+    // Refusing on a partial slice mirrors the existing decision that all-day
+    // events are not draggable: a midnight boundary is a rendering artifact,
+    // not something the user can meaningfully grab.
+    const full = hit.event._event;
+    if (
+      hit.event.start.getTime() !== full.dtstart.getTime() ||
+      hit.event.end.getTime() !== full.dtend.getTime()
+    ) {
+      return;
+    }
+
     const startMin = hit.event.start.getHours() * 60 + hit.event.start.getMinutes();
     const durationMin = (hit.event.end.getTime() - hit.event.start.getTime()) / 60_000;
     const startPx = (startMin / DAY_MINUTES) * s.hourRowHeight * 24;
@@ -96,6 +127,7 @@ export function useEventDrag({
         : hit.mode === 'resizeStart'
           ? MODE_RESIZE_START
           : MODE_RESIZE_END;
+    columnIndexSV.value = columnIndex;
 
     top.value = startPx;
     height.value = heightPx;
@@ -118,11 +150,28 @@ export function useEventDrag({
     // loop.
   }, [top, height, left, topBase, heightBase, leftBase, modeFlag]);
 
-  const commit = useCallback((deltaMinutes: number, deltaColumns: number) => {
+  const commit = useCallback((deltaMinutes: number, rawDeltaColumns: number) => {
     const s = live.current;
     const current = s.drag;
     setDrag(null);
     if (!current || !s.onMoveEvent) return;
+
+    // Clamped here, off `current.columnIndex` -- part of the DragState
+    // `begin` put into React state -- rather than in onEnd's worklet off a
+    // shared value: `current` is guaranteed to reflect the drag `begin`
+    // armed, while a shared value written in `begin` is only guaranteed to
+    // still hold that write on the same render; the state update `begin`
+    // triggers (`setDrag`) can hand onEnd's worklet a same-named but distinct
+    // shared value from the one `begin` wrote to. A move can never land on a
+    // day off the page: clamp to [-columnIndex, dates.length - 1 -
+    // columnIndex].
+    const deltaColumns =
+      current.mode === 'move'
+        ? Math.min(
+            s.dates.length - 1 - current.columnIndex,
+            Math.max(-current.columnIndex, rawDeltaColumns),
+          )
+        : 0;
     if (deltaMinutes === 0 && deltaColumns === 0) return;
 
     const deltaDays = deltaColumns * DAY_MINUTES;
@@ -162,54 +211,73 @@ export function useEventDrag({
 
   const cancel = useCallback(() => setDrag(null), []);
 
-  const gesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .activateAfterLongPress(LONG_PRESS_MS)
-        .onStart((e) => {
-          scheduleOnRN(begin, e.x, e.y);
-        })
-        .onUpdate((e) => {
-          const snapped = snapDeltaMinutes(e.translationY, hourRowHeight, SNAP_MINUTES);
-          const offsetPx = (snapped / 60) * hourRowHeight;
-          const minPx = (SNAP_MINUTES / 60) * hourRowHeight;
+  const gesture = useMemo(() => {
+    // A plain number, not a shared value: captured directly by the worklets
+    // below the same way `columnWidth`/`hourRowHeight` already are, so it is
+    // listed in this memo's own dependency array (below) rather than the
+    // shared-value list `begin` explains. `dates` itself (an array of `Date`s)
+    // is never closed over by a worklet -- only this primitive is.
+    const daysCount = dates.length;
 
-          if (modeFlag.value === MODE_MOVE) {
-            top.value = topBase.value + offsetPx;
-            height.value = heightBase.value;
-            left.value = leftBase.value + Math.round(e.translationX / columnWidth) * columnWidth;
-            return;
-          }
+    return Gesture.Pan()
+      .activateAfterLongPress(LONG_PRESS_MS)
+      .onStart((e) => {
+        scheduleOnRN(begin, e.x, e.y);
+      })
+      .onUpdate((e) => {
+        const snapped = snapDeltaMinutes(e.translationY, hourRowHeight, SNAP_MINUTES);
+        const offsetPx = (snapped / 60) * hourRowHeight;
+        const minPx = (SNAP_MINUTES / 60) * hourRowHeight;
 
-          // A resize never changes column, and never shrinks below one step.
-          left.value = leftBase.value;
-          if (modeFlag.value === MODE_RESIZE_START) {
-            const clamped = Math.min(offsetPx, heightBase.value - minPx);
-            top.value = topBase.value + clamped;
-            height.value = heightBase.value - clamped;
-          } else {
-            top.value = topBase.value;
-            height.value = Math.max(minPx, heightBase.value + offsetPx);
-          }
-        })
-        .onEnd((e) => {
-          const snapped = snapDeltaMinutes(e.translationY, hourRowHeight, SNAP_MINUTES);
-          const columnDelta =
-            modeFlag.value === MODE_MOVE ? Math.round(e.translationX / columnWidth) : 0;
-          scheduleOnRN(commit, snapped, columnDelta);
-        })
-        .onFinalize(() => {
-          scheduleOnRN(cancel);
-        }),
+        if (modeFlag.value === MODE_MOVE) {
+          // A best-effort visual clamp: keeps the ghost from being drawn at
+          // a negative (or past-the-last-column) `left` while the page's
+          // real, authoritative clamp -- in `commit`, off React state -- is
+          // what actually decides the committed delta.
+          const rawColumns = Math.round(e.translationX / columnWidth);
+          const columns = clampColumnDelta(rawColumns, columnIndexSV.value, daysCount);
+          top.value = topBase.value + offsetPx;
+          height.value = heightBase.value;
+          left.value = leftBase.value + columns * columnWidth;
+          return;
+        }
+
+        // A resize never changes column, and never shrinks below one step.
+        left.value = leftBase.value;
+        if (modeFlag.value === MODE_RESIZE_START) {
+          const clamped = Math.min(offsetPx, heightBase.value - minPx);
+          top.value = topBase.value + clamped;
+          height.value = heightBase.value - clamped;
+        } else {
+          top.value = topBase.value;
+          height.value = Math.max(minPx, heightBase.value + offsetPx);
+        }
+      })
+      .onEnd((e, success) => {
+        // RNGH calls onEnd on both a completed gesture (success: true) and a
+        // cancelled/failed one (success: false) -- a second finger landing, a
+        // system touch cancellation, backgrounding mid-drag. Committing on the
+        // latter writes the in-flight, possibly-mid-swipe position to the
+        // server with no user action to explain it.
+        if (!success) return;
+        const snapped = snapDeltaMinutes(e.translationY, hourRowHeight, SNAP_MINUTES);
+        const columnDelta =
+          modeFlag.value === MODE_MOVE ? Math.round(e.translationX / columnWidth) : 0;
+        scheduleOnRN(commit, snapped, columnDelta);
+      })
+      .onFinalize(() => {
+        scheduleOnRN(cancel);
+      });
     // The shared values below are safe to list despite the mock-vs-production
     // gap explained on `begin`'s own dependency list above: no effect here is
     // keyed on any of them, so a churning identity under test just rebuilds
-    // this gesture, it does not loop.
-    [
-      begin, commit, cancel, hourRowHeight, columnWidth,
-      top, height, left, topBase, heightBase, leftBase, modeFlag,
-    ]
-  );
+    // this gesture, it does not loop. `columnIndexSV` is deliberately not
+    // listed, same reasoning, so as not to grow this list beyond the shared
+    // values it already carried.
+  }, [
+    begin, commit, cancel, hourRowHeight, columnWidth, dates.length,
+    top, height, left, topBase, heightBase, leftBase, modeFlag,
+  ]);
 
   return { gesture, drag, top, height, left };
 }

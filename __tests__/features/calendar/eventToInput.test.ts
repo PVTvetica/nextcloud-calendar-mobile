@@ -1,5 +1,5 @@
 import { eventToInput } from '@/features/calendar/utils/eventToInput';
-import type { CalendarEvent } from '@/types';
+import type { Account, CalendarEvent } from '@/types';
 
 const base: CalendarEvent = {
   uid: 'u1', href: '/u1.ics', calendarId: 'cal-1', accountId: 'a1',
@@ -16,9 +16,19 @@ const base: CalendarEvent = {
   alarmMinutes: 10,
 };
 
+const account: Account = {
+  id: 'acc-1',
+  displayName: 'Charlie',
+  baseUrl: 'https://cloud.example.org',
+  username: 'charlie',
+  appPassword: 'secret',
+  davUserId: 'charlie',
+  email: 'charlie@example.org',
+};
+
 describe('eventToInput', () => {
   it('carries every field the update path needs', () => {
-    const input = eventToInput(base);
+    const input = eventToInput(base, account);
     expect(input.summary).toBe('Standup');
     expect(input.calendarId).toBe('cal-1');
     expect(input.dtstart).toEqual(base.dtstart);
@@ -27,13 +37,12 @@ describe('eventToInput', () => {
     expect(input.description).toBe('Daily sync');
     expect(input.location).toBe('Room 2');
     expect(input.attendees).toEqual(base.attendees);
-    expect(input.organizerEmail).toBe('me@example.org');
     expect(input.alarmMinutes).toBe(10);
   });
 
   it('never asks for a new Talk room', () => {
     // A drag changes times, nothing else. Requesting a room would create one.
-    expect(eventToInput(base).withTalkRoom).toBe(false);
+    expect(eventToInput(base, account).withTalkRoom).toBe(false);
   });
 
   it('reads the stored recurrence rule back so a drag does not destroy the series', () => {
@@ -42,7 +51,7 @@ describe('eventToInput', () => {
       isRecurring: true,
       rrule: 'RRULE:FREQ=WEEKLY;BYDAY=MO',
     };
-    expect(eventToInput(recurring).rrule).toEqual({ freq: 'WEEKLY', byDay: ['MO'] });
+    expect(eventToInput(recurring, account).rrule).toEqual({ freq: 'WEEKLY', byDay: ['MO'] });
   });
 
   it('leaves rrule undefined when the stored rule cannot be represented exactly', () => {
@@ -51,7 +60,7 @@ describe('eventToInput', () => {
       isRecurring: true,
       rrule: 'RRULE:FREQ=MONTHLY;BYMONTHDAY=15',
     };
-    expect(eventToInput(exotic).rrule).toBeUndefined();
+    expect(eventToInput(exotic, account).rrule).toBeUndefined();
   });
 
   it('tolerates an event with no optional fields', () => {
@@ -62,14 +71,40 @@ describe('eventToInput', () => {
       organizerEmail: undefined,
       alarmMinutes: undefined,
     };
-    const input = eventToInput(bare);
+    const input = eventToInput(bare, account);
     expect(input.description).toBeUndefined();
-    expect(input.organizerEmail).toBe('');
-    expect(input.organizerName).toBe('');
   });
 
   it('does not alias the attendee array', () => {
-    const input = eventToInput(base);
+    const input = eventToInput(base, account);
     expect(input.attendees).not.toBe(base.attendees);
+  });
+
+  describe('organizer', () => {
+    // Important 3 (whole-plan review): organizerEmail/organizerName must
+    // come from the acting account, not the stored event -- ics.ts's
+    // organizerLine is unconditional, so leaving these to the event (which
+    // routinely has no organizer for events synced from other clients)
+    // wrote a malformed ORGANIZER;CN=:mailto: on every drag.
+    it('uses the account email when set', () => {
+      const input = eventToInput(base, account);
+      expect(input.organizerEmail).toBe('charlie@example.org');
+      expect(input.organizerName).toBe('Charlie');
+    });
+
+    it('falls back to the username when it is already an email', () => {
+      const noEmail: Account = { ...account, email: undefined, username: 'charlie@work.org' };
+      expect(eventToInput(base, noEmail).organizerEmail).toBe('charlie@work.org');
+    });
+
+    it('falls back to username@host when neither email nor an email-shaped username is available', () => {
+      const noEmail: Account = { ...account, email: undefined, username: 'charlie' };
+      expect(eventToInput(base, noEmail).organizerEmail).toBe('charlie@cloud.example.org');
+    });
+
+    it("ignores the event's own stored organizer entirely", () => {
+      const otherOrganizer: CalendarEvent = { ...base, organizerEmail: 'someone-else@example.org' };
+      expect(eventToInput(otherOrganizer, account).organizerEmail).toBe('charlie@example.org');
+    });
   });
 });
