@@ -83,7 +83,6 @@ function TimeGridPageImpl({
         {drag && (
           <DragGhost
             event={drag.event}
-            mode={drag.mode}
             top={top}
             height={height}
             left={left}

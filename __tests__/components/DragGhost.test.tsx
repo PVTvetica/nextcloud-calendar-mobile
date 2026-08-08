@@ -1,5 +1,6 @@
 import React from 'react';
 import { render as rtlRender } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { ThemeWrapper } from '../helpers/theme';
 import { DragGhost } from '@/features/calendar/components/DragGhost';
 import type { GridEvent } from '@/features/calendar/utils/toGridEvents';
@@ -19,11 +20,10 @@ const event: GridEvent = (() => {
   return { title: e.summary, start: e.dtstart, end: e.dtend, color: e.color, _event: e };
 })();
 
-function ghost(mode: 'move' | 'resizeStart' | 'resizeEnd' = 'move') {
+function ghost() {
   return (
     <DragGhost
       event={event}
-      mode={mode}
       top={shared(100)}
       height={shared(60)}
       left={shared(0)}
@@ -37,9 +37,20 @@ describe('DragGhost', () => {
     expect(render(ghost()).getByText('Standup')).toBeTruthy();
   });
 
-  it('renders both handles so the affordance is visible while dragging', () => {
-    const { getByTestId } = render(ghost());
-    expect(getByTestId('ghost-handle-start')).toBeTruthy();
-    expect(getByTestId('ghost-handle-end')).toBeTruthy();
+  it('renders no resize handles', () => {
+    // The ghost is the event being lifted, not a placeholder with controls.
+    const { queryByTestId } = render(ghost());
+    expect(queryByTestId('ghost-handle-start')).toBeNull();
+    expect(queryByTestId('ghost-handle-end')).toBeNull();
+  });
+
+  it('draws no outline, so it reads as the event rather than a frame', () => {
+    const flat = StyleSheet.flatten(render(ghost()).getByTestId('drag-ghost').props.style);
+    expect(flat.borderWidth ?? 0).toBe(0);
+  });
+
+  it('carries the event colour', () => {
+    const flat = StyleSheet.flatten(render(ghost()).getByTestId('drag-ghost').props.style);
+    expect(flat.backgroundColor).toBe('#0082c9');
   });
 });
