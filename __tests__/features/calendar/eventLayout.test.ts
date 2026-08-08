@@ -75,12 +75,14 @@ describe('layoutDay', () => {
     // C at 10:00-11:00 does not overlap B (ends at 10:00) or A (ends at 10:00),
     // so C can expand into columns 1 and 2. Expansion blocked only by D (9:30 < 11:00).
     // C expands to 66.67%, which clears the floor. A, B, D each span 1 column
-    // (33.3%), below the floor, so they go dense at the floor independently.
+    // (33.3%), below the floor, so they cascade independently: A is the
+    // background (col 0, full width), B steps in on top, D is topmost at the
+    // floor — step = (100-40)/2 = 30.
     const out = byUid(layoutDay([ev('a', 9, 10), ev('b', 9, 10), evAt('d', 570, 630), ev('c', 10, 11)]));
     expect(out.get('c')!.leftPct).toBe(0);
     expect(out.get('c')!.widthPct).toBeCloseTo(100 * (2 / 3), 6);
-    expect(out.get('a')!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
-    expect(out.get('b')!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
+    expect(out.get('a')!.widthPct).toBe(100);
+    expect(out.get('b')!.widthPct).toBeCloseTo(70, 6);
     expect(out.get('d')!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
   });
 
@@ -92,14 +94,18 @@ describe('layoutDay', () => {
     expect(out.get('b')!.widthPct).toBe(50);
   });
 
-  it('stacks three simultaneous events at distinct positions', () => {
+  it('cascades three simultaneous events, background widest and top at the floor', () => {
     // Three columns would be 33.3% each, below MIN_EVENT_WIDTH_PCT, so they
-    // hold the floor and overlap instead of shrinking — each still exposes a
-    // distinct strip, so none is hidden.
+    // cascade: the background keeps full width, each later box steps in by a
+    // fixed indent and draws on top, and the topmost lands at the floor. Three
+    // distinct left edges means none is hidden. step = (100-40)/2 = 30.
     const out = byUid(layoutDay([ev('a', 9, 12), ev('b', 9, 12), ev('c', 9, 12)]));
-    for (const uid of ['a', 'b', 'c']) {
-      expect(out.get(uid)!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
-    }
+    expect(out.get('a')!.leftPct).toBe(0);
+    expect(out.get('a')!.widthPct).toBe(100);
+    expect(out.get('b')!.leftPct).toBeCloseTo(30, 6);
+    expect(out.get('b')!.widthPct).toBeCloseTo(70, 6);
+    expect(out.get('c')!.leftPct).toBeCloseTo(60, 6);
+    expect(out.get('c')!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
     expect(new Set([...out.values()].map((p) => p.leftPct)).size).toBe(3);
   });
 
@@ -175,11 +181,18 @@ describe('layoutDay dense stacking', () => {
     expect(out.get('e1')!.leftPct).toBe(50);
   });
 
-  it('stops shrinking at the floor once a group is dense', () => {
-    // Eight columns would be 12.5% each — unreadable. They hold at the floor
-    // and overlap instead.
-    const out = layoutDay(simultaneous(8));
-    for (const p of out) expect(p.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
+  it('holds the floor for the topmost box and widens the ones behind it', () => {
+    // Eight columns would be 12.5% each — unreadable. They cascade instead: the
+    // topmost (last) box is exactly the floor, the background is full width,
+    // none is below the floor, and widths shrink monotonically front to back.
+    const out = byUid(layoutDay(simultaneous(8)));
+    expect(out.get('e0')!.widthPct).toBe(100);
+    expect(out.get('e7')!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
+    for (const p of out.values()) expect(p.widthPct).toBeGreaterThanOrEqual(MIN_EVENT_WIDTH_PCT);
+    const byColumn = [...out.values()].sort((a, b) => a.leftPct - b.leftPct);
+    for (let i = 1; i < byColumn.length; i++) {
+      expect(byColumn[i].widthPct).toBeLessThan(byColumn[i - 1].widthPct);
+    }
   });
 
   it('spreads dense columns so the last one ends at the right edge', () => {
@@ -194,11 +207,13 @@ describe('layoutDay dense stacking', () => {
     for (const step of steps) expect(step).toBeCloseTo((100 - MIN_EVENT_WIDTH_PCT) / 4, 6);
   });
 
-  it('switches to stacking exactly at the floor', () => {
-    // Three columns are 33.3% — below 40 — so they stack.
-    const three = layoutDay(simultaneous(3));
-    for (const p of three) expect(p.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
-    // Two are 50% — above the floor — so they still share.
+  it('switches to cascade exactly at the floor', () => {
+    // Three columns are 33.3% — below 40 — so they cascade: background full
+    // width, topmost at the floor.
+    const three = byUid(layoutDay(simultaneous(3)));
+    expect(three.get('e0')!.widthPct).toBe(100);
+    expect(three.get('e2')!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
+    // Two are 50% — above the floor — so they still share side by side.
     const two = layoutDay(simultaneous(2));
     for (const p of two) expect(p.widthPct).toBe(50);
   });
@@ -218,10 +233,12 @@ describe('layoutDay dense stacking', () => {
       layoutDay([ev('a', 9, 10), ev('b', 9, 10), evAt('d', 570, 630), ev('c', 10, 11)])
     );
     expect(out.get('c')!.widthPct).toBeCloseTo(100 * (2 / 3), 6);
-    // …while the three that do not clear the floor still go dense, each on its
-    // own account: one event clearing the floor must not speak for the group.
-    for (const uid of ['a', 'b', 'd']) {
-      expect(out.get(uid)!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
-    }
+    // …while the three that do not clear the floor cascade, each on its own
+    // account: one event clearing the floor must not speak for the group. a is
+    // the background (col 0, full width), b steps in on top, d is topmost at
+    // the floor — step = (100-40)/2 = 30.
+    expect(out.get('a')!.widthPct).toBe(100);
+    expect(out.get('b')!.widthPct).toBeCloseTo(70, 6);
+    expect(out.get('d')!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
   });
 });

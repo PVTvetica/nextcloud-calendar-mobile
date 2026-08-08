@@ -11,11 +11,14 @@ export interface PositionedEvent {
 
 /**
  * Below this width an event box is too narrow to read, so the layout stops
- * dividing and starts overlapping instead — Google Calendar's behaviour.
+ * dividing and cascades the boxes on top of one another instead — Google
+ * Calendar's behaviour. In a cascade the last, topmost box is exactly this
+ * wide and the ones behind it grow wider, so this is the narrowest any box ever
+ * gets.
  *
  * At 40, one and two simultaneous events still share the column (100%, 50%);
- * three and more stack, because 33.3% is already under the floor. Lower it to
- * 33 to let three keep sharing and start stacking at four.
+ * three and more cascade, because 33.3% is already under the floor. Lower it to
+ * 33 to let three keep sharing and start cascading at four.
  */
 export const MIN_EVENT_WIDTH_PCT = 40;
 
@@ -35,10 +38,11 @@ function overlaps(a: GridEvent, b: GridEvent): boolean {
  * ever on screen at the same minute.
  *
  * The floor pass checks each event's expanded width independently: if an event
- * would be narrower than MIN_EVENT_WIDTH_PCT, it switches to dense stacking
- * instead. This allows events in the same chain to use different strategies:
- * an event that expands above the floor uses the regular formula, while a
- * narrower event in the same chain uses dense stacking, so nothing gets hidden.
+ * would be narrower than MIN_EVENT_WIDTH_PCT, it switches to a cascade instead,
+ * where boxes overlap with a fixed indent rather than dividing further. This
+ * allows events in the same chain to use different strategies: an event that
+ * expands above the floor uses the regular formula, while a narrower event in
+ * the same chain cascades, so nothing gets hidden.
  */
 function layoutGroup(group: GridEvent[]): PositionedEvent[] {
   const columns: GridEvent[][] = [];
@@ -81,15 +85,20 @@ function layoutGroup(group: GridEvent[]): PositionedEvent[] {
       };
     }
 
-    // Dense: this event's expanded width is below the floor. Hold the floor and
-    // slide each column right instead of dividing further. total > 1 here —
-    // one column is 100% wide and two are 50%, both above the floor — so the
-    // divisor is safe. The last column lands exactly at the right edge, and
-    // zIndex keeps the later event on top.
+    // Dense: this event's expanded width is below the floor, so instead of
+    // dividing further the group cascades, the way Google Calendar draws a busy
+    // hour. The background column stays full width; each later column steps in
+    // by a fixed indent and draws on top (rising zIndex), every box reaching
+    // the right edge. The last, topmost column lands at exactly
+    // MIN_EVENT_WIDTH_PCT — so nothing is ever narrower than the floor — while
+    // the columns behind it grow progressively wider, each keeping a left band
+    // exposed to read and to tap. total > 1 here (one column is 100% wide and
+    // two are 50%, both above the floor), so the divisor is safe.
+    const leftPct = column * ((100 - MIN_EVENT_WIDTH_PCT) / (total - 1));
     return {
       event,
-      leftPct: column * ((100 - MIN_EVENT_WIDTH_PCT) / (total - 1)),
-      widthPct: MIN_EVENT_WIDTH_PCT,
+      leftPct,
+      widthPct: 100 - leftPct,
       zIndex: 100 + column,
     };
   });
