@@ -68,6 +68,40 @@ export async function patchByUid(
   }, 15000, 'patchByUid');
 }
 
+/**
+ * Move every occurrence of a series by the same deltas.
+ *
+ * patchByUid only touches rows carrying one uid — a single occurrence — so an
+ * "all events" edit left the rest of the series sitting at its old time until
+ * the next sync. Occurrences are separate rows keyed base_occ_<timestamp>, so
+ * the series has to be addressed by its base uid.
+ *
+ * Dates are shifted, not assigned: each row keeps its own position in the
+ * series. `patch` carries the non-temporal fields, which apply to every row.
+ */
+export async function shiftSeriesDates(
+  accountId: string,
+  baseUid: string,
+  deltaStartMs: number,
+  deltaEndMs: number,
+  patch: Omit<Partial<CalendarEvent>, 'dtstart' | 'dtend'>,
+): Promise<void> {
+  const db = getDatabaseInstance();
+  await safeWrite(db, async () => {
+    const rows = await events().query(Q.where('account_id', accountId)).fetch();
+    const target = rows.filter((r) => seriesBaseUid(r.uid) === baseUid);
+    await db.batch(
+      target.map((r) =>
+        r.prepareUpdate((row: Event) => {
+          applyPatch(row, patch);
+          row.start = row.start + deltaStartMs;
+          row.end = row.end + deltaEndMs;
+        })
+      )
+    );
+  }, 15000, 'shiftSeriesDates');
+}
+
 export async function snapshotByBase(accountId: string, baseUid: string): Promise<CalendarEvent[]> {
   const rows = await events().query(Q.where('account_id', accountId)).fetch();
   return rows.map(mapEventToShared).filter((e) => seriesBaseUid(e.uid) === baseUid);

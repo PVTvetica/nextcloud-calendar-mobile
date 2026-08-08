@@ -184,6 +184,34 @@ export function extractDtstartTzid(ics: string): string | undefined {
   return tzid && isValidTimeZone(tzid) ? tzid : undefined;
 }
 
+/**
+ * The master VEVENT's start and end, as absolute instants.
+ *
+ * Needed to move a whole series by a delta: the occurrence's own dates say
+ * nothing about where the series begins, and writing them onto the master would
+ * restart it there and drop every earlier occurrence.
+ *
+ * Returns undefined when the ICS cannot be read; a caller about to rewrite a
+ * master must then abort rather than fall back to the occurrence's dates.
+ */
+export function extractDtstartDtend(ics: string): { dtstart: Date; dtend: Date } | undefined {
+  try {
+    const comp = new ICAL.Component(parseIcsToJcal(ics));
+    const master = comp
+      .getAllSubcomponents('vevent')
+      .find((v: ICAL.Component) => !v.getFirstPropertyValue('recurrence-id'));
+    if (!master) return undefined;
+    const icalEvent = new ICAL.Event(master, { strictExceptions: false });
+    const tzid = eventTzid(master);
+    return {
+      dtstart: resolveInstant(icalEvent.startDate, tzid),
+      dtend: resolveInstant(icalEvent.endDate, tzid, true),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 export function parseIcsObjects(
   items: { ics: string; href: string }[],
   meta: ParseCalMeta,

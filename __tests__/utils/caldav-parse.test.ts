@@ -1,4 +1,4 @@
-import { parseIcsObjects, parseIcsObjectsAsync } from '@/utils/caldav-parse';
+import { parseIcsObjects, parseIcsObjectsAsync, extractDtstartDtend } from '@/utils/caldav-parse';
 import { buildAllDayIcs } from '@/utils/ics';
 
 const sampleIcs = `BEGIN:VCALENDAR
@@ -201,5 +201,53 @@ describe('parseIcsObjectsAsync', () => {
     const sync = parseIcsObjects(items, calMeta, rangeStart, rangeEnd);
     expect(events).toEqual(sync);
     expect(events.length).toBeGreaterThan(0);
+  });
+});
+
+function ics(lines: string[]): string {
+  return [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'BEGIN:VEVENT', 'UID:series-1',
+    ...lines,
+    'END:VEVENT', 'END:VCALENDAR',
+  ].join('\r\n');
+}
+
+describe('extractDtstartDtend', () => {
+  it('reads a UTC date-time pair', () => {
+    const b = extractDtstartDtend(ics(['DTSTART:20260803T070000Z', 'DTEND:20260803T080000Z']));
+    expect(b?.dtstart.toISOString()).toBe('2026-08-03T07:00:00.000Z');
+    expect(b?.dtend.toISOString()).toBe('2026-08-03T08:00:00.000Z');
+  });
+
+  it('resolves a TZID date-time to the right instant', () => {
+    // 09:00 Paris in August is 07:00Z.
+    const b = extractDtstartDtend(
+      ics(['DTSTART;TZID=Europe/Paris:20260803T090000', 'DTEND;TZID=Europe/Paris:20260803T100000'])
+    );
+    expect(b?.dtstart.toISOString()).toBe('2026-08-03T07:00:00.000Z');
+  });
+
+  it('reads a date-only pair', () => {
+    const b = extractDtstartDtend(ics(['DTSTART;VALUE=DATE:20260803', 'DTEND;VALUE=DATE:20260804']));
+    expect(b?.dtstart.getFullYear()).toBe(2026);
+    expect(b?.dtstart.getMonth()).toBe(7);
+    expect(b?.dtstart.getDate()).toBe(3);
+  });
+
+  it('ignores an exception VEVENT and reads the master', () => {
+    const withException = [
+      'BEGIN:VCALENDAR', 'VERSION:2.0',
+      'BEGIN:VEVENT', 'UID:s', 'RECURRENCE-ID:20260810T070000Z',
+      'DTSTART:20260810T090000Z', 'DTEND:20260810T100000Z', 'END:VEVENT',
+      'BEGIN:VEVENT', 'UID:s',
+      'DTSTART:20260803T070000Z', 'DTEND:20260803T080000Z', 'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+    expect(extractDtstartDtend(withException)?.dtstart.toISOString()).toBe('2026-08-03T07:00:00.000Z');
+  });
+
+  it('returns undefined for unparseable input rather than guessing', () => {
+    expect(extractDtstartDtend('not an ics')).toBeUndefined();
+    expect(extractDtstartDtend('')).toBeUndefined();
   });
 });
