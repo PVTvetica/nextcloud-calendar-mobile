@@ -57,7 +57,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 4,
     paddingVertical: 1,
-    justifyContent: 'center',
+    // Title pinned to the top, as TimeGridEvent draws it — a lifted event keeps
+    // its title where the resting card had it rather than recentring it.
+    justifyContent: 'flex-start',
     // The lift cue, replacing the old outline.
     shadowColor: '#000',
     shadowOpacity: 0.3,

@@ -55,6 +55,12 @@ describe('DragGhost', () => {
     expect(flat.backgroundColor).toBe('#0082c9');
   });
 
+  it('pins the title to the top, as the resting card draws it', () => {
+    // A lifted event keeps its title at the top rather than recentring it.
+    const flat = StyleSheet.flatten(render(ghost()).getByTestId('drag-ghost').props.style);
+    expect(flat.justifyContent).toBe('flex-start');
+  });
+
   it('picks title ink colour from the event background luminance', () => {
     // Dark background should get light text
     const darkGhost = render(ghost('#0082c9'));

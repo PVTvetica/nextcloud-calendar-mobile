@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -11,6 +11,13 @@ import type { GridEvent } from '../utils/toGridEvents';
 const LONG_PRESS_MS = 300;
 const DAY_MINUTES = 1440;
 
+// After a drop the ghost is held at the dropped position until the optimistic
+// re-render lands the event there (see the settling effect). This watchdog is
+// the fallback for when that re-render never comes — a recurrence prompt the
+// user cancels, or a mutation that fails and rolls back — so the held ghost
+// snaps away instead of hanging forever.
+const SETTLE_WATCHDOG_MS = 2500;
+
 const MODE_MOVE = 0;
 const MODE_RESIZE_START = 1;
 const MODE_RESIZE_END = 2;
@@ -19,6 +26,16 @@ interface DragState {
   event: GridEvent;
   mode: DragMode;
   columnIndex: number;
+  /**
+   * Present once the drop has been committed: the bounds (ms) written to the
+   * store. While set, the gesture is over but the ghost is deliberately kept
+   * mounted at the dropped position, and the source kept dimmed, until the
+   * optimistic re-render places the event at these bounds. Holding this way is
+   * what stops the box flashing back to its origin and then jerking to the new
+   * slot — the behaviour super-calendar gets by holding its per-box offset
+   * through the commit (TimeGrid.tsx).
+   */
+  settling?: { start: number; end: number };
 }
 
 interface Args {
@@ -153,8 +170,13 @@ export function useEventDrag({
   const commit = useCallback((deltaMinutes: number, rawDeltaColumns: number) => {
     const s = live.current;
     const current = s.drag;
-    setDrag(null);
-    if (!current || !s.onMoveEvent) return;
+    // No move to make: tear the ghost down now. Every early return below clears
+    // it, and only the real-move path at the end swaps to the settling phase
+    // that keeps it mounted.
+    if (!current || !s.onMoveEvent) {
+      setDrag(null);
+      return;
+    }
 
     // Clamped here, off `current.columnIndex` -- part of the DragState
     // `begin` put into React state -- rather than in onEnd's worklet off a
@@ -172,7 +194,10 @@ export function useEventDrag({
             Math.max(-current.columnIndex, rawDeltaColumns),
           )
         : 0;
-    if (deltaMinutes === 0 && deltaColumns === 0) return;
+    if (deltaMinutes === 0 && deltaColumns === 0) {
+      setDrag(null);
+      return;
+    }
 
     const deltaDays = deltaColumns * DAY_MINUTES;
     const durationMin = (current.event.end.getTime() - current.event.start.getTime()) / 60_000;
@@ -205,11 +230,49 @@ export function useEventDrag({
           ? resolveDraggedBounds(current.event.start, current.event.end, clampedDelta, 0, SNAP_MINUTES)
           : resolveDraggedBounds(current.event.start, current.event.end, 0, clampedDelta, SNAP_MINUTES);
 
-    if (!bounds) return;
+    if (!bounds) {
+      setDrag(null);
+      return;
+    }
+    // Hold the ghost at the dropped position (top/height/left still carry it
+    // from onUpdate) and keep the source dimmed until the settling effect sees
+    // the event re-render at these bounds. Do NOT null the drag here.
+    setDrag({ ...current, settling: { start: bounds.start.getTime(), end: bounds.end.getTime() } });
     s.onMoveEvent(current.event, bounds.start, bounds.end);
   }, []);
 
-  const cancel = useCallback(() => setDrag(null), []);
+  // onFinalize always runs, including right after a successful commit. It must
+  // not tear down a ghost that commit has moved into the settling phase — that
+  // is the flash-back this whole mechanism removes. A plain gesture that never
+  // committed (cancelled, or a tap that armed nothing) has no settling bounds
+  // and is cleared as before.
+  const cancel = useCallback(() => setDrag((d) => (d?.settling ? d : null)), []);
+
+  // Drop the held ghost the moment the committed change re-renders the event at
+  // its new bounds — the source, dimmed underneath, is already there, so the
+  // swap is invisible. If that re-render never comes (a cancelled recurrence
+  // prompt, a rolled-back mutation), the watchdog clears it so it cannot hang.
+  // Ported from super-calendar's "clear the preview once the new geometry
+  // lands" effect (TimeGrid.tsx), adapted to our single-ghost model.
+  useEffect(() => {
+    if (!drag?.settling) return;
+    const { start, end } = drag.settling;
+    const uid = drag.event._event.uid;
+    const landed = layouts.some((column) =>
+      column.some(
+        (p) =>
+          p.event._event.uid === uid &&
+          p.event.start.getTime() === start &&
+          p.event.end.getTime() === end,
+      ),
+    );
+    if (landed) {
+      setDrag(null);
+      return;
+    }
+    const timer = setTimeout(() => setDrag((d) => (d?.settling ? null : d)), SETTLE_WATCHDOG_MS);
+    return () => clearTimeout(timer);
+  }, [drag, layouts]);
 
   const gesture = useMemo(() => {
     // A plain number, not a shared value: captured directly by the worklets

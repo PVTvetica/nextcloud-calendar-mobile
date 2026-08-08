@@ -212,6 +212,112 @@ describe('useEventDrag', () => {
     expect(onMoveEvent).not.toHaveBeenCalled();
   });
 
+  // Device verification: releasing a drag used to flash the box back to its
+  // origin and then jerk to the new slot, because onFinalize tore the ghost
+  // down before the optimistic re-render landed. commit now holds the ghost in
+  // a "settling" phase at the dropped position until the event re-renders at
+  // the committed bounds (or a watchdog fires). Mirrors super-calendar's
+  // hold-through-commit (TimeGrid.tsx).
+  describe('holds the ghost until the move lands (no flash-back)', () => {
+    const movedStart = new Date(2026, 7, 7, 9, 30);
+    const movedEnd = new Date(2026, 7, 7, 10, 30);
+
+    function movedLayout(event: GridEvent) {
+      const moved: GridEvent = {
+        ...event,
+        start: movedStart,
+        end: movedEnd,
+        _event: { ...event._event, dtstart: movedStart, dtend: movedEnd },
+      };
+      return [layoutDay([moved])];
+    }
+
+    it('keeps the drag in a settling phase after a committed move, then clears it once the event re-renders at the new bounds', () => {
+      const event = gridEvent('a', 9, 60); // 09:00-10:00
+      const onMoveEvent = jest.fn();
+      const props = {
+        dates: [event.start],
+        layouts: [layoutDay([event])],
+        hourRowHeight: HOUR_ROW_HEIGHT,
+        columnWidth: COLUMN_WIDTH,
+        onMoveEvent,
+      };
+      const { result, rerender } = renderHook((p: typeof props) => useEventDrag(p), { initialProps: props });
+
+      act(() => { result.current.gesture.handlers.onStart?.({ x: 50, y: 570 } as never); });
+      act(() => {
+        result.current.gesture.handlers.onUpdate?.({ translationX: 0, translationY: 32 } as never);
+        result.current.gesture.handlers.onEnd?.({ translationX: 0, translationY: 32 } as never, true);
+      });
+
+      // The ghost is held, not torn down: drag survives with the committed bounds.
+      expect(onMoveEvent).toHaveBeenCalledTimes(1);
+      expect(result.current.drag).not.toBeNull();
+      expect(result.current.drag?.settling).toEqual({
+        start: movedStart.getTime(),
+        end: movedEnd.getTime(),
+      });
+
+      // The optimistic write re-renders the event at the committed bounds.
+      act(() => { rerender({ ...props, layouts: movedLayout(event) }); });
+
+      expect(result.current.drag).toBeNull();
+    });
+
+    it('onFinalize does not tear down a ghost that has committed into settling', () => {
+      const event = gridEvent('a', 9, 60);
+      const { result, onMoveEvent } = setup([event]);
+
+      act(() => { result.current.gesture.handlers.onStart?.({ x: 50, y: 570 } as never); });
+      act(() => {
+        result.current.gesture.handlers.onUpdate?.({ translationX: 0, translationY: 32 } as never);
+        result.current.gesture.handlers.onEnd?.({ translationX: 0, translationY: 32 } as never, true);
+        // onFinalize always runs on release; it must leave the settling ghost be.
+        result.current.gesture.handlers.onFinalize?.({} as never, true);
+      });
+
+      expect(onMoveEvent).toHaveBeenCalledTimes(1);
+      expect(result.current.drag?.settling).toBeTruthy();
+    });
+
+    it('a cancelled gesture with no commit still clears the ghost on finalize', () => {
+      const event = gridEvent('a', 9, 60);
+      const { result, onMoveEvent } = setup([event]);
+
+      act(() => { result.current.gesture.handlers.onStart?.({ x: 50, y: 570 } as never); });
+      act(() => {
+        // success: false -> onEnd skips the commit, so there is no settling.
+        result.current.gesture.handlers.onEnd?.({ translationX: 0, translationY: 32 } as never, false);
+        result.current.gesture.handlers.onFinalize?.({} as never, false);
+      });
+
+      expect(onMoveEvent).not.toHaveBeenCalled();
+      expect(result.current.drag).toBeNull();
+    });
+
+    it('the watchdog clears a held ghost when the move never lands (e.g. a cancelled recurrence prompt)', () => {
+      jest.useFakeTimers();
+      try {
+        const event = gridEvent('a', 9, 60);
+        const { result } = setup([event]);
+
+        act(() => { result.current.gesture.handlers.onStart?.({ x: 50, y: 570 } as never); });
+        act(() => {
+          result.current.gesture.handlers.onUpdate?.({ translationX: 0, translationY: 32 } as never);
+          result.current.gesture.handlers.onEnd?.({ translationX: 0, translationY: 32 } as never, true);
+        });
+        // Layouts never change (the prompt was cancelled, nothing was written).
+        expect(result.current.drag?.settling).toBeTruthy();
+
+        act(() => { jest.advanceTimersByTime(2500); });
+
+        expect(result.current.drag).toBeNull();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
+
   // Whole-plan review, Minor 8: deltaColumns was unclamped -- dragging left
   // from the first column moved the event to a day not on the page, with the
   // ghost drawn at a negative `left`. Cross-column arithmetic had no test at
