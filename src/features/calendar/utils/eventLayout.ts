@@ -9,6 +9,16 @@ export interface PositionedEvent {
   zIndex: number;
 }
 
+/**
+ * Below this width an event box is too narrow to read, so the layout stops
+ * dividing and starts overlapping instead — Google Calendar's behaviour.
+ *
+ * At 40, one and two simultaneous events still share the column (100%, 50%);
+ * three and more stack, because 33.3% is already under the floor. Lower it to
+ * 33 to let three keep sharing and start stacking at four.
+ */
+export const MIN_EVENT_WIDTH_PCT = 40;
+
 function overlaps(a: GridEvent, b: GridEvent): boolean {
   // Touching edges do not overlap: one ending exactly as the other begins is
   // two consecutive events, not a clash.
@@ -47,17 +57,49 @@ function layoutGroup(group: GridEvent[]): PositionedEvent[] {
 
   const total = columns.length;
 
-  return group.map((event) => {
+  // First pass: calculate spans and check if any event would be above the floor.
+  // If any event clears the floor, the whole group avoids dense stacking.
+  const eventSpans: Map<GridEvent, number> = new Map();
+  let hasAboveFloor = false;
+
+  for (const event of group) {
     const column = columnOf.get(event)!;
     let span = 1;
     for (let c = column + 1; c < total; c++) {
       if (columns[c].some((other) => overlaps(other, event))) break;
       span++;
     }
+    eventSpans.set(event, span);
+    const sharedWidth = (span / total) * 100;
+    if (sharedWidth >= MIN_EVENT_WIDTH_PCT) {
+      hasAboveFloor = true;
+    }
+  }
+
+  // Second pass: return positioned events using the appropriate formula.
+  return group.map((event) => {
+    const column = columnOf.get(event)!;
+    const span = eventSpans.get(event)!;
+
+    if (hasAboveFloor) {
+      // Regular formula: at least one event clears the floor.
+      return {
+        event,
+        leftPct: (column / total) * 100,
+        widthPct: (span / total) * 100,
+        zIndex: 100 + column,
+      };
+    }
+
+    // Dense: all events in the group are below the floor. Hold the floor and
+    // slide each column right instead of dividing further. total > 1 here —
+    // one column is 100% wide and two are 50%, both above the floor — so the
+    // divisor is safe. The last column lands exactly at the right edge, and
+    // zIndex keeps the later event on top.
     return {
       event,
-      leftPct: (column / total) * 100,
-      widthPct: (span / total) * 100,
+      leftPct: column * ((100 - MIN_EVENT_WIDTH_PCT) / (total - 1)),
+      widthPct: MIN_EVENT_WIDTH_PCT,
       zIndex: 100 + column,
     };
   });

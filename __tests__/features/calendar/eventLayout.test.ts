@@ -1,4 +1,4 @@
-import { layoutDay } from '@/features/calendar/utils/eventLayout';
+import { layoutDay, MIN_EVENT_WIDTH_PCT } from '@/features/calendar/utils/eventLayout';
 import type { GridEvent } from '@/features/calendar/utils/toGridEvents';
 import type { CalendarEvent } from '@/types';
 
@@ -91,10 +91,13 @@ describe('layoutDay', () => {
     expect(out.get('b')!.widthPct).toBe(50);
   });
 
-  it('gives three simultaneous events a third each', () => {
+  it('stacks three simultaneous events at distinct positions', () => {
+    // Three columns would be 33.3% each, below MIN_EVENT_WIDTH_PCT, so they
+    // hold the floor and overlap instead of shrinking — each still exposes a
+    // distinct strip, so none is hidden.
     const out = byUid(layoutDay([ev('a', 9, 12), ev('b', 9, 12), ev('c', 9, 12)]));
     for (const uid of ['a', 'b', 'c']) {
-      expect(out.get(uid)!.widthPct).toBeCloseTo(100 / 3, 6);
+      expect(out.get(uid)!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
     }
     expect(new Set([...out.values()].map((p) => p.leftPct)).size).toBe(3);
   });
@@ -156,5 +159,70 @@ describe('layoutDay', () => {
     expect(out.get('a')!.widthPct).toBe(50);
     expect(out.get('b')!.widthPct).toBe(50);
     expect(out.get('c')!.widthPct).toBe(50);
+  });
+});
+
+describe('layoutDay dense stacking', () => {
+  const simultaneous = (n: number) =>
+    Array.from({ length: n }, (_, i) => ev(`e${i}`, 9, 12));
+
+  it('still shares equally while every event clears the floor', () => {
+    // Two columns give 50% each, comfortably above the 40% floor.
+    const out = byUid(layoutDay(simultaneous(2)));
+    expect(out.get('e0')!.widthPct).toBe(50);
+    expect(out.get('e1')!.widthPct).toBe(50);
+    expect(out.get('e1')!.leftPct).toBe(50);
+  });
+
+  it('stops shrinking at the floor once a group is dense', () => {
+    // Eight columns would be 12.5% each — unreadable. They hold at the floor
+    // and overlap instead.
+    const out = layoutDay(simultaneous(8));
+    for (const p of out) expect(p.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
+  });
+
+  it('spreads dense columns so the last one ends at the right edge', () => {
+    const out = byUid(layoutDay(simultaneous(8)));
+    expect(out.get('e0')!.leftPct).toBe(0);
+    expect(out.get('e7')!.leftPct + MIN_EVENT_WIDTH_PCT).toBeCloseTo(100, 6);
+  });
+
+  it('offsets dense columns evenly', () => {
+    const out = layoutDay(simultaneous(5)).sort((a, b) => a.leftPct - b.leftPct);
+    const steps = out.slice(1).map((p, i) => p.leftPct - out[i].leftPct);
+    for (const step of steps) expect(step).toBeCloseTo(steps[0], 6);
+  });
+
+  it('raises zIndex with the column so the later event draws on top', () => {
+    const out = layoutDay(simultaneous(5)).sort((a, b) => a.leftPct - b.leftPct);
+    for (let i = 1; i < out.length; i++) {
+      expect(out[i].zIndex).toBeGreaterThan(out[i - 1].zIndex);
+    }
+  });
+
+  it('switches to stacking exactly at the floor', () => {
+    // Three columns are 33.3% — below 40 — so they stack.
+    const three = layoutDay(simultaneous(3));
+    for (const p of three) expect(p.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
+    // Two are 50% — above the floor — so they still share.
+    const two = layoutDay(simultaneous(2));
+    for (const p of two) expect(p.widthPct).toBe(50);
+  });
+
+  it('never emits a zero width, dense or not', () => {
+    for (const n of [1, 2, 3, 8, 20]) {
+      for (const p of layoutDay(simultaneous(n))) {
+        expect(p.widthPct).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('leaves an expanded event alone when its span clears the floor', () => {
+    // a 9-10, b 9-10, d 9:30-10:30, c 10-11 — c expands over two of three
+    // columns, so 66.7% clears the floor and the group is not dense for it.
+    const out = byUid(
+      layoutDay([ev('a', 9, 10), ev('b', 9, 10), evAt('d', 570, 630), ev('c', 10, 11)])
+    );
+    expect(out.get('c')!.widthPct).toBeCloseTo(100 * (2 / 3), 6);
   });
 });
