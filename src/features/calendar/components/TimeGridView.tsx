@@ -1,23 +1,23 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-// React Native's ScrollView, deliberately, not gesture-handler's: RNGH's is
-// createNativeWrapper(RNScrollView, { disallowInterruption: true }), so wrapping
-// it in our own GestureDetector puts two NativeViewGestureHandlers on one view
-// and the inner one — which refuses interruption — never lets the scroll start.
-// One native handler, ours, composed with the pager via simultaneousGestures.
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from 'react-native';
-import {
-  Gesture,
-  GestureDetector,
-  type ComposedGesture,
-  type GestureType,
-} from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
+import { View, StyleSheet } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+// Reanimated's ScrollView wraps React Native's, deliberately, not
+// gesture-handler's: RNGH's is createNativeWrapper(RNScrollView,
+// { disallowInterruption: true }), so wrapping it in our own GestureDetector
+// puts two NativeViewGestureHandlers on one view and the inner one — which
+// refuses interruption — never lets the scroll start. One native handler,
+// ours, composed with the pager via simultaneousGestures. The Reanimated
+// wrapper is what lets the pinch worklet scroll it in its own frame.
+import Animated, {
+  scrollTo,
+  useAnimatedRef,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  type SharedValue,
+} from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
+import { anchoredScrollY, scaledCellHeight } from '../utils/zoomAnchor';
 import { useTheme } from 'expo-router';
 import InfinitePager, { type InfinitePagerImperativeApi } from 'react-native-infinite-pager';
 import type { CalendarEvent } from '@/types';
@@ -57,7 +57,8 @@ interface Props {
   weekStartsOn: 0 | 1;
   /** Bumped only by a date jump, never by a swipe. See useCalendarNavigation. */
   jump: { nonce: number; target: Date };
-  pinchGesture: ComposedGesture | GestureType;
+  /** Persist the zoom a pinch landed on. Called once, when the gesture ends. */
+  commitZoom: (h: number) => void;
   initialScrollHour: number;
   onPageChange: (focusDate: Date) => void;
   onPressSlot: (d: Date) => void;
@@ -68,7 +69,7 @@ interface Props {
 
 function TimeGridViewImpl({
   mode, anchorDate, activeDate, events, allDayEvents, hourRowHeight, cellHeight, weekStartsOn,
-  jump, pinchGesture, initialScrollHour, onPageChange, onPressSlot, onPressEvent,
+  jump, commitZoom, initialScrollHour, onPageChange, onPressSlot, onPressEvent,
   onPressAllDayEvent, onMoveEvent,
 }: Props) {
   const { colors } = useTheme();
@@ -79,10 +80,6 @@ function TimeGridViewImpl({
   const syncNode = useSharedValue(0);
 
   const nativeScroll = useMemo(() => Gesture.Native(), []);
-  const simultaneous = useMemo(
-    () => [nativeScroll, pinchGesture],
-    [nativeScroll, pinchGesture]
-  );
 
   // buildDayIndex allocates a fresh array per day, so a sync touching one day
   // would otherwise hand every DayColumn a new `events` reference and re-render
@@ -162,9 +159,15 @@ function TimeGridViewImpl({
   // delta, cancelling the shift exactly. Net effect: hour lines never move, the
   // band just grows or shrinks, and the top of the day is never trapped under
   // the header.
-  const scrollRef = useRef<ScrollView>(null);
-  const scrollY = useRef(initialScrollHour * hourRowHeight);
+  // An animated ref, so the pinch worklet can scroll in the same frame it
+  // changes the height. A shared value mirrors the offset for the same reason:
+  // the anchor maths run on the UI thread and cannot read a JS ref.
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const scrollY = useSharedValue(initialScrollHour * hourRowHeight);
   const prevHeaderHeight = useRef(headerHeight);
+  const scrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
   // useLayoutEffect, not useEffect: the padding change lands in the render
   // commit, so a passive effect corrects the scroll one frame later and that
   // frame shows the grid displaced by the band's height. Compensating before
@@ -173,14 +176,66 @@ function TimeGridViewImpl({
     const delta = headerHeight - prevHeaderHeight.current;
     prevHeaderHeight.current = headerHeight;
     if (delta === 0) return;
-    const y = Math.max(0, scrollY.current + delta);
-    scrollY.current = y;
+    const y = Math.max(0, scrollY.value + delta);
+    scrollY.value = y;
     scrollRef.current?.scrollTo({ y, animated: false });
-  }, [headerHeight]);
+  }, [headerHeight, scrollY, scrollRef]);
 
-  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    scrollY.current = e.nativeEvent.contentOffset.y;
-  }, []);
+  // The zoom, anchored to the fingers.
+  //
+  // Changing the height alone pins the grid at midnight, so every hour line
+  // moves in proportion to its distance from it: measured on device, 51 -> 62
+  // px/hour swept the 08:00 line 88px under a stationary finger. Scrolling in
+  // the same frame keeps the instant under the focal point where it was, which
+  // is what makes the gesture read as a zoom rather than a lurch.
+  // Frozen at mount. As a live expression this would recompute from the
+  // committed hourRowHeight after every pinch, and a changed contentOffset prop
+  // is re-applied by the ScrollView — teleporting the view back to the seed
+  // hour at the end of each gesture.
+  const initialOffset = useRef({ x: 0, y: initialScrollHour * hourRowHeight }).current;
+
+  const pinchBase = useSharedValue(hourRowHeight);
+  const pinchStartScrollY = useSharedValue(0);
+  const headerInset = useSharedValue(headerHeight);
+  useEffect(() => { headerInset.value = headerHeight; }, [headerHeight, headerInset]);
+
+  const pinchGesture = useMemo(
+    () =>
+      Gesture.Pinch()
+        .onStart(() => {
+          // Both captured at the start, for the same reason: `scale` is
+          // relative to the gesture's beginning, so the offset it implies must
+          // be measured from there too. Accumulating either per frame
+          // compounds float error and the zoom never settles.
+          pinchBase.value = cellHeight.value;
+          pinchStartScrollY.value = scrollY.value;
+        })
+        .onUpdate((e) => {
+          const next = scaledCellHeight(pinchBase.value, e.scale);
+          const y = anchoredScrollY({
+            scrollY: pinchStartScrollY.value,
+            focalY: e.focalY,
+            headerInset: headerInset.value,
+            fromCellHeight: pinchBase.value,
+            toCellHeight: next,
+          });
+          // Not rounded: the live value is continuous so the grid tracks the
+          // fingers smoothly. onEnd rounds the one value that is kept.
+          cellHeight.value = next;
+          scrollY.value = y;
+          scrollTo(scrollRef, 0, y, false);
+        })
+        .onEnd(() => {
+          scheduleOnRN(commitZoom, cellHeight.value);
+        }),
+    [commitZoom, cellHeight, pinchBase, pinchStartScrollY, headerInset, scrollY, scrollRef]
+  );
+
+  // Handed to the pager so a pinch and a page swipe do not fight each other.
+  const simultaneous = useMemo(
+    () => [nativeScroll, pinchGesture],
+    [nativeScroll, pinchGesture]
+  );
 
   // The anchor only moves on a mode switch now, and the span changed with it,
   // so every cached page is invalid anyway: land on page 0 without animating.
@@ -310,12 +365,12 @@ function TimeGridViewImpl({
             height instead would shove the content down by the band's height on
             every such swipe, which reads as the grid jumping back toward 00:00. */}
         <GestureDetector gesture={nativeScroll}>
-          <ScrollView
+          <Animated.ScrollView
             ref={scrollRef}
             style={styles.fill}
             contentContainerStyle={{ paddingTop: headerHeight }}
-            contentOffset={{ x: 0, y: initialScrollHour * hourRowHeight }}
-            onScroll={handleScroll}
+            contentOffset={initialOffset}
+            onScroll={scrollHandler}
             scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
           >
@@ -337,7 +392,7 @@ function TimeGridViewImpl({
                 pageBuffer={1}
               />
             </Animated.View>
-          </ScrollView>
+          </Animated.ScrollView>
         </GestureDetector>
 
         <View

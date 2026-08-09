@@ -8,6 +8,11 @@ beforeEach(() => {
   act(() => { useCalendarStore.getState().setHourRowHeight(DEFAULT); });
 });
 
+// The pinch gesture itself lives in TimeGridView now — an anchored zoom has to
+// move the scroll offset in the same frame it changes the height, and the
+// ScrollView is that component's to drive. The arithmetic it runs is pure and
+// covered in __tests__/features/calendar/zoomAnchor.test.ts. What is left here
+// is what this hook still owns: the seed, the commit, and the one-way sync.
 describe('useZoom', () => {
   it('seeds the live height from the committed store value', () => {
     const { result } = renderHook(() => useZoom());
@@ -15,62 +20,24 @@ describe('useZoom', () => {
     expect(result.current.hourRowHeight).toBe(DEFAULT);
   });
 
-  it('tracks the pinch scale live, before anything is committed', () => {
+  it('rounds the height a gesture landed on before persisting it', () => {
     const { result } = renderHook(() => useZoom());
 
-    act(() => {
-      result.current.pinchGesture.handlers.onStart?.({} as never);
-      result.current.pinchGesture.handlers.onUpdate?.({ scale: 1.5 } as never);
-    });
-
-    // The live value has moved — this is what the grid animates from…
-    expect(result.current.cellHeight.value).toBeCloseTo(90, 6);
-    // …while the committed value has not, so nothing has re-rendered yet.
-    expect(useCalendarStore.getState().hourRowHeight).toBe(DEFAULT);
-  });
-
-  it('scales from the height captured at the start, not from per-frame deltas', () => {
-    // Deltas compound float error and the zoom never settles on a clean level.
-    // Two updates in one gesture must both be measured against the start.
-    const { result } = renderHook(() => useZoom());
-
-    act(() => {
-      result.current.pinchGesture.handlers.onStart?.({} as never);
-      result.current.pinchGesture.handlers.onUpdate?.({ scale: 2 } as never);
-      result.current.pinchGesture.handlers.onUpdate?.({ scale: 1.5 } as never);
-    });
-
-    expect(result.current.cellHeight.value).toBeCloseTo(90, 6);
-  });
-
-  it('clamps the live height to the zoom bounds', () => {
-    const { result } = renderHook(() => useZoom());
-
-    act(() => {
-      result.current.pinchGesture.handlers.onStart?.({} as never);
-      result.current.pinchGesture.handlers.onUpdate?.({ scale: 100 } as never);
-    });
-    expect(result.current.cellHeight.value).toBe(200);
-
-    act(() => {
-      result.current.pinchGesture.handlers.onUpdate?.({ scale: 0.001 } as never);
-    });
-    expect(result.current.cellHeight.value).toBe(30);
-  });
-
-  it('commits a rounded integer to the store on release', () => {
-    const { result } = renderHook(() => useZoom());
-
-    act(() => {
-      result.current.pinchGesture.handlers.onStart?.({} as never);
-      // 60 * 1.234 = 74.04
-      result.current.pinchGesture.handlers.onUpdate?.({ scale: 1.234 } as never);
-      result.current.pinchGesture.handlers.onEnd?.({} as never, true);
-    });
+    act(() => { result.current.commitZoom(74.04); });
 
     // An integer, so the store→cellHeight effect hands back exactly the value
     // already held and the sync is a no-op rather than a nudge.
     expect(useCalendarStore.getState().hourRowHeight).toBe(74);
+  });
+
+  it('commits whatever the gesture reached, without clamping it again', () => {
+    // Clamping belongs to scaledCellHeight, which the gesture already applied;
+    // doing it twice would be two places to keep in step.
+    const { result } = renderHook(() => useZoom());
+
+    act(() => { result.current.commitZoom(155.5); });
+
+    expect(useCalendarStore.getState().hourRowHeight).toBe(156);
   });
 
   // Documents the contract; cannot enforce it. See the note below — this one
