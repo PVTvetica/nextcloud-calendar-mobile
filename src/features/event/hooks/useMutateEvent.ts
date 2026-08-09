@@ -255,23 +255,24 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
 
         if (!event.isRecurring || scope === 'all') {
           let uid = event.uid;
-          let masterInput = input;
+          let masterInput = scheduled;
+          let sequence = 0;
           if (event.isRecurring) {
             const masterIcs = await fetchEventIcs(account, event.href);
             timezone = extractDtstartTzid(masterIcs) ?? timezone;
+            sequence = extractSequence(masterIcs) + 1;
             const bounds = extractDtstartDtend(masterIcs);
             if (!bounds) throw new Error('Cannot read the series master to shift it');
             uid = seriesBaseUid(event.uid);
-            masterInput = shiftedMasterInput(input, bounds, deltaStart, deltaEnd);
-          let sequence = 0;
-          try {
-            const masterIcs = await fetchEventIcs(account, event.href);
-            sequence = extractSequence(masterIcs) + 1;
-            if (event.isRecurring) timezone = extractDtstartTzid(masterIcs) ?? timezone;
-          } catch {
+            masterInput = shiftedMasterInput(scheduled, bounds, deltaStart, deltaEnd);
+          } else {
+            try {
+              const masterIcs = await fetchEventIcs(account, event.href);
+              sequence = extractSequence(masterIcs) + 1;
+            } catch {
+            }
           }
-          const ics = buildIcsForInput(uid, masterInput, location, description, timezone);
-          const ics = buildIcsForInput(event.uid, scheduled, location, description, timezone, sequence);
+          const ics = buildIcsForInput(uid, masterInput, location, description, timezone, sequence);
           await updateEvent(account, event.href, ics);
           if (!event.isRecurring && input.calendarId !== event.calendarId) {
             const cal = calendars.find((c) => c.id === input.calendarId);

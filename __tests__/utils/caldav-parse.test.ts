@@ -1,4 +1,4 @@
-import { parseIcsObjects, parseIcsObjectsAsync } from '@/utils/caldav-parse';
+import { parseIcsObjects, parseIcsObjectsAsync, extractDtstartDtend } from '@/utils/caldav-parse';
 import { buildAllDayIcs } from '@/utils/ics';
 
 const sampleIcs = `BEGIN:VCALENDAR
