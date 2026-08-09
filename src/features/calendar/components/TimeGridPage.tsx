@@ -47,7 +47,7 @@ function TimeGridPageImpl({
   const columnWidth = dates.length > 0 ? pageWidth / dates.length : 0;
   const handleLayout = (e: LayoutChangeEvent) => setPageWidth(e.nativeEvent.layout.width);
 
-  const { gesture, drag, top, height, left } = useEventDrag({
+  const { gesture, drag, translateX, translateY, height } = useEventDrag({
     dates,
     layouts,
     hourRowHeight,
@@ -67,15 +67,17 @@ function TimeGridPageImpl({
             now={now}
             onPressSlot={onPressSlot}
             onPressEvent={onPressEvent}
-            dimmedUid={drag?.event._event.uid}
+            dimmedUid={drag?.columnIndex === i ? drag.event._event.uid : undefined}
           />
         ))}
         {drag && (
           <DragGhost
             event={drag.event}
-            top={top}
+            translateX={translateX}
+            translateY={translateY}
             height={height}
-            left={left}
+            restingHeight={drag.heightPx}
+            resizing={drag.mode !== 'move'}
             width={columnWidth}
           />
         )}

@@ -174,6 +174,35 @@ describe('buildAgendaTimeline', () => {
     expect(afterEnd?.snapshot.events).toHaveLength(0);
   });
 
+  it('builds a constant number of date formatters, not one per event per entry', () => {
+    const events = Array.from({ length: 300 }, (_, i) =>
+      ev({
+        uid: `e${i}`,
+        dtstart: new Date(now.getTime() + i * 3 * 60_000),
+        dtend: new Date(now.getTime() + (i * 3 + 30) * 60_000),
+      }),
+    );
+
+    jest.resetModules();
+    const Real = Intl.DateTimeFormat;
+    let built = 0;
+    const counting = function (this: unknown, ...args: unknown[]) {
+      built += 1;
+      return new (Real as unknown as new (...a: unknown[]) => Intl.DateTimeFormat)(...args);
+    } as unknown as typeof Intl.DateTimeFormat;
+    counting.supportedLocalesOf = Real.supportedLocalesOf;
+    Intl.DateTimeFormat = counting;
+
+    try {
+      const fresh = require('@/features/widget/core/agendaSnapshot') as typeof import('@/features/widget/core/agendaSnapshot');
+      fresh.buildAgendaTimeline(events, { now, timeZone: TZ, locale: 'en-US', days: 7, maxPerSection: 10 });
+    } finally {
+      Intl.DateTimeFormat = Real;
+    }
+
+    expect(built).toBeLessThan(20);
+  });
+
   it('ignores event ends beyond the horizon and caps the entry count', () => {
     const events = Array.from({ length: 40 }, (_, i) =>
       ev({

@@ -21,6 +21,7 @@ interface DragState {
   event: GridEvent;
   mode: DragMode;
   columnIndex: number;
+  heightPx: number;
   settling?: { start: number; end: number };
 }
 
@@ -46,9 +47,9 @@ export function useEventDrag({
 }: Args) {
   const [drag, setDrag] = useState<DragState | null>(null);
 
-  const top = useSharedValue(0);
+  const translateY = useSharedValue(0);
   const height = useSharedValue(0);
-  const left = useSharedValue(0);
+  const translateX = useSharedValue(0);
 
   const topBase = useSharedValue(0);
   const heightBase = useSharedValue(0);
@@ -99,12 +100,12 @@ export function useEventDrag({
           : MODE_RESIZE_END;
     columnIndexSV.value = columnIndex;
 
-    top.value = startPx;
+    translateY.value = startPx;
     height.value = heightPx;
-    left.value = leftPx;
+    translateX.value = leftPx;
 
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setDrag({ event: hit.event, mode: hit.mode, columnIndex });
+    setDrag({ event: hit.event, mode: hit.mode, columnIndex, heightPx });
     // top/height/left/topBase/heightBase/leftBase/modeFlag are listed here (and
     // below, on `gesture`) even though nothing reads their *identity* — every
     // access is a `.value` read or write, so any instance of the container
@@ -118,7 +119,7 @@ export function useEventDrag({
     // every run, which schedules another render, which churns it again --
     // there is no effect here keyed on any of these, so there is nothing to
     // loop.
-  }, [top, height, left, topBase, heightBase, leftBase, modeFlag]);
+  }, [translateY, height, translateX, topBase, heightBase, leftBase, modeFlag]);
 
   const commit = useCallback((deltaMinutes: number, rawDeltaColumns: number) => {
     const s = live.current;
@@ -185,13 +186,17 @@ export function useEventDrag({
           p.event.end.getTime() === end,
       ),
     );
-    if (landed) {
-      setDrag(null);
-      return;
-    }
+    if (landed) setDrag(null);
+  }, [drag, layouts]);
+
+  const settleKey = drag?.settling
+    ? `${drag.event._event.uid}:${drag.settling.start}:${drag.settling.end}`
+    : null;
+  useEffect(() => {
+    if (!settleKey) return;
     const timer = setTimeout(() => setDrag((d) => (d?.settling ? null : d)), SETTLE_WATCHDOG_MS);
     return () => clearTimeout(timer);
-  }, [drag, layouts]);
+  }, [settleKey]);
 
   const gesture = useMemo(() => {
     const daysCount = dates.length;
@@ -209,19 +214,18 @@ export function useEventDrag({
         if (modeFlag.value === MODE_MOVE) {
           const rawColumns = Math.round(e.translationX / columnWidth);
           const columns = clampColumnDelta(rawColumns, columnIndexSV.value, daysCount);
-          top.value = topBase.value + offsetPx;
-          height.value = heightBase.value;
-          left.value = leftBase.value + columns * columnWidth;
+          translateY.value = topBase.value + offsetPx;
+          translateX.value = leftBase.value + columns * columnWidth;
           return;
         }
 
-        left.value = leftBase.value;
+        translateX.value = leftBase.value;
         if (modeFlag.value === MODE_RESIZE_START) {
           const clamped = Math.min(offsetPx, heightBase.value - minPx);
-          top.value = topBase.value + clamped;
+          translateY.value = topBase.value + clamped;
           height.value = heightBase.value - clamped;
         } else {
-          top.value = topBase.value;
+          translateY.value = topBase.value;
           height.value = Math.max(minPx, heightBase.value + offsetPx);
         }
       })
@@ -243,8 +247,8 @@ export function useEventDrag({
     // values it already carried.
   }, [
     begin, commit, cancel, hourRowHeight, columnWidth, dates.length,
-    top, height, left, topBase, heightBase, leftBase, modeFlag,
+    translateY, height, translateX, topBase, heightBase, leftBase, modeFlag,
   ]);
 
-  return { gesture, drag, top, height, left };
+  return { gesture, drag, translateX, translateY, height };
 }

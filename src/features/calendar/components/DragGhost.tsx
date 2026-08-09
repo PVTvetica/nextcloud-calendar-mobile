@@ -6,25 +6,43 @@ import { contrastFor } from '../utils/eventInk';
 
 interface Props {
   event: GridEvent;
-  top: SharedValue<number>;
+  translateX: SharedValue<number>;
+  translateY: SharedValue<number>;
   height: SharedValue<number>;
-  left: SharedValue<number>;
+  restingHeight: number;
+  resizing: boolean;
   width: number;
 }
 
-function DragGhostImpl({ event, top, height, left, width }: Props) {
+function DragGhostImpl({
+  event,
+  translateX,
+  translateY,
+  height,
+  restingHeight,
+  resizing,
+  width,
+}: Props) {
   const ink = contrastFor(event.color);
-  const style = useAnimatedStyle(() => ({
-    top: top.value,
-    height: height.value,
-    left: left.value,
-  }));
+
+  const style = useAnimatedStyle(() =>
+    resizing
+      ? {
+          height: height.value,
+          transform: [{ translateX: translateX.value }, { translateY: translateY.value }],
+        }
+      : { transform: [{ translateX: translateX.value }, { translateY: translateY.value }] },
+  );
 
   return (
     <Animated.View
       testID="drag-ghost"
       pointerEvents="none"
-      style={[styles.ghost, { width, backgroundColor: event.color }, style]}
+      style={[
+        styles.ghost,
+        { width, height: restingHeight, backgroundColor: event.color },
+        style,
+      ]}
     >
       <Text numberOfLines={1} style={[styles.title, { color: ink.text }]}>
         {event.title}
@@ -38,6 +56,8 @@ export const DragGhost = memo(DragGhostImpl);
 const styles = StyleSheet.create({
   ghost: {
     position: 'absolute',
+    top: 0,
+    left: 0,
     zIndex: 20000,
     borderRadius: 6,
     paddingHorizontal: 4,

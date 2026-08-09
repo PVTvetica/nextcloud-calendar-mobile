@@ -25,9 +25,11 @@ function ghost(color?: string) {
   return (
     <DragGhost
       event={eventWithColor}
-      top={shared(100)}
+      translateX={shared(0)}
+      translateY={shared(100)}
       height={shared(60)}
-      left={shared(0)}
+      restingHeight={60}
+      resizing={false}
       width={100}
     />
   );

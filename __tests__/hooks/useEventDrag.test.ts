@@ -258,6 +258,41 @@ describe('useEventDrag', () => {
         jest.useRealTimers();
       }
     });
+
+    it('the watchdog is not restarted by unrelated re-layouts while the move is settling', () => {
+      jest.useFakeTimers();
+      try {
+        const event = gridEvent('a', 9, 60);
+        const other = gridEvent('b', 14, 60);
+        const props = {
+          dates: [event.start],
+          layouts: [layoutDay([event, other])],
+          hourRowHeight: HOUR_ROW_HEIGHT,
+          columnWidth: COLUMN_WIDTH,
+          onMoveEvent: jest.fn(),
+        };
+        const { result, rerender } = renderHook((p: typeof props) => useEventDrag(p), {
+          initialProps: props,
+        });
+
+        act(() => { result.current.gesture.handlers.onStart?.({ x: 50, y: 570 } as never); });
+        act(() => {
+          result.current.gesture.handlers.onUpdate?.({ translationX: 0, translationY: 32 } as never);
+          result.current.gesture.handlers.onEnd?.({ translationX: 0, translationY: 32 } as never, true);
+        });
+        expect(result.current.drag?.settling).toBeTruthy();
+
+        for (let i = 0; i < 4; i += 1) {
+          act(() => { jest.advanceTimersByTime(600); });
+          act(() => { rerender({ ...props, layouts: [layoutDay([event, other])] }); });
+        }
+        act(() => { jest.advanceTimersByTime(200); });
+
+        expect(result.current.drag).toBeNull();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
   });
 
   describe('cross-column drag', () => {
