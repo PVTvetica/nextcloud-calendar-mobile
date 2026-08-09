@@ -15,7 +15,13 @@ export function daysPerPage(mode: CalMode): number {
 }
 
 export function dayKey(d: Date): string {
-  return dayjs(d).format('YYYY-MM-DD');
+  // Raw local-time formatting rather than dayjs: this runs per event slice in
+  // buildDayIndex and per column in render, so a dayjs object per call showed up
+  // as hundreds of ms on a busy month. Same YYYY-MM-DD result.
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  return `${y}-${m < 10 ? `0${m}` : m}-${day < 10 ? `0${day}` : day}`;
 }
 
 function weekStartOffset(subjectDow: number, weekStartsOn: 0 | 1): number {
@@ -115,29 +121,50 @@ export function eventPositionStyle(start: Date, end: Date): { top: string; heigh
 export function buildDayIndex(events: GridEvent[]): Map<string, GridEvent[]> {
   const index = new Map<string, GridEvent[]>();
 
+  const push = (key: string, slice: GridEvent) => {
+    const bucket = index.get(key);
+    if (bucket) bucket.push(slice);
+    else index.set(key, [slice]);
+  };
+
   for (const event of events) {
     if (event._event.allDay) continue;
 
-    let day = dayjs(event.start).startOf('day');
-    const end = dayjs(event.end);
+    // Raw Date/timestamp arithmetic, no dayjs: this runs over every event in
+    // the visible month on each mutation, and a handful of dayjs objects per
+    // event was the bulk of the ~500ms lag felt when dropping a dragged event
+    // on a busy calendar. Day boundaries use local midnight, as dayjs's
+    // startOf('day') did, so DST and month rollover are handled by the Date
+    // constructor.
+    const startMs = event.start.getTime();
+    const endMs = event.end.getTime();
+    let dayStart = new Date(event.start.getFullYear(), event.start.getMonth(), event.start.getDate());
+    const firstNextMs = new Date(
+      dayStart.getFullYear(), dayStart.getMonth(), dayStart.getDate() + 1,
+    ).getTime();
 
-    while (day.isBefore(end)) {
-      const nextDay = day.add(1, 'day');
-      const sliceStart = dayjs(event.start).isAfter(day) ? dayjs(event.start) : day;
-      const sliceEnd = end.isBefore(nextDay) ? end : nextDay;
+    // Fast path — the common single-day event: no slice allocation, no loop.
+    if (endMs <= firstNextMs) {
+      push(dayKey(dayStart), event);
+      continue;
+    }
 
-      if (sliceStart.isBefore(sliceEnd)) {
-        const key = day.format('YYYY-MM-DD');
+    while (dayStart.getTime() < endMs) {
+      const nextMs = new Date(
+        dayStart.getFullYear(), dayStart.getMonth(), dayStart.getDate() + 1,
+      ).getTime();
+      const sliceStartMs = startMs > dayStart.getTime() ? startMs : dayStart.getTime();
+      const sliceEndMs = endMs < nextMs ? endMs : nextMs;
+
+      if (sliceStartMs < sliceEndMs) {
         const slice: GridEvent =
-          sliceStart.isSame(event.start) && sliceEnd.isSame(event.end)
+          sliceStartMs === startMs && sliceEndMs === endMs
             ? event
-            : { ...event, start: sliceStart.toDate(), end: sliceEnd.toDate() };
-        const bucket = index.get(key);
-        if (bucket) bucket.push(slice);
-        else index.set(key, [slice]);
+            : { ...event, start: new Date(sliceStartMs), end: new Date(sliceEndMs) };
+        push(dayKey(dayStart), slice);
       }
 
-      day = nextDay;
+      dayStart = new Date(nextMs);
     }
   }
 
