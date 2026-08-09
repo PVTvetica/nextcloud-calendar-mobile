@@ -3,7 +3,7 @@ import { Appearance } from 'react-native';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 import { readUpcomingEvents } from '../core/readEvents';
-import { buildAgendaSnapshot } from '../core/agendaSnapshot';
+import { buildAgendaTimeline } from '../core/agendaSnapshot';
 import { selectOngoingEvent } from '../core/liveEvent';
 import { homeWidget } from '../surfaces/homeWidget';
 import { liveActivity } from '../surfaces/liveActivity';
@@ -20,8 +20,8 @@ async function runSync(now: Date): Promise<void> {
     const scheme = Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
 
     if (homeWidget.isSupported()) {
-      const snapshot = buildAgendaSnapshot(events, { now, locale, scheme, days: AGENDA_DAYS, maxPerSection: 10 });
-      await homeWidget.update(snapshot);
+      const timeline = buildAgendaTimeline(events, { now, locale, scheme, days: AGENDA_DAYS, maxPerSection: 10 });
+      await homeWidget.update(timeline);
     }
 
     if (liveActivity.isSupported()) {

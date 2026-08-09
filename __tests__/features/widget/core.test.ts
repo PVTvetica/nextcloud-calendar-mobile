@@ -1,4 +1,4 @@
-import { buildAgendaSnapshot } from '@/features/widget/core/agendaSnapshot';
+import { buildAgendaSnapshot, buildAgendaTimeline } from '@/features/widget/core/agendaSnapshot';
 import { selectOngoingEvent, eventProgress, formatRemaining, remainingMinutes } from '@/features/widget/core/liveEvent';
 import type { CalendarEvent } from '@/types';
 
@@ -140,5 +140,49 @@ describe('formatRemaining', () => {
   it('takes localized unit suffixes', () => {
     expect(formatRemaining(206, { hour: 'ч', minute: 'м' })).toBe('3ч26');
     expect(formatRemaining(47, { hour: 'ч', minute: 'м' })).toBe('47м');
+  });
+});
+
+describe('buildAgendaTimeline', () => {
+  const now = new Date('2026-08-01T09:00:00Z');
+
+  it('starts at now and adds an entry for each event end still ahead', () => {
+    const events = [
+      ev({ uid: 'past', dtstart: new Date('2026-08-01T07:00:00Z'), dtend: new Date('2026-08-01T08:00:00Z') }),
+      ev({ uid: 'soon', dtstart: new Date('2026-08-01T10:00:00Z'), dtend: new Date('2026-08-01T12:00:00Z') }),
+    ];
+    const timeline = buildAgendaTimeline(events, { now, timeZone: TZ, locale: 'en-US' });
+
+    expect(timeline[0].atIso).toBe(now.toISOString());
+    expect(timeline.map((e) => e.atIso)).toContain('2026-08-01T12:00:00.000Z');
+    expect(timeline.every((e, i) => i === 0 || e.atIso > timeline[i - 1].atIso)).toBe(true);
+  });
+
+  it('adds the local midnight so the day rolls over on its own', () => {
+    const timeline = buildAgendaTimeline([], { now, timeZone: TZ, locale: 'en-US' });
+    expect(timeline.map((e) => e.atIso)).toContain('2026-08-01T22:00:00.000Z');
+  });
+
+  it('drops a finished event from the entry that follows its end', () => {
+    const events = [
+      ev({ uid: 'ends', dtstart: new Date('2026-08-01T10:00:00Z'), dtend: new Date('2026-08-01T12:00:00Z') }),
+    ];
+    const timeline = buildAgendaTimeline(events, { now, timeZone: TZ, locale: 'en-US' });
+
+    expect(timeline[0].snapshot.events.map((e) => e.uid)).toEqual(['ends']);
+    const afterEnd = timeline.find((e) => e.atIso === '2026-08-01T12:00:00.000Z');
+    expect(afterEnd?.snapshot.events).toHaveLength(0);
+  });
+
+  it('ignores event ends beyond the horizon and caps the entry count', () => {
+    const events = Array.from({ length: 40 }, (_, i) =>
+      ev({
+        uid: `e${i}`,
+        dtstart: new Date(now.getTime() + i * 60_000),
+        dtend: new Date(now.getTime() + (i + 1) * 60_000),
+      }),
+    );
+    const timeline = buildAgendaTimeline(events, { now, timeZone: TZ, locale: 'en-US' }, 10);
+    expect(timeline).toHaveLength(10);
   });
 });

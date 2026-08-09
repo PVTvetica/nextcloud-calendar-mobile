@@ -1,6 +1,6 @@
 import { createMMKV, type MMKV } from 'react-native-mmkv';
 
-import type { AgendaSnapshot, LiveEventState } from '../core/types';
+import type { AgendaSnapshot, AgendaTimelineEntry, LiveEventState } from '../core/types';
 
 export const WIDGET_MMKV_ID = 'group.com.soluce.nextcloud-calendar';
 
@@ -13,15 +13,19 @@ function store(): MMKV {
 const AGENDA_KEY = 'widget.agenda.v1';
 const LIVE_KEY = 'widget.live.v1';
 
-export function writeAgendaSnapshot(snapshot: AgendaSnapshot): void {
-  store().set(AGENDA_KEY, JSON.stringify(snapshot));
+export function writeAgendaTimeline(entries: AgendaTimelineEntry[]): void {
+  store().set(AGENDA_KEY, JSON.stringify(entries));
 }
 
-export function readAgendaSnapshot(): AgendaSnapshot | null {
+export function readAgendaSnapshot(now: Date = new Date()): AgendaSnapshot | null {
   const raw = store().getString(AGENDA_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as AgendaSnapshot;
+    const entries = JSON.parse(raw) as AgendaTimelineEntry[];
+    if (!Array.isArray(entries) || entries.length === 0) return null;
+    const t = now.getTime();
+    const current = entries.filter((e) => new Date(e.atIso).getTime() <= t).pop();
+    return (current ?? entries[0]).snapshot;
   } catch {
     return null;
   }
