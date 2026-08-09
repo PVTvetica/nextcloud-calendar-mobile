@@ -15,7 +15,6 @@ const TALK_URL_PATTERN = /\/call\//;
 
 const MAX_OCCURRENCES = 1000;
 
-
 function firstAlarmMinutes(vevent: ICAL.Component): number | undefined {
   const alarm = vevent.getFirstSubcomponent('valarm');
   const trigger = alarm?.getFirstProperty('trigger');
@@ -184,16 +183,6 @@ export function extractDtstartTzid(ics: string): string | undefined {
   return tzid && isValidTimeZone(tzid) ? tzid : undefined;
 }
 
-/**
- * The master VEVENT's start and end, as absolute instants.
- *
- * Needed to move a whole series by a delta: the occurrence's own dates say
- * nothing about where the series begins, and writing them onto the master would
- * restart it there and drop every earlier occurrence.
- *
- * Returns undefined when the ICS cannot be read; a caller about to rewrite a
- * master must then abort rather than fall back to the occurrence's dates.
- */
 export function extractDtstartDtend(ics: string): { dtstart: Date; dtend: Date } | undefined {
   try {
     const comp = new ICAL.Component(parseIcsToJcal(ics));
@@ -225,7 +214,6 @@ export function parseIcsObjects(
   }
   return events;
 }
-
 
 export async function parseIcsObjectsAsync(
   items: { ics: string; href: string }[],

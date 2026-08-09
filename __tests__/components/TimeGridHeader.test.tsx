@@ -57,8 +57,6 @@ describe('TimeGridHeader', () => {
   });
 
   it('highlights nothing on a page that does not contain today', () => {
-    // Swiping away must leave the whole page unmarked, not move the pill onto
-    // the page's first day.
     const { queryByTestId } = render(
       <TimeGridHeader dates={dates} now={new Date(2026, 0, 15)} allDayEvents={[]} onPressEvent={jest.fn()} />
     );

@@ -15,11 +15,6 @@ describe('decideMoveEventScope', () => {
   });
 
   it('commits with scope "this" and does not prompt when the rule cannot round-trip', () => {
-    // BYMONTHDAY is not in parseRrule's SUPPORTED set, so it returns
-    // undefined. Offering 'all' or 'thisAndFollowing' here would rebuild the
-    // series from an undefined rrule and destroy the recurrence on the
-    // server, so this must fall straight through to the this-occurrence-only
-    // scope instead of the prompt.
     expect(
       decideMoveEventScope({ isRecurring: true, rrule: 'RRULE:FREQ=MONTHLY;BYMONTHDAY=15' }),
     ).toEqual({ kind: 'commit', scope: 'this' });

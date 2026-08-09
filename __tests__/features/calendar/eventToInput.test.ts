@@ -41,7 +41,6 @@ describe('eventToInput', () => {
   });
 
   it('never asks for a new Talk room', () => {
-    // A drag changes times, nothing else. Requesting a room would create one.
     expect(eventToInput(base, account).withTalkRoom).toBe(false);
   });
 
@@ -81,11 +80,6 @@ describe('eventToInput', () => {
   });
 
   describe('organizer', () => {
-    // Important 3 (whole-plan review): organizerEmail/organizerName must
-    // come from the acting account, not the stored event -- ics.ts's
-    // organizerLine is unconditional, so leaving these to the event (which
-    // routinely has no organizer for events synced from other clients)
-    // wrote a malformed ORGANIZER;CN=:mailto: on every drag.
     it('uses the account email when set', () => {
       const input = eventToInput(base, account);
       expect(input.organizerEmail).toBe('charlie@example.org');

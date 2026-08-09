@@ -8,7 +8,6 @@ const render = (ui: React.ReactElement) => rtlRender(ui, { wrapper: ThemeWrapper
 
 describe('GridLines', () => {
   it('draws an hour rule at every boundary except midnight', () => {
-    // Midnight needs none: it is the grid's own top edge.
     const { queryAllByTestId, queryByTestId } = render(<GridLines />);
     expect(queryAllByTestId(/^hour-line-/)).toHaveLength(23);
     expect(queryByTestId('hour-line-0')).toBeNull();
@@ -20,8 +19,6 @@ describe('GridLines', () => {
   });
 
   it('positions rules as percentages of the day, so they follow a live zoom', () => {
-    // Pure time fractions: independent of pixels-per-hour, so the animated
-    // container height carries them with no animated node here.
     const { getByTestId } = render(<GridLines />);
     expect(StyleSheet.flatten(getByTestId('hour-line-6').props.style).top).toBe('25%');
     expect(StyleSheet.flatten(getByTestId('hour-line-12').props.style).top).toBe('50%');

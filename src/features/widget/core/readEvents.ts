@@ -44,8 +44,6 @@ export function observeTodayEventsQuery(accountId: string, now: Date = new Date(
   return eventsInRangeQuery(accountId, startOfDay(now), endOfDayAfter(now, 0));
 }
 
-// Observes the whole agenda window the widget renders (not just today) so deleting a
-// future event still triggers a widget refresh.
 export function observeAgendaEventsQuery(accountId: string, days: number, now: Date = new Date()) {
   return eventsInRangeQuery(accountId, startOfDay(now), endOfDayAfter(now, days));
 }

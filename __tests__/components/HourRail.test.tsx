@@ -21,8 +21,6 @@ describe('HourRail', () => {
   });
 
   it('divides the rail equally rather than sizing blocks in pixels', () => {
-    // The blocks share whatever height the animated container gives them, so
-    // the rail follows a live zoom without an animated node of its own.
     const flat = StyleSheet.flatten(render(<HourRail />).getByTestId('hour-block-9').props.style);
     expect(flat.flex).toBe(1);
     expect(flat.height).toBeUndefined();

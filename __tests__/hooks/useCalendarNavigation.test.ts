@@ -55,8 +55,6 @@ describe('useCalendarNavigation', () => {
 
     act(() => { result.current.setDate(target); });
 
-    // The pager is infinite: the grid animates to the target's index rather
-    // than re-anchoring, which would invalidate every cached page.
     expect(result.current.anchorDate).toBe(anchorBefore);
     expect(result.current.date).toEqual(target);
     expect(result.current.jump.nonce).toBe(nonceBefore + 1);
@@ -93,8 +91,6 @@ describe('useCalendarNavigation', () => {
     const today = new Date().toDateString();
     expect(result.current.date.toDateString()).toBe(today);
     expect(result.current.jump.target.toDateString()).toBe(today);
-    // Deliberately unchanged: the grid animates to today's index. Re-anchoring
-    // is what used to make Today feel like a remount.
     expect(result.current.anchorDate).toBe(anchorBefore);
   });
 });

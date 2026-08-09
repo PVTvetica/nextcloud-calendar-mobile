@@ -11,11 +11,6 @@ import type { GridEvent } from '../utils/toGridEvents';
 const LONG_PRESS_MS = 300;
 const DAY_MINUTES = 1440;
 
-// After a drop the ghost is held at the dropped position until the optimistic
-// re-render lands the event there (see the settling effect). This watchdog is
-// the fallback for when that re-render never comes — a recurrence prompt the
-// user cancels, or a mutation that fails and rolls back — so the held ghost
-// snaps away instead of hanging forever.
 const SETTLE_WATCHDOG_MS = 2500;
 
 const MODE_MOVE = 0;
@@ -26,15 +21,6 @@ interface DragState {
   event: GridEvent;
   mode: DragMode;
   columnIndex: number;
-  /**
-   * Present once the drop has been committed: the bounds (ms) written to the
-   * store. While set, the gesture is over but the ghost is deliberately kept
-   * mounted at the dropped position, and the source kept dimmed, until the
-   * optimistic re-render places the event at these bounds. Holding this way is
-   * what stops the box flashing back to its origin and then jerking to the new
-   * slot — the behaviour super-calendar gets by holding its per-box offset
-   * through the commit (TimeGrid.tsx).
-   */
   settling?: { start: number; end: number };
 }
 
@@ -46,21 +32,11 @@ interface Args {
   onMoveEvent?: (event: GridEvent, nextStart: Date, nextEnd: Date) => void;
 }
 
-/** Clamp a column delta so a move can never land on a day off the page. */
 function clampColumnDelta(rawDelta: number, columnIndex: number, daysCount: number): number {
   'worklet';
   return Math.min(daysCount - 1 - columnIndex, Math.max(-columnIndex, rawDelta));
 }
 
-/**
- * One drag gesture for a whole page.
- *
- * Arming is delegated to `activateAfterLongPress` rather than composing a
- * LongPress with a Pan by hand: the pan simply does not activate until the
- * finger has been held still, so the vertical scroll and the pager keep
- * priority before that and lose it after. Hand-rolled arbitration is what cost
- * us a dead scroll in the grid's first pass.
- */
 export function useEventDrag({
   dates,
   layouts,
@@ -74,31 +50,17 @@ export function useEventDrag({
   const height = useSharedValue(0);
   const left = useSharedValue(0);
 
-  // Where the ghost started, so onUpdate can position it absolutely from the
-  // gesture's total translation rather than accumulating per-frame deltas.
   const topBase = useSharedValue(0);
   const heightBase = useSharedValue(0);
   const leftBase = useSharedValue(0);
-  /** The drag mode, readable from the UI thread. `drag` is React state. */
   const modeFlag = useSharedValue(MODE_MOVE);
-  // The hit column, readable from the UI thread so onUpdate can clamp the
-  // ghost's column to the page without reading `drag` (React state) in a
-  // worklet. Deliberately left out of the `begin`/`gesture` dependency
-  // arrays below, same as every other shared value here: only its `.value`
-  // is ever read, and Reanimated hands back a stable ref in production. The
-  // committed delta is clamped separately, in `commit`, off `current
-  // .columnIndex` (see the comment there) rather than off this shared value.
   const columnIndexSV = useSharedValue(0);
 
-  // Read inside callbacks without re-creating the gesture on every render.
   const live = useRef({ dates, layouts, hourRowHeight, columnWidth, onMoveEvent, drag });
   live.current = { dates, layouts, hourRowHeight, columnWidth, onMoveEvent, drag };
 
   const begin = useCallback((x: number, y: number) => {
     const s = live.current;
-    // Before the page's first onLayout, columnWidth is 0 and x / 0 is NaN,
-    // which fails both bounds checks below (NaN < 0 and NaN >= length are
-    // both false) and would otherwise fall through to hitTestEvent with NaN.
     if (s.columnWidth <= 0) return;
     const columnIndex = Math.floor(x / s.columnWidth);
     if (columnIndex < 0 || columnIndex >= s.dates.length) return;
@@ -112,15 +74,6 @@ export function useEventDrag({
     );
     if (!hit) return;
 
-    // buildDayIndex clamps any event crossing midnight to a per-day slice:
-    // `hit.event.start/.end` are that slice's bounds, while `hit.event._event`
-    // still points at the full, unclamped event. Arming a drag here would let
-    // `commit` compute the new bounds from the clamped slice and hand them to
-    // onMoveEvent, which writes them onto the full event -- silently
-    // truncating or shifting the rest of a multi-day event on the server.
-    // Refusing on a partial slice mirrors the existing decision that all-day
-    // events are not draggable: a midnight boundary is a rendering artifact,
-    // not something the user can meaningfully grab.
     const full = hit.event._event;
     if (
       hit.event.start.getTime() !== full.dtstart.getTime() ||
@@ -170,23 +123,11 @@ export function useEventDrag({
   const commit = useCallback((deltaMinutes: number, rawDeltaColumns: number) => {
     const s = live.current;
     const current = s.drag;
-    // No move to make: tear the ghost down now. Every early return below clears
-    // it, and only the real-move path at the end swaps to the settling phase
-    // that keeps it mounted.
     if (!current || !s.onMoveEvent) {
       setDrag(null);
       return;
     }
 
-    // Clamped here, off `current.columnIndex` -- part of the DragState
-    // `begin` put into React state -- rather than in onEnd's worklet off a
-    // shared value: `current` is guaranteed to reflect the drag `begin`
-    // armed, while a shared value written in `begin` is only guaranteed to
-    // still hold that write on the same render; the state update `begin`
-    // triggers (`setDrag`) can hand onEnd's worklet a same-named but distinct
-    // shared value from the one `begin` wrote to. A move can never land on a
-    // day off the page: clamp to [-columnIndex, dates.length - 1 -
-    // columnIndex].
     const deltaColumns =
       current.mode === 'move'
         ? Math.min(
@@ -202,14 +143,6 @@ export function useEventDrag({
     const deltaDays = deltaColumns * DAY_MINUTES;
     const durationMin = (current.event.end.getTime() - current.event.start.getTime()) / 60_000;
 
-    // Mirror onUpdate's pixel clamp (which never lets the ghost's height fall
-    // below one SNAP_MINUTES step) in minutes, so the delta handed to
-    // resolveDraggedBounds always matches what the ghost showed. Without
-    // this, an overshoot the ghost quietly floors mid-drag hits
-    // resolveDraggedBounds' own "shrank below one step" rejection on commit
-    // and the event snaps back to its original size with no explanation.
-    // resolveDraggedBounds itself is untouched: it's a ported contract with
-    // its own tests, and other callers may rely on its rejection behaviour.
     const clampedDelta =
       current.mode === 'resizeStart'
         ? Math.min(deltaMinutes, durationMin - SNAP_MINUTES)
@@ -234,26 +167,12 @@ export function useEventDrag({
       setDrag(null);
       return;
     }
-    // Hold the ghost at the dropped position (top/height/left still carry it
-    // from onUpdate) and keep the source dimmed until the settling effect sees
-    // the event re-render at these bounds. Do NOT null the drag here.
     setDrag({ ...current, settling: { start: bounds.start.getTime(), end: bounds.end.getTime() } });
     s.onMoveEvent(current.event, bounds.start, bounds.end);
   }, []);
 
-  // onFinalize always runs, including right after a successful commit. It must
-  // not tear down a ghost that commit has moved into the settling phase — that
-  // is the flash-back this whole mechanism removes. A plain gesture that never
-  // committed (cancelled, or a tap that armed nothing) has no settling bounds
-  // and is cleared as before.
   const cancel = useCallback(() => setDrag((d) => (d?.settling ? d : null)), []);
 
-  // Drop the held ghost the moment the committed change re-renders the event at
-  // its new bounds — the source, dimmed underneath, is already there, so the
-  // swap is invisible. If that re-render never comes (a cancelled recurrence
-  // prompt, a rolled-back mutation), the watchdog clears it so it cannot hang.
-  // Ported from super-calendar's "clear the preview once the new geometry
-  // lands" effect (TimeGrid.tsx), adapted to our single-ghost model.
   useEffect(() => {
     if (!drag?.settling) return;
     const { start, end } = drag.settling;
@@ -275,11 +194,6 @@ export function useEventDrag({
   }, [drag, layouts]);
 
   const gesture = useMemo(() => {
-    // A plain number, not a shared value: captured directly by the worklets
-    // below the same way `columnWidth`/`hourRowHeight` already are, so it is
-    // listed in this memo's own dependency array (below) rather than the
-    // shared-value list `begin` explains. `dates` itself (an array of `Date`s)
-    // is never closed over by a worklet -- only this primitive is.
     const daysCount = dates.length;
 
     return Gesture.Pan()
@@ -293,10 +207,6 @@ export function useEventDrag({
         const minPx = (SNAP_MINUTES / 60) * hourRowHeight;
 
         if (modeFlag.value === MODE_MOVE) {
-          // A best-effort visual clamp: keeps the ghost from being drawn at
-          // a negative (or past-the-last-column) `left` while the page's
-          // real, authoritative clamp -- in `commit`, off React state -- is
-          // what actually decides the committed delta.
           const rawColumns = Math.round(e.translationX / columnWidth);
           const columns = clampColumnDelta(rawColumns, columnIndexSV.value, daysCount);
           top.value = topBase.value + offsetPx;
@@ -305,7 +215,6 @@ export function useEventDrag({
           return;
         }
 
-        // A resize never changes column, and never shrinks below one step.
         left.value = leftBase.value;
         if (modeFlag.value === MODE_RESIZE_START) {
           const clamped = Math.min(offsetPx, heightBase.value - minPx);
@@ -317,11 +226,6 @@ export function useEventDrag({
         }
       })
       .onEnd((e, success) => {
-        // RNGH calls onEnd on both a completed gesture (success: true) and a
-        // cancelled/failed one (success: false) -- a second finger landing, a
-        // system touch cancellation, backgrounding mid-drag. Committing on the
-        // latter writes the in-flight, possibly-mid-swipe position to the
-        // server with no user action to explain it.
         if (!success) return;
         const snapped = snapDeltaMinutes(e.translationY, hourRowHeight, SNAP_MINUTES);
         const columnDelta =

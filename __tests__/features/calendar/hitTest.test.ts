@@ -3,7 +3,7 @@ import type { PositionedEvent } from '@/features/calendar/utils/eventLayout';
 import type { GridEvent } from '@/features/calendar/utils/toGridEvents';
 import type { CalendarEvent } from '@/types';
 
-const GRID_HEIGHT = 1440; // 1px per minute keeps the arithmetic obvious
+const GRID_HEIGHT = 1440;
 const COLUMN_WIDTH = 100;
 
 function ev(uid: string, startMin: number, endMin: number): GridEvent {
@@ -21,7 +21,6 @@ const full = (e: GridEvent, zIndex = 100): PositionedEvent =>
   ({ event: e, leftPct: 0, widthPct: 100, zIndex });
 
 describe('hitTestEvent', () => {
-  // 09:00-11:00 => top 540px, height 120px.
   const twoHour = full(ev('a', 540, 660));
 
   it('returns null when the point is in an empty gap', () => {
@@ -39,18 +38,14 @@ describe('hitTestEvent', () => {
   });
 
   it('returns resizeStart for a touch in the top fifth', () => {
-    // Box spans 540..660; the top 20% is 540..564.
     expect(hitTestEvent(50, 545, [twoHour], COLUMN_WIDTH, GRID_HEIGHT)?.mode).toBe('resizeStart');
   });
 
   it('returns resizeEnd for a touch in the bottom fifth', () => {
-    // The bottom 20% is 636..660.
     expect(hitTestEvent(50, 655, [twoHour], COLUMN_WIDTH, GRID_HEIGHT)?.mode).toBe('resizeEnd');
   });
 
   it('forces move on an event shorter than 45 minutes', () => {
-    // 09:00-09:30 => top 540, height 30. A touch at the very top would be a
-    // resize on a longer box, but the zones are too small to aim at here.
     const short = full(ev('s', 540, 570));
     expect(hitTestEvent(50, 541, [short], COLUMN_WIDTH, GRID_HEIGHT)?.mode).toBe('move');
   });

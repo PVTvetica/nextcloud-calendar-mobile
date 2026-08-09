@@ -16,7 +16,6 @@ function ev(uid: string, startHour: number, endHour: number): GridEvent {
   };
 }
 
-/** Same, for events that do not start and end on the hour. */
 function evAt(uid: string, startMin: number, endMin: number): GridEvent {
   const base = ev(uid, 0, 1);
   base.start = new Date(2026, 7, 7, Math.floor(startMin / 60), startMin % 60);
@@ -44,7 +43,6 @@ describe('layoutDay', () => {
   });
 
   it('treats touching edges as disjoint', () => {
-    // 9-10 and 10-11 do not overlap: one ends exactly as the other begins.
     const out = byUid(layoutDay([ev('a', 9, 10), ev('b', 10, 11)]));
     expect(out.get('a')!.widthPct).toBe(100);
     expect(out.get('b')!.widthPct).toBe(100);
@@ -59,25 +57,12 @@ describe('layoutDay', () => {
   });
 
   it('expands an event into the free column to its right', () => {
-    // A 9:00-10:00, B 9:30-11:00, C 10:00-12:00.
-    // Columns: A=0, B=1, C=0 is taken until 10:00 so C=2? No — C starts at 10:00
-    // and A ended at 10:00, so C reuses column 0. B keeps column 1.
-    // A can expand right only while nothing in column 1 overlaps it: B does
-    // (9:30 < 10:00), so A stays one column wide.
     const out = byUid(layoutDay([ev('a', 9, 10), evAt('b', 570, 660), ev('c', 10, 12)]));
     expect(out.get('a')!.widthPct).toBe(50);
     expect(out.get('b')!.widthPct).toBe(50);
   });
 
   it('legitimately expands an event when freed columns do not overlap it', () => {
-    // A 9:00-10:00, B 9:00-10:00, D 9:30-10:30, C 10:00-11:00.
-    // D chains A/B to C (all in one group). Columns: A=0, B=1, D=2, C=0 (after A).
-    // C at 10:00-11:00 does not overlap B (ends at 10:00) or A (ends at 10:00),
-    // so C can expand into columns 1 and 2. Expansion blocked only by D (9:30 < 11:00).
-    // C expands to 66.67%, which clears the floor. A, B, D each span 1 column
-    // (33.3%), below the floor, so they cascade independently: A is the
-    // background (col 0, full width), B steps in on top, D is topmost at the
-    // floor — step = (100-40)/2 = 30.
     const out = byUid(layoutDay([ev('a', 9, 10), ev('b', 9, 10), evAt('d', 570, 630), ev('c', 10, 11)]));
     expect(out.get('c')!.leftPct).toBe(0);
     expect(out.get('c')!.widthPct).toBeCloseTo(100 * (2 / 3), 6);
@@ -87,18 +72,12 @@ describe('layoutDay', () => {
   });
 
   it('lets an event span every column when nothing overlaps it', () => {
-    // A 8:00-9:00 alone, then B 10:00-11:00 and C 10:30-11:30 overlapping.
-    // A is its own group and takes the full width.
     const out = byUid(layoutDay([ev('a', 8, 9), ev('b', 10, 11), evAt('c', 630, 690)]));
     expect(out.get('a')!.widthPct).toBe(100);
     expect(out.get('b')!.widthPct).toBe(50);
   });
 
   it('cascades three simultaneous events, background widest and top at the floor', () => {
-    // Three columns would be 33.3% each, below MIN_EVENT_WIDTH_PCT, so they
-    // cascade: the background keeps full width, each later box steps in by a
-    // fixed indent and draws on top, and the topmost lands at the floor. Three
-    // distinct left edges means none is hidden. step = (100-40)/2 = 30.
     const out = byUid(layoutDay([ev('a', 9, 12), ev('b', 9, 12), ev('c', 9, 12)]));
     expect(out.get('a')!.leftPct).toBe(0);
     expect(out.get('a')!.widthPct).toBe(100);
@@ -117,15 +96,11 @@ describe('layoutDay', () => {
   });
 
   it('does not let one long event narrow the whole day', () => {
-    // The bug this replaces: an all-day-spanning slice used to chain every
-    // event into one cluster, so twenty short events became twenty columns.
     const slices = [
       ev('span', 0, 24),
       ...Array.from({ length: 20 }, (_, i) => ev(`e${i}`, 9 + (i % 8), 9 + (i % 8) + 1)),
     ];
     const out = layoutDay(slices);
-    // At most a handful of events are ever simultaneous, so no box collapses to
-    // a sliver: the narrowest is far wider than 1/21 of the column.
     const narrowest = Math.min(...out.map((p) => p.widthPct));
     expect(narrowest).toBeGreaterThan(100 / 6);
   });
@@ -141,8 +116,6 @@ describe('layoutDay', () => {
     expect(layoutDay([])).toEqual([]);
   });
 
-  // Ported from the old per-cluster overlap test suite: zIndex = 100 + column,
-  // and nothing in the tests above pinned that down.
   it('assigns the base zIndex to a lone event', () => {
     const out = byUid(layoutDay([ev('a', 9, 10), ev('b', 11, 12)]));
     expect(out.get('a')!.zIndex).toBe(100);
@@ -155,9 +128,6 @@ describe('layoutDay', () => {
     expect(out.get('b')!.zIndex).toBe(101);
   });
 
-  // Ported from the old per-cluster overlap test suite: a-b overlap, b-c
-  // overlap, but a and c do not overlap each other. The three still chain
-  // into one group, and c reuses a's column once it frees up at 10:00.
   it('reuses a freed column across a chain even when its endpoints are disjoint', () => {
     const out = byUid(layoutDay([ev('a', 9, 10), evAt('b', 570, 660), evAt('c', 630, 690)]));
     expect(out.get('a')!.leftPct).toBe(0);
@@ -174,7 +144,6 @@ describe('layoutDay dense stacking', () => {
     Array.from({ length: n }, (_, i) => ev(`e${i}`, 9, 12));
 
   it('still shares equally while every event clears the floor', () => {
-    // Two columns give 50% each, comfortably above the 40% floor.
     const out = byUid(layoutDay(simultaneous(2)));
     expect(out.get('e0')!.widthPct).toBe(50);
     expect(out.get('e1')!.widthPct).toBe(50);
@@ -182,9 +151,6 @@ describe('layoutDay dense stacking', () => {
   });
 
   it('holds the floor for the topmost box and widens the ones behind it', () => {
-    // Eight columns would be 12.5% each — unreadable. They cascade instead: the
-    // topmost (last) box is exactly the floor, the background is full width,
-    // none is below the floor, and widths shrink monotonically front to back.
     const out = byUid(layoutDay(simultaneous(8)));
     expect(out.get('e0')!.widthPct).toBe(100);
     expect(out.get('e7')!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
@@ -208,12 +174,9 @@ describe('layoutDay dense stacking', () => {
   });
 
   it('switches to cascade exactly at the floor', () => {
-    // Three columns are 33.3% — below 40 — so they cascade: background full
-    // width, topmost at the floor.
     const three = byUid(layoutDay(simultaneous(3)));
     expect(three.get('e0')!.widthPct).toBe(100);
     expect(three.get('e2')!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);
-    // Two are 50% — above the floor — so they still share side by side.
     const two = layoutDay(simultaneous(2));
     for (const p of two) expect(p.widthPct).toBe(50);
   });
@@ -227,16 +190,10 @@ describe('layoutDay dense stacking', () => {
   });
 
   it('leaves an expanded event alone when its span clears the floor', () => {
-    // a 9-10, b 9-10, d 9:30-10:30, c 10-11 — c expands over two of three
-    // columns, so 66.7% clears the floor and the group is not dense for it.
     const out = byUid(
       layoutDay([ev('a', 9, 10), ev('b', 9, 10), evAt('d', 570, 630), ev('c', 10, 11)])
     );
     expect(out.get('c')!.widthPct).toBeCloseTo(100 * (2 / 3), 6);
-    // …while the three that do not clear the floor cascade, each on its own
-    // account: one event clearing the floor must not speak for the group. a is
-    // the background (col 0, full width), b steps in on top, d is topmost at
-    // the floor — step = (100-40)/2 = 30.
     expect(out.get('a')!.widthPct).toBe(100);
     expect(out.get('b')!.widthPct).toBeCloseTo(70, 6);
     expect(out.get('d')!.widthPct).toBe(MIN_EVENT_WIDTH_PCT);

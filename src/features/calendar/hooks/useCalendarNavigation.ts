@@ -29,16 +29,6 @@ export function useCalendarNavigation() {
   const agendaVisibleDateRef = useRef(agendaVisibleDate);
   agendaVisibleDateRef.current = agendaVisibleDate;
 
-  /**
-   * A jump (Today, a date picked in the month view, month navigation).
-   *
-   * The anchor deliberately does NOT move. The pager is infinite, so any date
-   * is reachable as an index from a fixed anchor, and moving the anchor would
-   * invalidate every cached page and rebuild the whole grid — which is what
-   * made Today feel like a remount. `jump` carries the target to the grid,
-   * which animates to it. It changes only on a jump, never on a swipe, so it
-   * does not churn the grid's props while paging.
-   */
   const setDate = useCallback((d: Date) => {
     fetchDebounce.cancel();
     setDateState(d);
@@ -46,7 +36,6 @@ export function useCalendarNavigation() {
     setJump((j) => ({ nonce: j.nonce + 1, target: d }));
   }, [fetchDebounce]);
 
-  /** A swipe: the anchor stays put so the pager keeps its index. */
   const onPageChange = useCallback((d: Date) => {
     setDateState(d);
     fetchDebounce.call(d);
@@ -58,9 +47,6 @@ export function useCalendarNavigation() {
     const focus = viewModeRef.current === 'schedule'
       ? agendaVisibleDateRef.current
       : dateRef.current;
-    // Mode switch is the one case that re-anchors: the page span changes, so
-    // every cached page is invalid regardless, and making page 0 the focus page
-    // means the grid lands on it without animating from an unrelated index.
     if (target !== 'schedule') {
       setAnchorDate(focus);
       setDate(focus);

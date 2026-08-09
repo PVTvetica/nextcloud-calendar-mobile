@@ -21,9 +21,6 @@ function DayColumnImpl({ date, positioned, hourRowHeight, now, onPressSlot, onPr
   const { colors } = useTheme();
   const isToday = dayjs(now).isSame(date, 'day');
 
-  // The column's own left edge, drawn once. It used to be the left border of
-  // each of 24 hour cells stacked into a continuous line — 24 nodes to draw
-  // what one border does.
   const columnStyle = useMemo(
     () => [styles.column, { borderLeftWidth: 1, borderLeftColor: colors.border }],
     [colors.border]
@@ -39,10 +36,6 @@ function DayColumnImpl({ date, positioned, hourRowHeight, now, onPressSlot, onPr
   );
 
   return (
-    // The horizontal hour and half-hour rules are not here: GridLines draws
-    // them once for the whole grid, since they are identical in every column
-    // and every page. Keeping them per-column cost ~1000 flex nodes per frame
-    // of a pinch.
     <View testID="day-column" style={columnStyle}>
       <Pressable testID="day-column-surface" style={StyleSheet.absoluteFill} onPress={handlePress} />
 

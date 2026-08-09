@@ -39,7 +39,6 @@ describe('DragGhost', () => {
   });
 
   it('renders no resize handles', () => {
-    // The ghost is the event being lifted, not a placeholder with controls.
     const { queryByTestId } = render(ghost());
     expect(queryByTestId('ghost-handle-start')).toBeNull();
     expect(queryByTestId('ghost-handle-end')).toBeNull();
@@ -56,27 +55,21 @@ describe('DragGhost', () => {
   });
 
   it('pins the title to the top, as the resting card draws it', () => {
-    // A lifted event keeps its title at the top rather than recentring it.
     const flat = StyleSheet.flatten(render(ghost()).getByTestId('drag-ghost').props.style);
     expect(flat.justifyContent).toBe('flex-start');
   });
 
   it('picks title ink colour from the event background luminance', () => {
-    // Dark background should get light text
     const darkGhost = render(ghost('#0082c9'));
     const darkTitle = darkGhost.getByText('Standup');
     const darkTitleFlat = StyleSheet.flatten(darkTitle.props.style);
 
-    // Pale background should get dark text
     const paleGhost = render(ghost('#ffe8a3'));
     const paleTitle = paleGhost.getByText('Standup');
     const paleTitleFlat = StyleSheet.flatten(paleTitle.props.style);
 
-    // They should be different
     expect(darkTitleFlat.color).not.toBe(paleTitleFlat.color);
-    // Pale background should get dark text
     expect(paleTitleFlat.color).toBe('#1c1c1e');
-    // Dark background should get light text
     expect(darkTitleFlat.color).toBe('#ffffff');
   });
 });

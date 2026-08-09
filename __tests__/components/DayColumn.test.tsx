@@ -27,9 +27,6 @@ const now = new Date(2026, 7, 7, 12, 0);
 
 describe('DayColumn', () => {
   it('draws no horizontal rules of its own', () => {
-    // GridLines draws them once for the whole grid instead. Per-column cells
-    // were ~1000 flex nodes to re-lay out on every frame of a pinch, all
-    // drawing the same lines.
     const { queryAllByTestId } = render(
       <DayColumn date={date} positioned={[]} hourRowHeight={60} now={now} onPressSlot={jest.fn()} onPressEvent={jest.fn()} />
     );
@@ -127,9 +124,6 @@ describe('DayColumn', () => {
     expect(style.width).toBe('50%');
   });
 
-  // Regression test for the lost 3px gap: the touch target now spans the full
-  // widthPct, so the background/border box must be a separate inner view
-  // inset by marginRight, not the touch target itself.
   it('reserves a 3px gap on the card via marginRight, not the touch target', () => {
     const { getByTestId } = render(
       <DayColumn date={date} positioned={positioned(gridEvent())} hourRowHeight={60} now={now} onPressSlot={jest.fn()} onPressEvent={jest.fn()} />
@@ -142,7 +136,6 @@ describe('DayColumn', () => {
   });
 
   it('carries its own left divider rather than stacking 24 cell borders', () => {
-    // One border on the column draws what 24 stacked cell borders used to.
     const { getByTestId } = render(
       <DayColumn date={date} positioned={[]} hourRowHeight={60} now={now} onPressSlot={jest.fn()} onPressEvent={jest.fn()} />
     );

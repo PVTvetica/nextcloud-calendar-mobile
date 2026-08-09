@@ -44,10 +44,6 @@ export default function CalendarScreen() {
   const toggleCalendarVisibility = useCalendarStore((s) => s.toggleCalendarVisibility);
 
   const nav = useCalendarNavigation();
-  // navigateMonth is destructured, not read as nav.navigateMonth: a worklet
-  // closure captures the base object of a member expression, so `nav.x` inside
-  // the pan handler below would drag the whole nav object — Dates included —
-  // onto the UI runtime, where Worklets cannot copy them.
   const { viewMode, date, fetchDate, agendaVisibleDate, navigateMonth } = nav;
 
   const deferredViewMode = useDeferredValue(viewMode);
@@ -55,13 +51,6 @@ export default function CalendarScreen() {
   const deferredAnchorDate = useDeferredValue(nav.anchorDate);
   const deferredWeekStartsOn = useDeferredValue(weekStartsOn);
   const deferredIsCalendarMode = isCalMode(deferredViewMode);
-  // TimeGridView stays mounted under ViewLayer (opacity/display toggling, not
-  // unmounting) so it keeps receiving `mode` while month/schedule are active;
-  // guard explicitly rather than casting a non-CalMode past the type checker.
-  // Latch the last real CalMode in a ref rather than falling back to a fixed
-  // default: falling back to 'week' while month/schedule are active flips the
-  // still-mounted grid's mode on every navigation into and out of those views,
-  // invalidating datesForIndex and re-rendering every column for nothing.
   const lastCalModeRef = useRef<CalMode>('week');
   if (isCalMode(deferredViewMode)) lastCalModeRef.current = deferredViewMode;
   const calMode: CalMode = lastCalModeRef.current;
@@ -93,18 +82,7 @@ export default function CalendarScreen() {
     [router, navGuard]
   );
 
-  // activeAccount is only used inside the mutation's callback, which the
-  // early return in handleMoveEvent below always guards, so `!` here is safe
-  // in the same way the edit screen uses it.
   const updateMutation = useUpdateEvent(activeAccount!, calendars);
-  // Destructured rather than depending on `updateMutation` itself: useAction
-  // (useMutateEvent.ts) returns a fresh { mutate, mutateAsync, isPending }
-  // object literal every render, so depending on the object churns
-  // handleMoveEvent's identity on every CalendarScreen render -- which
-  // TimeGridView passes straight through to all three mounted TimeGridPages
-  // as onMoveEvent, re-rendering every one of them for nothing. `mutateAsync`
-  // itself is stable: it's wrapped in its own useCallback keyed only on
-  // [account, calendars].
   const { mutateAsync } = updateMutation;
 
   const recurrenceScopeStrings = useMemo(
@@ -120,8 +98,6 @@ export default function CalendarScreen() {
 
   const handleMoveEvent = useCallback(
     (gridEvent: GridEvent, nextStart: Date, nextEnd: Date) => {
-      // activeAccount can be null on first launch, before any account has
-      // been added — nothing to commit the drag to yet.
       if (!activeAccount) return;
       const event = gridEvent._event;
       const apply = (scope: RecurrenceEditScope) => {
@@ -133,8 +109,6 @@ export default function CalendarScreen() {
       };
       const decision = decideMoveEventScope(event);
       if (decision.kind === 'prompt') {
-        // Cancelling the prompt leaves the event where it was: the local
-        // patch only happens inside apply, which cancelling never reaches.
         askRecurrenceScope(t('event.editEvent'), recurrenceScopeStrings, apply);
         return;
       }

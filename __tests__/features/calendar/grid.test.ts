@@ -31,7 +31,6 @@ describe('dayKey', () => {
 });
 
 describe('pageDates', () => {
-  // 2026-08-07 is a Friday.
   const friday = new Date(2026, 7, 7);
 
   it('aligns a week page on Monday when weekStartsOn is 1', () => {
@@ -301,7 +300,6 @@ describe('allDayRowHeight', () => {
 });
 
 describe('pageIndexForDate', () => {
-  // 2026-08-07 is a Friday.
   const friday = new Date(2026, 7, 7);
 
   it('is 0 for the anchor itself', () => {
@@ -324,9 +322,7 @@ describe('pageIndexForDate', () => {
 
   it('respects weekStartsOn when assigning a date to a page', () => {
     const sunday = new Date(2026, 7, 9);
-    // weekStartsOn=1: Sunday the 9th closes the anchor week.
     expect(pageIndexForDate(friday, sunday, 'week', 1)).toBe(0);
-    // weekStartsOn=0: the same Sunday opens the next one.
     expect(pageIndexForDate(friday, sunday, 'week', 0)).toBe(1);
   });
 

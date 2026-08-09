@@ -2,8 +2,6 @@ import { shiftSeriesDates } from '../../src/database/eventWrites';
 import { getDatabaseInstance } from '../../src/database/DatabaseProvider';
 
 jest.mock('../../src/database/DatabaseProvider');
-// Passthrough so the real safeWrite's 30s watchdog timer doesn't leak as an
-// open handle; the fake db.write already runs the operation.
 jest.mock('../../src/database/utils/safeTransaction', () => ({
   safeWrite: (_db: unknown, fn: () => Promise<unknown>) => fn(),
 }));
@@ -14,9 +12,6 @@ const ACCOUNT_ID = 'acc-1';
 const HOUR = 60 * 60 * 1000;
 const MIN = 60 * 1000;
 
-// Mirrors how a WatermelonDB Model applies prepareUpdate: the updater runs
-// synchronously against the record itself, so assertions can inspect the
-// row's fields straight after shiftSeriesDates resolves.
 function makeRow(uid: string, start: number, end: number, summary = 's') {
   const row: any = { uid, accountId: ACCOUNT_ID, start, end, summary };
   row.prepareUpdate = jest.fn((updater: (r: any) => void) => {
@@ -59,8 +54,6 @@ describe('shiftSeriesDates', () => {
     expect(r3.start).toBe(t0 + 2 * HOUR + 30 * MIN);
     expect(r3.end).toBe(t0 + 3 * HOUR + 30 * MIN);
 
-    // Each row keeps its original offset from the others — the series
-    // slides as a whole, it does not collapse onto one time.
     expect(r2.start - r1.start).toBe(HOUR);
     expect(r3.start - r2.start).toBe(HOUR);
 

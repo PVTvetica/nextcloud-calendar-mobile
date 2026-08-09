@@ -14,7 +14,7 @@ function ev(partial: Partial<CalendarEvent> & { dtstart: Date; dtend: Date }): C
 const TZ = 'Europe/Berlin';
 
 describe('buildAgendaSnapshot', () => {
-  const now = new Date('2026-08-01T09:00:00Z'); // 11:00 Berlin
+  const now = new Date('2026-08-01T09:00:00Z');
 
   it('keeps only today\'s not-yet-finished events, sorted by start', () => {
     const events = [
@@ -52,7 +52,7 @@ describe('buildAgendaSnapshot', () => {
 
     expect(snap.sections).toHaveLength(2);
     expect(snap.sections[0].isToday).toBe(true);
-    expect(snap.sections[0].items.map((e) => e.uid)).toEqual(['soon']); // past dropped
+    expect(snap.sections[0].items.map((e) => e.uid)).toEqual(['soon']);
     expect(snap.sections[1].isToday).toBe(false);
     expect(snap.sections[1].items.map((e) => e.uid)).toEqual(['tomorrow']);
     expect(snap.nextEvent?.uid).toBe('soon');

@@ -26,8 +26,6 @@ describe('seriesDeltas', () => {
 });
 
 describe('shiftedMasterInput', () => {
-  // A weekly series starting 3 Aug; the user drags the 17 Aug occurrence
-  // forward an hour and chooses "all events".
   const masterBounds = {
     dtstart: new Date(2026, 7, 3, 9, 0),
     dtend: new Date(2026, 7, 3, 10, 0),
@@ -40,7 +38,6 @@ describe('shiftedMasterInput', () => {
 
   it('shifts the master rather than moving it to the dragged occurrence', () => {
     const next = shiftedMasterInput(input, masterBounds, 60 * 60_000, 60 * 60_000);
-    // Still 3 August — the series keeps its earlier occurrences.
     expect(next.dtstart.getDate()).toBe(3);
     expect(next.dtstart.getHours()).toBe(10);
     expect(next.dtend.getHours()).toBe(11);

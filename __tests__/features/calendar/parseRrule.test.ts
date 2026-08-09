@@ -38,15 +38,11 @@ describe('parseRrule', () => {
   });
 
   it('round-trips every rule the app itself can write', () => {
-    // rruleLine (src/utils/ics.ts) emits exactly FREQ, INTERVAL, BYDAY, and
-    // COUNT or UNTIL. Anything this app creates must survive the round trip.
     const rule = { freq: 'WEEKLY' as const, interval: 3, byDay: ['TU', 'TH'], count: 5 };
     expect(parseRrule('RRULE:FREQ=WEEKLY;INTERVAL=3;BYDAY=TU,TH;COUNT=5')).toEqual(rule);
   });
 
   it('refuses a rule with parts the type cannot represent', () => {
-    // Returning a partial rule here would silently drop BYMONTHDAY on the next
-    // write — the same data loss this function exists to prevent.
     expect(parseRrule('RRULE:FREQ=MONTHLY;BYMONTHDAY=15')).toBeUndefined();
     expect(parseRrule('RRULE:FREQ=WEEKLY;WKST=SU')).toBeUndefined();
     expect(parseRrule('RRULE:FREQ=MONTHLY;BYSETPOS=-1;BYDAY=FR')).toBeUndefined();
@@ -71,18 +67,12 @@ describe('parseRrule', () => {
   });
 
   it('refuses a rule with both COUNT and UNTIL', () => {
-    // rruleLine only ever writes one of the two (`if (rule.count) ... else if
-    // (rule.until)`), so a rule with both cannot be reproduced exactly: the
-    // next write would silently drop UNTIL.
     expect(
       parseRrule('RRULE:FREQ=DAILY;COUNT=5;UNTIL=20260815T093000Z')
     ).toBeUndefined();
   });
 
   it('refuses a Z-less UNTIL date-time as floating/local, not UTC', () => {
-    // Per RFC 5545 a DATE-TIME without a trailing Z is floating time, not UTC.
-    // rruleLine's utcStamp always appends Z, so treating a Z-less stamp as UTC
-    // would shift the recurrence end by the timezone offset on the next write.
     expect(parseRrule('RRULE:FREQ=DAILY;UNTIL=20260815T093000')).toBeUndefined();
   });
 

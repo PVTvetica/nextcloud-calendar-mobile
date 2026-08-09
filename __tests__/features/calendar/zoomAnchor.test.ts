@@ -12,7 +12,6 @@ describe('scaledCellHeight', () => {
   });
 
   it('is not cumulative: the same scale twice gives the same height', () => {
-    // The guard against compounding float error across a gesture's frames.
     expect(scaledCellHeight(60, 1.5)).toBe(scaledCellHeight(60, 1.5));
   });
 
@@ -23,11 +22,8 @@ describe('scaledCellHeight', () => {
 });
 
 describe('anchoredScrollY', () => {
-  // A viewport scrolled to 08:00 at 60px/hour, with no header inset, and a
-  // finger halfway down a 600px-tall viewport.
   const base = { scrollY: 8 * 60, focalY: 300, headerInset: 0, fromCellHeight: 60 };
 
-  /** The instant sitting under the focal point, in hours from midnight. */
   const hoursAtFocal = (scrollY: number, focalY: number, inset: number, cell: number) =>
     (scrollY + focalY - inset) / cell;
 
@@ -56,8 +52,6 @@ describe('anchoredScrollY', () => {
   });
 
   it('never returns a negative offset', () => {
-    // Pinching closed near the top of the day would otherwise ask the
-    // ScrollView to scroll above its own content.
     const next = anchoredScrollY({
       scrollY: 10, focalY: 40, headerInset: 0, fromCellHeight: 200, toCellHeight: MIN_HOUR_ROW,
     });
@@ -65,15 +59,10 @@ describe('anchoredScrollY', () => {
   });
 
   it('reproduces the measured regression it was written to fix', () => {
-    // From the device recording: 51 -> 62 px/hour moved the 08:00 line 88px
-    // down because the offset never changed. Anchored, the line under the
-    // finger stays put instead.
     const args = { scrollY: 4 * 51, focalY: 200, headerInset: 0, fromCellHeight: 51 };
     const before = hoursAtFocal(args.scrollY, args.focalY, 0, 51);
     const next = anchoredScrollY({ ...args, toCellHeight: 62 });
     expect(hoursAtFocal(next, args.focalY, 0, 62)).toBeCloseTo(before, 6);
-    // And the offset genuinely moved — an unanchored implementation returns
-    // the original scrollY, which would fail the assertion above.
     expect(next).not.toBeCloseTo(args.scrollY, 0);
   });
 

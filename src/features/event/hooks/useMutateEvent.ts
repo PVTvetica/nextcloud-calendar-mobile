@@ -23,10 +23,6 @@ import type { Account, CalendarMeta, CalendarEvent, CreateEventInput, Recurrence
 
 const TALK_URL_PATTERN = /\/call\//;
 
-/**
- * How far the edit moved each edge of the occurrence. A move gives two equal
- * deltas; a resize gives one of them as zero.
- */
 export function seriesDeltas(
   occurrence: { dtstart: Date; dtend: Date },
   nextStart: Date,
@@ -38,13 +34,6 @@ export function seriesDeltas(
   };
 }
 
-/**
- * The input to rebuild a master with, for an "all events" edit.
- *
- * The dates are the MASTER's own, shifted by the deltas — not the occurrence's.
- * Writing the occurrence's dates onto the master restarts the series there and
- * silently drops every earlier occurrence.
- */
 export function shiftedMasterInput(
   input: CreateEventInput,
   masterBounds: { dtstart: Date; dtend: Date },
@@ -230,8 +219,6 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
       };
 
       if (shiftsWholeSeries) {
-        // Every occurrence is its own row; patchByUid would move only the one
-        // that was dragged and leave the rest behind until the next sync.
         await shiftSeriesDates(account.id, base, deltaStart, deltaEnd, nonTemporalPatch);
       } else {
         await patchByUid(account.id, event.uid, {
@@ -257,8 +244,6 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
             const masterIcs = await fetchEventIcs(account, event.href);
             timezone = extractDtstartTzid(masterIcs) ?? timezone;
             const bounds = extractDtstartDtend(masterIcs);
-            // Refuse rather than fall back to the occurrence's dates: that is
-            // exactly the write that restarts the series and drops its past.
             if (!bounds) throw new Error('Cannot read the series master to shift it');
             uid = seriesBaseUid(event.uid);
             masterInput = shiftedMasterInput(input, bounds, deltaStart, deltaEnd);

@@ -14,11 +14,6 @@ import {
 
 interface Props {
   dates: Date[];
-  /**
-   * Ticks once a minute from TimeGridView. Only today gets the pill, and
-   * reading the clock at render inside a memo'd component would strand the
-   * highlight on yesterday past midnight — same trap as the now-indicator.
-   */
   now: Date;
   allDayEvents: CalendarEvent[];
   onPressEvent: (event: CalendarEvent) => void;
@@ -75,15 +70,7 @@ function TimeGridHeaderImpl({ dates, now, allDayEvents, onPressEvent }: Props) {
               <View style={{ borderLeftWidth: 1, borderLeftColor: theme.colors.border, height: sectionHeight }}>
                 {byDate[i].map((event, chipIndex) => (
                   <TouchableOpacity
-                    // uid is indexed but not unique (schema.ts): recurrence
-                    // instances share a UID by iCalendar design, so two
-                    // occurrences landing on the same day collide on a bare
-                    // uid key. DayColumn already keys on uid + start; the index
-                    // closes the remaining case of a true duplicate row.
                     key={`${event.uid}-${event.dtstart.getTime()}-${chipIndex}`}
-                    // Explicit height and gap rather than letting text metrics
-                    // decide: allDayRowHeight reserves exactly this much per
-                    // chip, so any drift here reopens the gap under the band.
                     style={{
                       backgroundColor: event.color,
                       borderRadius: 2,

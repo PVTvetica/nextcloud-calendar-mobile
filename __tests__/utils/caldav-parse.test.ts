@@ -130,8 +130,6 @@ describe('parseIcsObjects', () => {
   });
 
   it('recovers events from a feed with broken (unfolded) multi-line DESCRIPTION', () => {
-    // DESCRIPTION carries raw HTML with literal newlines and NO leading-space
-    // folding — the shape that makes ical.js throw and drop the whole calendar.
     const brokenIcs = `BEGIN:VCALENDAR
 VERSION:2.0
 BEGIN:VEVENT
@@ -220,7 +218,6 @@ describe('extractDtstartDtend', () => {
   });
 
   it('resolves a TZID date-time to the right instant', () => {
-    // 09:00 Paris in August is 07:00Z.
     const b = extractDtstartDtend(
       ics(['DTSTART;TZID=Europe/Paris:20260803T090000', 'DTEND;TZID=Europe/Paris:20260803T100000'])
     );

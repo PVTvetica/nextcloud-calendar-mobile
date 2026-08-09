@@ -26,8 +26,6 @@ function TimeGridEventImpl({ event, top, height, leftPct, widthPct, zIndex, hour
   const ink = contrastFor(color);
   const durationMin = dayjs(event.end).diff(event.start, 'minute');
 
-  // Absolute-positioned touch target only: no background here, so it cannot
-  // paint over the 3px gap the inner card view reserves via marginRight.
   const positionStyle: ViewStyle = {
     position: 'absolute',
     top: top as ViewStyle['top'],

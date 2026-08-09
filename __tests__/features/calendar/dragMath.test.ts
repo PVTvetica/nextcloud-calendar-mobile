@@ -5,7 +5,6 @@ import {
 } from '@/features/calendar/utils/dragMath';
 
 describe('snapDeltaMinutes', () => {
-  // 64px per hour grid, snapping to 15-minute steps.
   it('snaps a one-hour drag to 60 minutes', () => {
     expect(snapDeltaMinutes(64, 64, 15)).toBe(60);
   });

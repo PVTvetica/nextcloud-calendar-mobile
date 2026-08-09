@@ -10,14 +10,8 @@
  * another event — overlapping events lay out side by side instead.
  */
 
-/** Snap step for both moving and resizing. */
 export const SNAP_MINUTES = 15;
 
-/**
- * Minutes to shift an event, snapping a vertical pixel drag to the nearest
- * `stepMinutes`. Runs on the UI thread inside the drag gesture. Returns 0 for a
- * degenerate grid (non-positive height/step).
- */
 export function snapDeltaMinutes(
   translationPx: number,
   cellHeightPx: number,
@@ -29,21 +23,12 @@ export function snapDeltaMinutes(
   return Math.round(rawMinutes / stepMinutes) * stepMinutes;
 }
 
-/** A copy of `date` shifted by `minutes` (may be negative). */
 export function shiftMinutes(date: Date, minutes: number): Date {
   const next = new Date(date);
   next.setMinutes(next.getMinutes() + minutes);
   return next;
 }
 
-/**
- * Resolve a committed drag into the event's new bounds: `start` shifts by
- * `deltaStartMinutes`, `end` by `deltaEndMinutes` (a move passes the same delta
- * to both; a resize passes 0 for the edge it does not touch). Returns `null`
- * only when the change would *shrink* the event below one `snapMinutes` step,
- * so a resize cannot commit a degenerate duration; a pure move keeps its
- * duration and is never rejected, even for an already sub-step event.
- */
 export function resolveDraggedBounds(
   start: Date,
   end: Date,

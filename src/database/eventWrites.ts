@@ -68,17 +68,6 @@ export async function patchByUid(
   }, 15000, 'patchByUid');
 }
 
-/**
- * Move every occurrence of a series by the same deltas.
- *
- * patchByUid only touches rows carrying one uid — a single occurrence — so an
- * "all events" edit left the rest of the series sitting at its old time until
- * the next sync. Occurrences are separate rows keyed base_occ_<timestamp>, so
- * the series has to be addressed by its base uid.
- *
- * Dates are shifted, not assigned: each row keeps its own position in the
- * series. `patch` carries the non-temporal fields, which apply to every row.
- */
 export async function shiftSeriesDates(
   accountId: string,
   baseUid: string,

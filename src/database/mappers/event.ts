@@ -7,9 +7,6 @@ function parseAttendees(raw?: string): Attendee[] {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    // Deduped on read, not only on write: rows persisted before this existed
-    // still carry duplicates, and this is the single funnel from a DB row to a
-    // CalendarEvent, so every consumer gets a clean list.
     return Array.isArray(parsed) ? dedupeAttendees(parsed as Attendee[]) : [];
   } catch {
     return [];

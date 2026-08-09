@@ -5,9 +5,6 @@ import { TimeGridPage } from '@/features/calendar/components/TimeGridPage';
 import type { GridEvent } from '@/features/calendar/utils/toGridEvents';
 import type { CalendarEvent } from '@/types';
 
-// Captures the `positioned` prop DayColumn is rendered with on every render,
-// so the test can assert on array identity without depending on DayColumn's
-// own implementation or React's rendering internals.
 let mockCapturedPositioned: unknown[] = [];
 
 jest.mock('@/features/calendar/components/DayColumn', () => ({
@@ -36,13 +33,6 @@ describe('TimeGridPage', () => {
     mockCapturedPositioned = [];
   });
 
-  // Regression test for the memo keyed too coarsely on [dates, dayIndex]:
-  // buildDayIndex allocates a fresh Map on every rebuild, so dayIndex's own
-  // identity always changes. stabilizeDayIndex preserves the per-day array
-  // identity for unchanged days regardless, and the layoutDay cache must key
-  // off that per-day array — not the enclosing Map — so an unchanged day's
-  // DayColumn keeps receiving the same `positioned` reference and can bail
-  // out of re-rendering.
   it('reuses the positioned array for a day whose slices array is unchanged, even across distinct dayIndex Map instances', () => {
     const slices = [gridEvent('a')];
 
@@ -58,9 +48,6 @@ describe('TimeGridPage', () => {
     );
     const first = mockCapturedPositioned[0];
 
-    // A fresh Map, exactly like buildDayIndex produces on every rebuild, but
-    // carrying over the same per-day array reference — exactly what
-    // stabilizeDayIndex does for a day that didn't change.
     rerender(
       <TimeGridPage
         dates={dates}
