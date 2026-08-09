@@ -1,11 +1,11 @@
 import React from 'react';
 import { HStack, Image, ProgressView, RoundedRectangle, Spacer, Text, VStack, ZStack } from '@expo/ui/swift-ui';
 import { clipShape, font, foregroundStyle, frame, opacity, padding, progressViewStyle, tint } from '@expo/ui/swift-ui/modifiers';
-import { createLiveActivity, type LiveActivity } from 'expo-widgets';
+import { after, createLiveActivity, type LiveActivity } from 'expo-widgets';
 import dayjs from 'dayjs';
 
 import type { LiveEventState, WidgetSurface } from '../../core/types';
-import { writeLiveEvent } from '../../storage/widgetStore';
+import { readLiveEvent, writeLiveEvent } from '../../storage/widgetStore';
 
 const ACTIVITY_NAME = 'NextcloudCalendarLiveActivity';
 
@@ -37,9 +37,10 @@ const CalendarLiveActivity = (props: ActivityProps) => {
   const TYPE = { time: 12, caption: 13, body: 15, title: 17, heading: 22 };
 
   function parseHex(hex: string): [number, number, number] {
-    let h = hex.replace('#', '');
+    let h = (hex ? String(hex) : '#3b82f6').replace('#', '');
     if (h.length === 3) h = h.split('').map((c) => c + c).join('');
     const n = parseInt(h.slice(0, 6), 16);
+    if (isNaN(n)) return [59, 130, 246];
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   }
 
@@ -63,6 +64,15 @@ const CalendarLiveActivity = (props: ActivityProps) => {
     const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
     return luminance > 0.6 ? '#111111' : '#ffffff';
   }
+
+  function displayColor(hex: string): string {
+    const rgb = parseHex(hex);
+    const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
+    if (luminance < 0.25) return '#ffffff';
+    return hex || '#3b82f6';
+  }
+
+  const dc = displayColor(props.color);
 
   function CountdownRing({ size, ring }: { size: number; ring: string }) {
     return (
@@ -113,20 +123,20 @@ const CalendarLiveActivity = (props: ActivityProps) => {
 
   return {
     banner: <Banner />,
-    compactLeading: <CountdownRing size={22} ring={props.color} />,
+    compactLeading: <CountdownRing size={22} ring={dc} />,
     compactTrailing: (
-      <Text modifiers={[font({ weight: 'semibold', size: TYPE.time }), foregroundStyle(props.color)]}>{props.startLabel}</Text>
+      <Text modifiers={[font({ weight: 'semibold', size: TYPE.time }), foregroundStyle(dc)]}>{props.startLabel}</Text>
     ),
-    minimal: <CountdownRing size={18} ring={props.color} />,
+    minimal: <CountdownRing size={18} ring={dc} />,
     expandedLeading: (
       <HStack modifiers={[padding({ leading: 10, top: 2 })]}>
-        <CountdownRing size={52} ring={props.color} />
+        <CountdownRing size={52} ring={dc} />
       </HStack>
     ),
     expandedTrailing: (
       <HStack modifiers={[padding({ trailing: 10, top: 2 })]}>
         <Spacer />
-        <Image systemName="calendar" size={22} modifiers={[foregroundStyle(props.color), opacity(0.9)]} />
+        <Image systemName="calendar" size={22} modifiers={[foregroundStyle(dc), opacity(0.9)]} />
       </HStack>
     ),
     expandedCenter: (
@@ -136,9 +146,9 @@ const CalendarLiveActivity = (props: ActivityProps) => {
     ),
     expandedBottom: (
       <HStack modifiers={[frame({ maxWidth: Infinity }), padding({ top: 6, bottom: 4, horizontal: 12 })]}>
-        <InfoRow symbol="clock.fill" text={props.timeRange} fg={props.color} size={TYPE.caption} />
+        <InfoRow symbol="clock.fill" text={props.timeRange} fg={dc} size={TYPE.caption} />
         <Spacer />
-        {props.location ? <InfoRow symbol="mappin.circle.fill" text={props.location} fg={props.color} size={TYPE.caption} /> : null}
+        {props.location ? <InfoRow symbol="mappin.circle.fill" text={props.location} fg={dc} size={TYPE.caption} /> : null}
       </HStack>
     ),
   };
@@ -146,7 +156,14 @@ const CalendarLiveActivity = (props: ActivityProps) => {
 
 const activity = createLiveActivity<ActivityProps>(ACTIVITY_NAME, CalendarLiveActivity);
 
+// ActivityKit's `.after(date)` dismissal policy is only honored within a ~4h
+// window; beyond that iOS clamps the date and would dismiss a long event early.
+const DISMISS_WINDOW_MS = 4 * 60 * 60 * 1000;
+
 let instance: LiveActivity<ActivityProps> | null = null;
+// True when `instance` was ended with a scheduled auto-dismiss: iOS owns its
+// removal now, so it can no longer be updated and must not be touched again.
+let scheduledEnd = false;
 
 function trackedInstance(): LiveActivity<ActivityProps> | null {
   if (!instance) instance = activity.getInstances()[0] ?? null;
@@ -157,27 +174,61 @@ export const liveActivity: WidgetSurface<LiveEventState> = {
   id: 'liveActivity',
   isSupported: () => typeof activity?.start === 'function',
   update: async (state) => {
-    writeLiveEvent(state);
+    const previous = readLiveEvent();
     const props = toProps(state);
-    const current = trackedInstance();
-    if (current) {
+    const sameEvent = !!previous && previous.deepLink === state.deepLink;
+    let current = trackedInstance();
+
+    if (sameEvent && current) {
+      // Short event already on screen with a native auto-dismiss scheduled:
+      // nothing to do. Re-running would either fail (it is ended) or spawn a
+      // duplicate — this is what the 60s sync loop hits most of the time.
+      if (scheduledEnd) return;
+      // Long event kept live (no native dismiss): refresh it in place.
       try {
         await current.update(props);
+        writeLiveEvent(state);
         return;
       } catch {
         instance = null;
+        current = null;
       }
+    } else if (current) {
+      // A different event is on screen — remove it so its deep link is gone.
+      try {
+        await current.end('immediate');
+      } catch {
+      }
+      instance = null;
+      current = null;
     }
+
+    writeLiveEvent(state);
+    const now = Date.now();
+    const canSchedule = props.endMs > now && props.endMs - now <= DISMISS_WINDOW_MS;
     try {
-      instance = activity.start(props, state.deepLink);
+      const started = activity.start(props, state.deepLink);
+      instance = started;
+      if (canSchedule) {
+        // Schedule the dismissal at the event end so iOS removes the Live
+        // Activity on time even if no JS runs (app backgrounded or killed).
+        // Trade-off: an ended activity leaves the Dynamic Island; the Lock
+        // Screen banner + native countdown remain until the event ends.
+        await started.end(after(new Date(props.endMs)), props, new Date(props.endMs));
+        scheduledEnd = true;
+      } else {
+        scheduledEnd = false;
+      }
     } catch (error) {
       instance = null;
+      scheduledEnd = false;
       throw error;
     }
   },
   clear: async () => {
     writeLiveEvent(null);
     const current = trackedInstance();
+    scheduledEnd = false;
     if (!current) return;
     try {
       await current.end('immediate');

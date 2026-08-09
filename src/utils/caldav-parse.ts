@@ -1,6 +1,5 @@
 import ICAL from 'ical.js';
 import type { CalendarEvent, Attendee } from '@/types';
-import { dedupeAttendees } from '@/utils/attendees';
 import { yieldToUI } from '@/utils/scheduling';
 import { isValidTimeZone, zonedWallTimeToUtc } from '@/utils/timezone';
 import { triggerToMinutes } from '@/features/notifications/alerts';
@@ -88,14 +87,25 @@ export function parseIcsItem(
       const icalEvent = new ICAL.Event(vevent, { strictExceptions: false });
       const tzid = eventTzid(vevent);
 
-      const attendees: Attendee[] = dedupeAttendees(
-        vevent.getAllProperties('attendee').map((prop: ICAL.Property) => {
-          const value = (prop.getFirstValue() as string) ?? '';
-          const email = value.replace(/^mailto:/i, '');
-          const displayName = (prop.getParameter('cn') as string) ?? undefined;
-          return { email, displayName };
-        })
-      );
+      // const attendees: Attendee[] = dedupeAttendees(
+      //   vevent.getAllProperties('attendee').map((prop: ICAL.Property) => {
+      //     const value = (prop.getFirstValue() as string) ?? '';
+      //     const email = value.replace(/^mailto:/i, '');
+      //     const displayName = (prop.getParameter('cn') as string) ?? undefined;
+      //     return { email, displayName };
+      //   })
+      // );
+      const seenAttendees = new Set<string>();
+      const attendees: Attendee[] = [];
+      for (const prop of vevent.getAllProperties('attendee')) {
+        const value = (prop.getFirstValue() as string) ?? '';
+        const email = value.replace(/^mailto:/i, '');
+        const displayName = (prop.getParameter('cn') as string) ?? undefined;
+        const key = email.toLowerCase();
+        if (email && seenAttendees.has(key)) continue;
+        if (email) seenAttendees.add(key);
+        attendees.push({ email, displayName });
+      }
 
       const location = icalEvent.location ?? undefined;
       const talkUrl = location && TALK_URL_PATTERN.test(location) ? location : undefined;
@@ -199,6 +209,12 @@ export function extractDtstartDtend(ics: string): { dtstart: Date; dtend: Date }
   } catch {
     return undefined;
   }
+}
+
+export function extractSequence(ics: string): number {
+  const m = ics.match(/^SEQUENCE:(\d+)/m);
+  const n = m ? Number(m[1]) : 0;
+  return Number.isFinite(n) ? n : 0;
 }
 
 export function parseIcsObjects(

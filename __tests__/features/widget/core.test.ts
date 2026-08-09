@@ -1,5 +1,5 @@
 import { buildAgendaSnapshot, buildAgendaTimeline } from '@/features/widget/core/agendaSnapshot';
-import { selectOngoingEvent, eventProgress, formatRemaining, remainingMinutes } from '@/features/widget/core/liveEvent';
+import { selectOngoingEvent, eventProgress, formatRemaining, remainingMinutes, displayLocation, shouldClearLiveEvent, meetingProvider } from '@/features/widget/core/liveEvent';
 import type { CalendarEvent } from '@/types';
 
 function ev(partial: Partial<CalendarEvent> & { dtstart: Date; dtend: Date }): CalendarEvent {
@@ -52,7 +52,7 @@ describe('buildAgendaSnapshot', () => {
 
     expect(snap.sections).toHaveLength(2);
     expect(snap.sections[0].isToday).toBe(true);
-    expect(snap.sections[0].items.map((e) => e.uid)).toEqual(['soon']);
+    expect(snap.sections[0].items.map((e) => e.uid)).toEqual(['soon']); // past dropped
     expect(snap.sections[1].isToday).toBe(false);
     expect(snap.sections[1].items.map((e) => e.uid)).toEqual(['tomorrow']);
     expect(snap.nextEvent?.uid).toBe('soon');

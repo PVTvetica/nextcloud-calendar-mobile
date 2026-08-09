@@ -22,6 +22,7 @@ import {
 import type { CalendarEvent, RecurrenceEditScope } from '@/types';
 import { askRecurrenceScope, type RecurrenceScopeStrings } from '@/features/event/recurrenceScope';
 import { decideMoveEventScope } from '@/features/calendar/utils/moveEventScope';
+import { goBackOrHome } from '@/utils/navigationGuard';
 
 dayjs.extend(localizedFormat);
 
@@ -123,8 +124,7 @@ export default function EventDetailScreen() {
             text: t('event.delete'), style: 'destructive',
             onPress: async () => {
               await deleteMutation.mutateAsync({ event, scope });
-              if (router.canGoBack()) router.back();
-              else router.replace('/(tabs)/calendar');
+              goBackOrHome(router);
             },
           },
         ]
@@ -151,11 +151,20 @@ export default function EventDetailScreen() {
   }
 
   if (!event) {
+    if (deleteMutation.isPending) {
+      return (
+        <ViewContainer>
+          <Stack flex vAlign="center" hAlign="center">
+            <Spinner size="large" />
+          </Stack>
+        </ViewContainer>
+      );
+    }
     return (
       <ViewContainer>
         <Stack flex vAlign="center" hAlign="center" gap={16}>
           <Typography variant="body1" color="secondary">{t('event.eventNotFound')}</Typography>
-          <Button variant="link" title={t('event.back')} onPress={() => router.back()} />
+          <Button variant="link" title={t('event.back')} onPress={() => goBackOrHome(router)} />
         </Stack>
       </ViewContainer>
     );
@@ -171,9 +180,9 @@ export default function EventDetailScreen() {
     <ViewContainer>
       <SafeAreaView edges={['top']} style={styles.flex}>
         <ScreenHeader
-          onBack={() => router.back()}
+          onBack={() => goBackOrHome(router)}
           right={canEdit ? (
-            <IconButton variant="plain" size={40} onPress={handleEdit}>
+            <IconButton glass round size={40} onPress={handleEdit} accessibilityLabel={t('event.edit')}>
               <Pencil size={20} color={theme.colors.primary} />
             </IconButton>
           ) : undefined}
@@ -246,14 +255,16 @@ export default function EventDetailScreen() {
               <Stack gap={8}>
                 <SectionHeader title={t('event.attendees')} />
                 <List>
-                  {event.attendees.map((att) => (
-                    <Item
-                      key={att.email}
-                      leading={<Avatar name={att.displayName ?? att.email} size={36} />}
-                      title={att.displayName ?? att.email}
-                      description={att.displayName ? att.email : undefined}
-                    />
-                  ))}
+                  {event.attendees
+                    .filter((a, i, arr) => arr.findIndex((b) => (b.email ?? '').toLowerCase() === (a.email ?? '').toLowerCase()) === i)
+                    .map((att, i) => (
+                      <Item
+                        key={att.email || `attendee-${i}`}
+                        leading={<Avatar name={att.displayName ?? att.email} size={36} />}
+                        title={att.displayName ?? att.email}
+                        description={att.displayName ? att.email : undefined}
+                      />
+                    ))}
                 </List>
               </Stack>
             )}

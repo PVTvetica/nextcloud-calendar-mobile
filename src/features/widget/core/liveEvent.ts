@@ -1,5 +1,40 @@
 import type { CalendarEvent } from '@/types';
+import i18n from '@/utils/i18n';
 import { type LiveEventState, eventDeepLink } from './types';
+
+export function displayLocation(raw: string | undefined): string {
+  if (!raw) return '';
+  const cleaned = raw
+    .replace(/(?:[a-z][a-z0-9+.-]*:\/\/|www\.)[^\s)\]}>]+/gi, ' ')
+    .replace(/(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s)\]}>]*)?/gi, ' ')
+    .replace(/[([{<]\s*[)\]}>]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/^[\s\-–—|,;:·•]+|[\s\-–—|,;:·•]+$/g, '')
+    .trim();
+  if (cleaned) return cleaned;
+  const provider = meetingProvider(raw);
+  return provider ? i18n.t('widget.videoConference', { provider }) : '';
+}
+
+
+const MEETING_PROVIDERS: [RegExp, string][] = [
+  [/\/call\//i, 'Talk'], // Nextcloud Talk
+  [/teams\.(?:microsoft\.(?:com|us)|live\.com)/i, 'Teams'],
+  [/meet\.google\.com/i, 'Google Meet'],
+  [/(?:\.|\/\/)zoom\.us\//i, 'Zoom'],
+  [/whereby\.com/i, 'Whereby'],
+  [/jit\.si/i, 'Jitsi'],
+  [/webex\.com/i, 'Webex'],
+];
+
+
+export function meetingProvider(raw: string | undefined): string | null {
+  if (!raw) return null;
+  for (const [pattern, name] of MEETING_PROVIDERS) {
+    if (pattern.test(raw)) return name;
+  }
+  return null;
+}
 
 export function selectOngoingEvent(events: CalendarEvent[], now: Date = new Date()): LiveEventState | null {
   const t = now.getTime();
@@ -16,9 +51,19 @@ export function selectOngoingEvent(events: CalendarEvent[], now: Date = new Date
     endIso: e.dtend.toISOString(),
     color: e.color,
     deepLink: eventDeepLink(e.uid),
-    location: e.location ?? '',
+    location: displayLocation(e.location),
     attendees: e.attendees.map((a) => a.displayName || a.email).filter(Boolean),
   };
+}
+
+export function shouldClearLiveEvent(
+  current: LiveEventState | null,
+  eventCount: number,
+  now: Date = new Date(),
+): boolean {
+  if (!current) return false;
+  if (new Date(current.endIso).getTime() <= now.getTime()) return true;
+  return eventCount > 0;
 }
 
 export function eventProgress(state: LiveEventState, now: Date = new Date()): number {

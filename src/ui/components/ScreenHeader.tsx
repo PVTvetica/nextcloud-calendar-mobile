@@ -17,44 +17,38 @@ function ScreenHeader({ title, onBack, left, right }: ScreenHeaderProps) {
   const { colors } = useTheme();
 
   const leftSlot = onBack ? (
-    <IconButton variant="plain" size={40} onPress={onBack}>
-      <ChevronLeft size={24} color={colors.primary} />
+    <IconButton variant="ghost" round size={40} onPress={onBack} accessibilityRole="button">
+      <ChevronLeft size={22} color={colors.text} />
     </IconButton>
   ) : (
     left
   );
 
+  const hasActions = Boolean(leftSlot || right);
+
   return (
-    <View
-      style={[
-        styles.header,
-        { backgroundColor: colors.headerBackground, borderBottomColor: colors.border },
-      ]}
-    >
-      <View style={styles.side}>{leftSlot}</View>
+    <View style={styles.container}>
+      {hasActions && (
+        <View style={styles.actions}>
+          {leftSlot}
+          <View style={styles.spacer} />
+          {right}
+        </View>
+      )}
       {title ? (
-        <Typography variant="title" align="center" nowrap style={styles.title}>
+        <Typography variant="h2" numberOfLines={2} style={styles.title}>
           {title}
         </Typography>
-      ) : (
-        <View style={styles.title} />
-      )}
-      <View style={[styles.side, styles.right]}>{right}</View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    minHeight: 56,
-    borderBottomWidth: 1,
-  },
-  side: { minWidth: 56, justifyContent: 'center' },
-  right: { alignItems: 'flex-end' },
-  title: { flex: 1 },
+  container: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8 },
+  actions: { flexDirection: 'row', alignItems: 'center', minHeight: 44 },
+  spacer: { flex: 1 },
+  title: { marginTop: 8 },
 });
 
 export default React.memo(ScreenHeader);

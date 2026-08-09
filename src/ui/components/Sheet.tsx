@@ -2,8 +2,11 @@ import React from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { X } from 'lucide-react-native';
 import AnimatedPressable from './AnimatedPressable';
-import Typography from './Typography';
+import IconButton from './IconButton';
+import ScreenHeader from './ScreenHeader';
 
 interface SheetProps {
   visible: boolean;
@@ -15,6 +18,7 @@ interface SheetProps {
 function Sheet({ visible, onClose, title, children }: SheetProps) {
   const { colors, radius } = useTheme();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -32,11 +36,14 @@ function Sheet({ visible, onClose, title, children }: SheetProps) {
           ]}
         >
           <View style={[styles.grabber, { backgroundColor: colors.border }]} />
-          {title ? (
-            <Typography variant="title" style={styles.title}>
-              {title}
-            </Typography>
-          ) : null}
+          <ScreenHeader
+            title={title}
+            left={
+              <IconButton variant="ghost" round size={40} onPress={onClose} accessibilityLabel={t('common.close')}>
+                <X size={22} color={colors.text} />
+              </IconButton>
+            }
+          />
           {children}
         </View>
       </AnimatedPressable>
@@ -63,7 +70,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 8,
   },
-  title: { marginBottom: 4 },
 });
 
 export default React.memo(Sheet);

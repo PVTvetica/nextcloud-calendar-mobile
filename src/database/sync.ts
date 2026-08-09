@@ -120,6 +120,22 @@ export async function syncCalendars(account: Account): Promise<CalendarMeta[]> {
   return remote;
 }
 
+
+let localWrites = 0;
+
+export function markLocalWrite(): void {
+  localWrites += 1;
+}
+
+export function localWriteEpoch(): number {
+  return localWrites;
+}
+
+export function seriesBaseUid(uid: string): string {
+  const i = uid.indexOf('_occ_');
+  return i === -1 ? uid : uid.slice(0, i);
+}
+
 export async function syncEvents(
   account: Account,
   calendars: CalendarMeta[],
@@ -127,6 +143,7 @@ export async function syncEvents(
   end: Date,
   deleteMissing = true,
 ): Promise<void> {
+  const epoch = localWriteEpoch();
   const remote = await fetchEventsForCalendars(account, calendars, start, end);
   const db = getDatabaseInstance();
   const events = db.get<Event>('events');
@@ -166,6 +183,8 @@ export async function syncEvents(
     if (deleteMissing) {
       for (const [k, r] of byKey) if (!seen.has(k)) ops.push(r.prepareMarkAsDeleted());
     }
+
+    if (localWriteEpoch() !== epoch) return;
 
     if (ops.length > 0) await db.batch(ops);
   }, 30000, 'syncEvents');

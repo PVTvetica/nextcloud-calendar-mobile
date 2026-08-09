@@ -45,7 +45,6 @@
     },
     "qrCameraDenied": "Cameratoegang is geweigerd. Schakel het in bij je apparaatinstellingen om de QR-code te scannen.",
     "qrOpenSettings": "Instellingen openen",
-    "qrHeaderTitle": "Nextcloud-QR scannen",
     "qrInvalidCode": "Geen geldige Nextcloud-login-QR-code. Probeer opnieuw te scannen.",
     "qrTryAgain": "Opnieuw proberen",
     "qrHint": "Open je Nextcloud-dashboard → tik op je avatar → \"Aanmelden via QR-code\""
@@ -163,7 +162,6 @@
       "github": "Bekijken op GitHub",
       "reportBug": "Een bug melden"
     },
-    "accountActive": "Actief",
     "notifications": {
       "title": "Meldingen",
       "liveActivity": "Live-activiteit",
@@ -173,7 +171,6 @@
       "channelName": "Afspraakmeldingen"
     },
     "alerts": {
-      "title": "Meldingen",
       "timed": "Standaardmelding",
       "allDay": "Hele dag",
       "none": "Geen",
@@ -205,6 +202,18 @@
     "liveRemainingShort": "{{duration}}",
     "durationHour": "u",
     "durationMinute": "m",
-    "emptyAgenda": "Geen aankomende afspraken"
+    "emptyAgenda": "Geen aankomende afspraken",
+    "videoConference": "Videovergadering: {{provider}}"
+  },
+  "notifications": {
+    "lead": {
+      "now": "Nu",
+      "minutes": "over {{value}} min",
+      "hours": "over {{value}} u",
+      "hoursMinutes": "over {{value}} u {{minutes}}",
+      "days": "over {{value}} dagen",
+      "today": "Vandaag",
+      "tomorrow": "Morgen"
+    }
   }
 }

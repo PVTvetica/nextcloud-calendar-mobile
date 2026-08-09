@@ -45,7 +45,6 @@
     },
     "qrCameraDenied": "L'accès à la caméra est refusé. Activez-le dans les réglages de l'appareil pour scanner le code QR.",
     "qrOpenSettings": "Ouvrir les réglages",
-    "qrHeaderTitle": "Scanner le QR Nextcloud",
     "qrInvalidCode": "Code QR de connexion Nextcloud invalide. Réessayez de scanner.",
     "qrTryAgain": "Réessayer",
     "qrHint": "Ouvrez votre tableau de bord Nextcloud → appuyez sur votre avatar → « Se connecter via QR code »"
@@ -163,7 +162,6 @@
       "github": "Voir sur GitHub",
       "reportBug": "Signaler un bug"
     },
-    "accountActive": "Actif",
     "notifications": {
       "title": "Notifications",
       "liveActivity": "Activité en direct",
@@ -173,7 +171,6 @@
       "channelName": "Alertes d'événement"
     },
     "alerts": {
-      "title": "Alertes",
       "timed": "Alerte par défaut",
       "allDay": "Journée entière",
       "none": "Aucune",
@@ -205,6 +202,18 @@
     "liveRemainingShort": "{{duration}}",
     "durationHour": "h",
     "durationMinute": "m",
-    "emptyAgenda": "Aucun événement à venir"
+    "emptyAgenda": "Aucun événement à venir",
+    "videoConference": "Visioconférence : {{provider}}"
+  },
+  "notifications": {
+    "lead": {
+      "now": "Maintenant",
+      "minutes": "dans {{value}} min",
+      "hours": "dans {{value}} h",
+      "hoursMinutes": "dans {{value}} h {{minutes}}",
+      "days": "dans {{value}} jours",
+      "today": "Aujourd'hui",
+      "tomorrow": "Demain"
+    }
   }
 }
