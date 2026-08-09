@@ -33,6 +33,7 @@ import {
   stabilizeDayIndex,
 } from '../utils/grid';
 import type { GridEvent } from '../utils/toGridEvents';
+import { GridLines } from './GridLines';
 import { HourRail } from './HourRail';
 import { TimeGridHeader } from './TimeGridHeader';
 import { TimeGridPage } from './TimeGridPage';
@@ -319,6 +320,10 @@ function TimeGridViewImpl({
             showsVerticalScrollIndicator={false}
           >
             <Animated.View style={[styles.gridRow, gridHeightStyle]}>
+              {/* Behind the rail and the pager: one set of horizontal rules for
+                  the whole grid rather than 24 flex cells per day column. The
+                  opaque rail covers the part that runs behind it. */}
+              <GridLines />
               <HourRail />
               <InfinitePager
                 key={pagerKey}

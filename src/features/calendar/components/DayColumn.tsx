@@ -7,8 +7,6 @@ import type { GridEvent } from '../utils/toGridEvents';
 import type { PositionedEvent } from '../utils/eventLayout';
 import { TimeGridEvent } from './TimeGridEvent';
 
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
-
 interface Props {
   date: Date;
   positioned: PositionedEvent[];
@@ -23,23 +21,12 @@ function DayColumnImpl({ date, positioned, hourRowHeight, now, onPressSlot, onPr
   const { colors } = useTheme();
   const isToday = dayjs(now).isSame(date, 'day');
 
-  // flex, not a pixel height: the cells divide the container's height, so a
-  // pinch that animates that height carries every hour line with it without
-  // an animated node per cell.
-  const cellStyle = useMemo(
-    () => ({
-      borderLeftWidth: 1,
-      borderBottomWidth: 1,
-      borderColor: colors.border,
-      flex: 1,
-      justifyContent: 'space-evenly' as const,
-    }),
+  // The column's own left edge, drawn once. It used to be the left border of
+  // each of 24 hour cells stacked into a continuous line — 24 nodes to draw
+  // what one border does.
+  const columnStyle = useMemo(
+    () => [styles.column, { borderLeftWidth: 1, borderLeftColor: colors.border }],
     [colors.border]
-  );
-
-  const subCellStyle = useMemo(
-    () => ({ borderLeftWidth: 1, borderBottomWidth: 1, borderColor: colors.borderSubtle, height: 1 }),
-    [colors.borderSubtle]
   );
 
   const handlePress = useCallback(
@@ -52,13 +39,11 @@ function DayColumnImpl({ date, positioned, hourRowHeight, now, onPressSlot, onPr
   );
 
   return (
-    <View style={styles.column}>
-      {HOURS.map((hour) => (
-        <View key={hour} testID={`hour-cell-${hour}`} style={cellStyle}>
-          <View style={subCellStyle} />
-        </View>
-      ))}
-
+    // The horizontal hour and half-hour rules are not here: GridLines draws
+    // them once for the whole grid, since they are identical in every column
+    // and every page. Keeping them per-column cost ~1000 flex nodes per frame
+    // of a pinch.
+    <View testID="day-column" style={columnStyle}>
       <Pressable testID="day-column-surface" style={StyleSheet.absoluteFill} onPress={handlePress} />
 
       {positioned.map(({ event, leftPct, widthPct, zIndex }) => {

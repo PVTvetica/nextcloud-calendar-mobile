@@ -26,11 +26,15 @@ const positioned = (e: GridEvent) => [{ event: e, leftPct: 0, widthPct: 100, zIn
 const now = new Date(2026, 7, 7, 12, 0);
 
 describe('DayColumn', () => {
-  it('renders 24 hour cells', () => {
-    const { getAllByTestId } = render(
+  it('draws no horizontal rules of its own', () => {
+    // GridLines draws them once for the whole grid instead. Per-column cells
+    // were ~1000 flex nodes to re-lay out on every frame of a pinch, all
+    // drawing the same lines.
+    const { queryAllByTestId } = render(
       <DayColumn date={date} positioned={[]} hourRowHeight={60} now={now} onPressSlot={jest.fn()} onPressEvent={jest.fn()} />
     );
-    expect(getAllByTestId(/^hour-cell-/)).toHaveLength(24);
+    expect(queryAllByTestId(/^hour-cell-/)).toHaveLength(0);
+    expect(queryAllByTestId(/-line-/)).toHaveLength(0);
   });
 
   it('renders its events', () => {
@@ -137,18 +141,12 @@ describe('DayColumn', () => {
     expect(boxStyle.marginRight).toBeUndefined();
   });
 
-  it('divides the column into 24 equal hour cells rather than pixel heights', () => {
-    // The cells share whatever height the animated container gives them, so a
-    // live zoom moves them without giving each cell an animated node.
-    const { getAllByTestId } = render(
+  it('carries its own left divider rather than stacking 24 cell borders', () => {
+    // One border on the column draws what 24 stacked cell borders used to.
+    const { getByTestId } = render(
       <DayColumn date={date} positioned={[]} hourRowHeight={60} now={now} onPressSlot={jest.fn()} onPressEvent={jest.fn()} />
     );
-    const cells = getAllByTestId(/^hour-cell-/);
-    expect(cells).toHaveLength(24);
-    for (const cell of cells) {
-      const flat = StyleSheet.flatten(cell.props.style);
-      expect(flat.flex).toBe(1);
-      expect(flat.height).toBeUndefined();
-    }
+    const flat = StyleSheet.flatten(getByTestId('day-column').props.style);
+    expect(flat.borderLeftWidth).toBe(1);
   });
 });
