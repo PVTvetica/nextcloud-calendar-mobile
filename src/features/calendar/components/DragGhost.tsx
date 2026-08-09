@@ -17,9 +17,10 @@ interface Props {
 /**
  * The single animated box shown while an event is being dragged or resized.
  *
- * Deliberately the only animated node in the grid: event boxes stay mute so the
- * cost of a page does not scale with a gesture that touches one event at a
- * time. It is mounted only while a drag is in flight.
+ * Deliberately one of two animated nodes in the grid (the other drives the
+ * grid's height for pinch zoom): event boxes stay mute so the cost of a page
+ * does not scale with a gesture that touches one event at a time. It is mounted
+ * only while a drag is in flight.
  *
  * It wears the event's own appearance rather than a placeholder's — no outline,
  * no handles — so the gesture reads as picking the event up. A light shadow
