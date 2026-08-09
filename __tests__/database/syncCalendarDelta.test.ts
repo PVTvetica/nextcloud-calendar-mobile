@@ -183,6 +183,29 @@ describe('syncEvents — local writes win over an in-flight pull', () => {
     expect(batch).not.toHaveBeenCalled();
   });
 
+  it('aborts before preparing any record, leaving none with pending changes', async () => {
+    // The regression: prepareUpdate / prepareMarkAsDeleted mutate the cached
+    // WatermelonDB instance synchronously and are cleared only by db.batch. If
+    // the epoch guard aborts AFTER preparing, the instance keeps its pending
+    // state, and the next sync's prepareUpdate on that same cached instance
+    // throws "Cannot update a record with pending changes". So on abort, nothing
+    // may be prepared at all.
+    const edited = windowRow('edited-uid');
+    const dropped = windowRow('dropped-uid');
+    mockFetchForCalendars.mockImplementation(async () => {
+      markLocalWrite();
+      return [{ ...evt('h1'), uid: 'edited-uid', summary: 'stale' }];
+    });
+    const { db, batch } = makeDb({ eventRows: [edited, dropped] });
+    mockGetDb.mockReturnValue(db);
+
+    await syncEvents(account, [calendar], start, end);
+
+    expect(batch).not.toHaveBeenCalled();
+    expect(edited.prepareUpdate).not.toHaveBeenCalled();
+    expect(dropped.prepareMarkAsDeleted).not.toHaveBeenCalled();
+  });
+
   it('still removes a row the server dropped when nothing was written locally', async () => {
     const stale = windowRow('stale-uid');
     mockFetchForCalendars.mockResolvedValue([]);

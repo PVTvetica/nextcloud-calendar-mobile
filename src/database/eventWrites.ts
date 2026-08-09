@@ -75,6 +75,7 @@ export async function shiftSeriesDates(
   patch: Omit<Partial<CalendarEvent>, 'dtstart' | 'dtend'>,
 ): Promise<void> {
   const db = getDatabaseInstance();
+  markLocalWrite();
   await safeWrite(db, async () => {
     const rows = await events().query(Q.where('account_id', accountId)).fetch();
     const target = rows.filter((r) => seriesBaseUid(r.uid) === baseUid);
