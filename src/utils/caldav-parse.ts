@@ -217,6 +217,27 @@ export function extractSequence(ics: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+const WRITER_MANAGED_PROPS = new Set([
+  'uid', 'dtstamp', 'sequence', 'dtstart', 'dtend', 'summary', 'description',
+  'location', 'rrule', 'organizer', 'attendee', 'recurrence-id', 'last-modified', 'prodid',
+]);
+
+export function extractExtraVeventLines(ics: string): string[] {
+  try {
+    const comp = new ICAL.Component(parseIcsToJcal(ics));
+    const vevents = comp.getAllSubcomponents('vevent');
+    if (vevents.length === 0) return [];
+    const master =
+      vevents.find((v: ICAL.Component) => !v.getFirstPropertyValue('recurrence-id')) ?? vevents[0];
+    return master
+      .getAllProperties()
+      .filter((p: ICAL.Property) => !WRITER_MANAGED_PROPS.has(p.name))
+      .map((p: ICAL.Property) => p.toICALString());
+  } catch {
+    return [];
+  }
+}
+
 export function parseIcsObjects(
   items: { ics: string; href: string }[],
   meta: ParseCalMeta,

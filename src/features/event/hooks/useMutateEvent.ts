@@ -6,8 +6,8 @@ import dayjs from 'dayjs';
 import { putEvent, updateEvent, deleteEvent, moveEvent, fetchEventIcs } from '@/services/nextcloud/caldav';
 import { createTalkRoom } from '@/services/nextcloud/talk';
 import { describeMutationError } from '@/services/shared/errors';
-import { buildIcs, buildAllDayIcs, buildExceptionIcs, injectExdate, truncateRruleUntil } from '@/utils/ics';
-import { parseIcsObjects, extractDtstartTzid, extractSequence, extractDtstartDtend } from '@/utils/caldav-parse';
+import { buildIcs, buildAllDayIcs, buildExceptionIcs, injectExdate, truncateRruleUntil, shiftIcsDates } from '@/utils/ics';
+import { parseIcsObjects, extractDtstartTzid, extractSequence, extractDtstartDtend, extractExtraVeventLines } from '@/utils/caldav-parse';
 import { isValidTimeZone } from '@/utils/timezone';
 import i18n from '@/utils/i18n';
 import {
@@ -85,6 +85,7 @@ function buildIcsForInput(
   description: string,
   timezone: string,
   sequence = 0,
+  extraLines: string[] = [],
 ): string {
   return input.allDay
     ? buildAllDayIcs({
@@ -92,14 +93,14 @@ function buildIcsForInput(
         dtstart: input.dtstart, dtend: input.dtend,
         organizerEmail: input.organizerEmail, organizerName: input.organizerName,
         attendees: input.attendees, rrule: input.rrule, alarmMinutes: input.alarmMinutes,
-        sequence,
+        sequence, extraLines,
       })
     : buildIcs({
         uid, summary: input.summary, description, location,
         dtstart: input.dtstart, dtend: input.dtend,
         organizerEmail: input.organizerEmail, organizerName: input.organizerName,
         attendees: input.attendees, timezone, rrule: input.rrule, alarmMinutes: input.alarmMinutes,
-        sequence,
+        sequence, extraLines,
       });
 }
 
@@ -213,8 +214,8 @@ export function useCreateEvent(account: Account, calendars: CalendarMeta[]) {
 }
 
 export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
-  return useAction<{ event: CalendarEvent; input: CreateEventInput; scope?: RecurrenceEditScope }>(
-    useCallback(async ({ event, input, scope = 'all' }) => {
+  return useAction<{ event: CalendarEvent; input: CreateEventInput; scope?: RecurrenceEditScope; datesOnly?: boolean }>(
+    useCallback(async ({ event, input, scope = 'all', datesOnly = false }) => {
       const base = seriesBaseUid(event.uid);
       const snapshot = await snapshotByBase(account.id, base);
 
@@ -234,10 +235,10 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
       };
 
       if (shiftsWholeSeries) {
-        await shiftSeriesDates(account.id, base, deltaStart, deltaEnd, nonTemporalPatch);
+        await shiftSeriesDates(account.id, base, deltaStart, deltaEnd, datesOnly ? {} : nonTemporalPatch);
       } else {
         await patchByUid(account.id, event.uid, {
-          ...nonTemporalPatch,
+          ...(datesOnly ? {} : nonTemporalPatch),
           dtstart,
           dtend,
           ...(targetCal && {
@@ -254,26 +255,47 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
         const scheduled = withServerOrganizer(input, event);
 
         if (!event.isRecurring || scope === 'all') {
-          let uid = event.uid;
-          let masterInput = scheduled;
-          let sequence = 0;
-          if (event.isRecurring) {
+          if (datesOnly) {
+            // Drag & drop only moves the event in time. Patch DTSTART/DTEND on
+            // the authoritative server copy so description, location, attendees
+            // and any other property are kept — never rebuilt from the local
+            // event, which the grid may hold only partially.
             const masterIcs = await fetchEventIcs(account, event.href);
-            timezone = extractDtstartTzid(masterIcs) ?? timezone;
-            sequence = extractSequence(masterIcs) + 1;
-            const bounds = extractDtstartDtend(masterIcs);
-            if (!bounds) throw new Error('Cannot read the series master to shift it');
-            uid = seriesBaseUid(event.uid);
-            masterInput = shiftedMasterInput(scheduled, bounds, deltaStart, deltaEnd);
-          } else {
-            try {
-              const masterIcs = await fetchEventIcs(account, event.href);
-              sequence = extractSequence(masterIcs) + 1;
-            } catch {
+            const tz = extractDtstartTzid(masterIcs) ?? timezone;
+            const sequence = extractSequence(masterIcs) + 1;
+            let newStart = input.dtstart;
+            let newEnd = input.dtend;
+            if (event.isRecurring) {
+              const bounds = extractDtstartDtend(masterIcs);
+              if (!bounds) throw new Error('Cannot read the series master to shift it');
+              newStart = new Date(bounds.dtstart.getTime() + deltaStart);
+              newEnd = new Date(bounds.dtend.getTime() + deltaEnd);
             }
+            await updateEvent(account, event.href, shiftIcsDates(masterIcs, newStart, newEnd, tz, input.allDay, sequence));
+          } else {
+            let uid = event.uid;
+            let masterInput = scheduled;
+            let sequence = 0;
+            let preserved: string[] = [];
+            if (event.isRecurring) {
+              const masterIcs = await fetchEventIcs(account, event.href);
+              timezone = extractDtstartTzid(masterIcs) ?? timezone;
+              sequence = extractSequence(masterIcs) + 1;
+              preserved = extractExtraVeventLines(masterIcs);
+              const bounds = extractDtstartDtend(masterIcs);
+              if (!bounds) throw new Error('Cannot read the series master to shift it');
+              uid = seriesBaseUid(event.uid);
+              masterInput = shiftedMasterInput(scheduled, bounds, deltaStart, deltaEnd);
+            } else {
+              try {
+                const masterIcs = await fetchEventIcs(account, event.href);
+                sequence = extractSequence(masterIcs) + 1;
+                preserved = extractExtraVeventLines(masterIcs);
+              } catch {
+              }
+            }
+            await updateEvent(account, event.href, buildIcsForInput(uid, masterInput, location, description, timezone, sequence, preserved));
           }
-          const ics = buildIcsForInput(uid, masterInput, location, description, timezone, sequence);
-          await updateEvent(account, event.href, ics);
           if (!event.isRecurring && input.calendarId !== event.calendarId) {
             const cal = calendars.find((c) => c.id === input.calendarId);
             if (!cal) throw new Error('Target calendar not found');
@@ -291,6 +313,7 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
             organizerEmail: scheduled.organizerEmail, organizerName: input.organizerName,
             attendees: input.attendees, timezone, recurrenceId: event.dtstart,
             sequence: extractSequence(masterIcs) + 1,
+            extraLines: extractExtraVeventLines(masterIcs),
           });
           await putEvent(account, cal, exceptionUid, exIcs);
         } else if (scope === 'thisAndFollowing') {
@@ -300,7 +323,7 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
           const cal = calendars.find((c) => c.id === event.calendarId) ?? calendars.find((c) => c.id === input.calendarId);
           if (!cal) throw new Error('Calendar not found for new series');
           const newUid = Crypto.randomUUID();
-          await putEvent(account, cal, newUid, buildIcsForInput(newUid, scheduled, location, description, timezone));
+          await putEvent(account, cal, newUid, buildIcsForInput(newUid, scheduled, location, description, timezone, 0, extractExtraVeventLines(masterIcs)));
         }
       } catch (error) {
         await restoreSeries(account.id, base, snapshot);
