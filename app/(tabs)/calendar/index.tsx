@@ -225,9 +225,9 @@ export default function CalendarScreen() {
         toggleCalendarVisibility={toggleCalendarVisibility}
         toggleCalendarNotifications={toggleCalendarNotifications}
         onClose={drawer.closeDrawer}
-        onOpenAccount={() => {
+        onNavigateSettings={() => {
           drawer.closeDrawer();
-          router.push(activeAccount ? `/(tabs)/settings/account/${activeAccount.id}` : '/(tabs)/settings');
+          router.push('/(tabs)/settings');
         }}
       />
     </ViewContainer>
