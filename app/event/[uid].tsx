@@ -4,7 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { Pencil, Clock, CalendarDays, MapPin, Video, Repeat, Trash2, Copy, Check } from 'lucide-react-native';
-import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter, useTheme } from 'expo-router';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
@@ -52,6 +52,19 @@ export default function EventDetailScreen() {
   const { data: calendars = [] } = useCalendars(activeAccount);
 
   const event = useEventByUid(activeAccountId, uid);
+
+  const navigation = useNavigation();
+  useEffect(() => {
+    const state = navigation.getState();
+    if (!state || state.type !== 'stack') return;
+    const routes = state.routes;
+    const top = routes.length - 1;
+    if (top < 1) return;
+    const topName = routes[top]?.name;
+    const hasDuplicateBelow = routes.slice(0, top).some((r) => r.name === topName);
+    if (!hasDuplicateBelow) return;
+    navigation.reset({ index: 1, routes: [routes[0], routes[top]] } as Parameters<typeof navigation.reset>[0]);
+  }, [navigation]);
 
   const start = useMemo(() => dayjs().subtract(3, 'months').toDate(), []);
   const end = useMemo(() => dayjs().add(3, 'months').toDate(), []);
@@ -113,7 +126,7 @@ export default function EventDetailScreen() {
     const doDelete = (scope: RecurrenceEditScope) => {
       Alert.alert(
         t('event.deleteEvent'),
-        scope === 'all'
+        scope === 'all' && event.isRecurring
           ? t('event.deleteAllMsg')
           : scope === 'thisAndFollowing'
           ? t('event.deleteThisAndFollowingMsg')
