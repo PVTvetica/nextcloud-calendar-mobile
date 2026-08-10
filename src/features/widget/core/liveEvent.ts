@@ -2,12 +2,16 @@ import type { CalendarEvent } from '@/types';
 import i18n from '@/utils/i18n';
 import { type LiveEventState, eventDeepLink } from './types';
 
-export function displayLocation(raw: string | undefined): string {
-  if (!raw) return '';
-  const cleaned = raw
+export function stripUrls(raw: string): string {
+  return raw
     .replace(/(?:[a-z][a-z0-9+.-]*:\/\/|www\.)[^\s)\]}>]+/gi, ' ')
     .replace(/(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s)\]}>]*)?/gi, ' ')
-    .replace(/[([{<]\s*[)\]}>]/g, ' ')
+    .replace(/[([{<]\s*[)\]}>]/g, ' ');
+}
+
+export function displayLocation(raw: string | undefined): string {
+  if (!raw) return '';
+  const cleaned = stripUrls(raw)
     .replace(/\s+/g, ' ')
     .replace(/^[\s\-–—|,;:·•]+|[\s\-–—|,;:·•]+$/g, '')
     .trim();

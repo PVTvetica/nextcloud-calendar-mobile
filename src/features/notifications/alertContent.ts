@@ -1,4 +1,5 @@
 import type { CalendarEvent } from '@/types';
+import { displayLocation, meetingProvider, stripUrls } from '@/features/widget/core/liveEvent';
 import i18n from '@/utils/i18n';
 
 const MAX_DESCRIPTION = 200;
@@ -35,20 +36,33 @@ export function leadLabel(event: Pick<AlertEvent, 'dtstart' | 'allDay'>, at: Dat
 
 function cleanDescription(description: string | undefined): string | undefined {
   if (!description) return undefined;
-  const text = description
+  const text = stripUrls(description)
     .replace(/\r\n?/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ \t]+/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
     .trim();
   if (!text) return undefined;
   return text.length > MAX_DESCRIPTION ? `${text.slice(0, MAX_DESCRIPTION - 1).trimEnd()}…` : text;
 }
 
+function videoConferenceLabel(provider: string): string {
+  return i18n.t('widget.videoConference', { provider });
+}
+
 export function alertBody(event: AlertEvent, at: Date): string {
   const parts = [leadLabel(event, at)];
 
-  const location = event.location?.trim();
+  const location = displayLocation(event.location);
   if (location) parts.push(location);
+
+  const locationProvider = meetingProvider(event.location);
+  const locationShowsVisio =
+    !!locationProvider && location === videoConferenceLabel(locationProvider);
+  const descriptionProvider = meetingProvider(event.description);
+  if (descriptionProvider && !locationShowsVisio) {
+    parts.push(videoConferenceLabel(descriptionProvider));
+  }
 
   const description = cleanDescription(event.description);
   if (description) parts.push(description);

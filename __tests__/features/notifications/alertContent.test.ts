@@ -73,4 +73,40 @@ describe('alertBody', () => {
     expect(description).toHaveLength(200);
     expect(description.endsWith('…')).toBe(true);
   });
+
+  it('turns a bare meeting URL in the location into a video-conference label', () => {
+    const body = alertBody(
+      { ...base, location: 'https://cloud.example.com/call/abc123' },
+      new Date(2026, 7, 10, 9, 0),
+    );
+    expect(body).toBe('Now\nVideo conference: Talk');
+  });
+
+  it('surfaces a meeting URL found in the description and strips the raw link', () => {
+    const body = alertBody(
+      { ...base, description: 'Join here https://meet.google.com/abc-defg' },
+      new Date(2026, 7, 10, 9, 0),
+    );
+    expect(body).toBe('Now\nVideo conference: Google Meet\nJoin here');
+  });
+
+  it('does not duplicate the video-conference line when location and description share it', () => {
+    const body = alertBody(
+      {
+        ...base,
+        location: 'https://cloud.example.com/call/x',
+        description: 'Talk link https://cloud.example.com/call/x',
+      },
+      new Date(2026, 7, 10, 9, 0),
+    );
+    expect(body).toBe('Now\nVideo conference: Talk\nTalk link');
+  });
+
+  it('strips a non-meeting URL from the description without adding a visio line', () => {
+    const body = alertBody(
+      { ...base, description: 'See https://example.com/docs' },
+      new Date(2026, 7, 10, 9, 0),
+    );
+    expect(body).toBe('Now\nSee');
+  });
 });
