@@ -1,6 +1,6 @@
 import React from 'react';
 import { HStack, Image, ProgressView, RoundedRectangle, Spacer, Text, VStack, ZStack } from '@expo/ui/swift-ui';
-import { clipShape, font, foregroundStyle, frame, opacity, padding, progressViewStyle, tint } from '@expo/ui/swift-ui/modifiers';
+import { clipShape, font, foregroundStyle, frame, opacity, padding, progressViewStyle, tint, widgetURL } from '@expo/ui/swift-ui/modifiers';
 import { after, createLiveActivity, type LiveActivity } from 'expo-widgets';
 import dayjs from 'dayjs';
 
@@ -17,6 +17,7 @@ interface ActivityProps {
   color: string;
   startMs: number;
   endMs: number;
+  link: string;
 }
 
 function toProps(state: LiveEventState): ActivityProps {
@@ -28,6 +29,7 @@ function toProps(state: LiveEventState): ActivityProps {
     color: state.color,
     startMs: new Date(state.startIso).getTime(),
     endMs: new Date(state.endIso).getTime(),
+    link: state.link,
   };
 }
 
@@ -102,7 +104,7 @@ const CalendarLiveActivity = (props: ActivityProps) => {
       endPoint: { x: 1, y: 1 },
     };
     return (
-      <ZStack modifiers={[frame({ maxWidth: Infinity }), clipShape('roundedRectangle', 24)]}>
+      <ZStack modifiers={[widgetURL(props.link), frame({ maxWidth: Infinity }), clipShape('roundedRectangle', 24)]}>
         <RoundedRectangle cornerRadius={24} modifiers={[foregroundStyle(bg), frame({ maxWidth: Infinity, maxHeight: Infinity })]} />
         <Image
           systemName="calendar"
@@ -156,13 +158,9 @@ const CalendarLiveActivity = (props: ActivityProps) => {
 
 const activity = createLiveActivity<ActivityProps>(ACTIVITY_NAME, CalendarLiveActivity);
 
-// ActivityKit's `.after(date)` dismissal policy is only honored within a ~4h
-// window; beyond that iOS clamps the date and would dismiss a long event early.
 const DISMISS_WINDOW_MS = 4 * 60 * 60 * 1000;
 
 let instance: LiveActivity<ActivityProps> | null = null;
-// True when `instance` was ended with a scheduled auto-dismiss: iOS owns its
-// removal now, so it can no longer be updated and must not be touched again.
 let scheduledEnd = false;
 
 function trackedInstance(): LiveActivity<ActivityProps> | null {
@@ -176,15 +174,11 @@ export const liveActivity: WidgetSurface<LiveEventState> = {
   update: async (state) => {
     const previous = readLiveEvent();
     const props = toProps(state);
-    const sameEvent = !!previous && previous.deepLink === state.deepLink;
+    const sameEvent = !!previous && previous.link === state.link;
     let current = trackedInstance();
 
     if (sameEvent && current) {
-      // Short event already on screen with a native auto-dismiss scheduled:
-      // nothing to do. Re-running would either fail (it is ended) or spawn a
-      // duplicate — this is what the 60s sync loop hits most of the time.
       if (scheduledEnd) return;
-      // Long event kept live (no native dismiss): refresh it in place.
       try {
         await current.update(props);
         writeLiveEvent(state);
@@ -194,7 +188,6 @@ export const liveActivity: WidgetSurface<LiveEventState> = {
         current = null;
       }
     } else if (current) {
-      // A different event is on screen — remove it so its deep link is gone.
       try {
         await current.end('immediate');
       } catch {
@@ -207,13 +200,9 @@ export const liveActivity: WidgetSurface<LiveEventState> = {
     const now = Date.now();
     const canSchedule = props.endMs > now && props.endMs - now <= DISMISS_WINDOW_MS;
     try {
-      const started = activity.start(props, state.deepLink);
+      const started = activity.start(props, state.link);
       instance = started;
       if (canSchedule) {
-        // Schedule the dismissal at the event end so iOS removes the Live
-        // Activity on time even if no JS runs (app backgrounded or killed).
-        // Trade-off: an ended activity leaves the Dynamic Island; the Lock
-        // Screen banner + native countdown remain until the event ends.
         await started.end(after(new Date(props.endMs)), props, new Date(props.endMs));
         scheduledEnd = true;
       } else {

@@ -101,7 +101,7 @@ describe('selectOngoingEvent', () => {
 
 describe('eventProgress / remainingMinutes', () => {
   const state = {
-    uid: 'u', title: 'T', color: '#000', deepLink: 'x',
+    uid: 'u', title: 'T', color: '#000', link: 'x',
     startIso: '2026-08-01T12:00:00Z', endIso: '2026-08-01T13:00:00Z',
     location: '', attendees: [],
   };
