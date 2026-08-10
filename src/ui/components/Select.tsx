@@ -1,11 +1,14 @@
 import React, { useRef, useState, type ReactNode } from 'react';
 import { View, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { ChevronUp, ChevronDown, Check } from 'lucide-react-native';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useTheme } from 'expo-router';
 
 import Typography from './Typography';
 import AnimatedPressable from './AnimatedPressable';
 import Spinner from './Spinner';
+
+const LIQUID_GLASS = isLiquidGlassAvailable();
 
 export interface SelectOption<T> {
   value: T;
@@ -20,6 +23,7 @@ interface SelectProps<T> {
   onChange: (value: T) => void;
   variant?: 'row' | 'icon';
   icon?: (color: string) => ReactNode;
+  glass?: boolean;
   busy?: boolean;
   accessibilityLabel?: string;
   disabled?: boolean;
@@ -33,9 +37,10 @@ const ICON_DROPDOWN_WIDTH = 240;
 type Anchor = { x: number; y: number; width: number; height: number };
 
 function Select<T>({
-  value, options, onChange, variant = 'row', icon, busy, accessibilityLabel, disabled,
+  value, options, onChange, variant = 'row', icon, glass = false, busy, accessibilityLabel, disabled,
 }: SelectProps<T>) {
   const { colors } = useTheme();
+  const onGlass = glass && LIQUID_GLASS;
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const triggerRef = useRef<View>(null);
@@ -77,7 +82,21 @@ function Select<T>({
             hitSlop={10}
             onPress={toggle}
           >
-            {busy ? <Spinner size="small" color="secondary" /> : icon?.(colors.textSecondary)}
+            <View
+              style={[
+                styles.iconButton,
+                {
+                  backgroundColor: onGlass ? 'transparent' : colors.surface,
+                  borderWidth: onGlass ? 0 : 1.5,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              {onGlass && (
+                <GlassView glassEffectStyle="regular" isInteractive style={[StyleSheet.absoluteFill, styles.iconGlass]} />
+              )}
+              {busy ? <Spinner size="small" color="secondary" /> : icon?.(colors.text)}
+            </View>
           </AnimatedPressable>
         ) : (
           <AnimatedPressable
@@ -142,6 +161,15 @@ function Select<T>({
 }
 
 const styles = StyleSheet.create({
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  iconGlass: { borderRadius: 20 },
   trigger: {
     flexDirection: 'row',
     alignItems: 'center',

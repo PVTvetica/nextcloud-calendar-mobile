@@ -11,7 +11,8 @@
     "errorNotFound": "Dieses Element existiert nicht mehr auf dem Server.",
     "errorServer": "Der Server ist vorübergehend nicht verfügbar. Bitte später erneut versuchen.",
     "errorRateLimited": "Zu viele Anfragen. Bitte warten Sie kurz und versuchen Sie es erneut.",
-    "errorRateLimitedRetry": "Zu viele Anfragen. Bitte in {{seconds}} s erneut versuchen."
+    "errorRateLimitedRetry": "Zu viele Anfragen. Bitte in {{seconds}} s erneut versuchen.",
+    "back": "Zurück"
   },
   "tabs": {
     "calendar": "Kalender",
@@ -136,6 +137,19 @@
   "settings": {
     "title": "Einstellungen",
     "appearance": "Darstellung",
+    "calendar": "Kalender",
+    "accessibility": {
+      "title": "Barrierefreiheit",
+      "haptics": "Haptisches Feedback",
+      "hapticsHint": "Bei Tippen und Interaktionen vibrieren.",
+      "reduceMotion": "Bewegung reduzieren",
+      "reduceMotionHint": "Animationen in der App minimieren."
+    },
+    "sections": {
+      "general": "Allgemein",
+      "alerts": "Hinweise",
+      "app": "Anwendung"
+    },
     "theme": "Design",
     "themeSystem": "System",
     "themeLight": "Hell",
@@ -157,6 +171,7 @@
     "removeMsg": "„{{name}}“ von diesem Gerät entfernen?",
     "version": "v{{version}}",
     "about": {
+      "title": "Über",
       "name": "Nextcloud Calendar",
       "description": "Eine quelloffene mobile Kalender-App für Nextcloud.",
       "github": "Auf GitHub ansehen",
@@ -195,7 +210,36 @@
       "useDefault": "Standard",
       "timedHint": "Gilt für Termine ohne eigene Erinnerung.",
       "allDayHint": "Wird am gewählten Tag um 9:00 ausgelöst."
-    }
+    },
+    "account": {
+      "title": "Konto",
+      "notFound": "Konto nicht gefunden.",
+      "displayName": "Anzeigename",
+      "email": "E-Mail",
+      "emailHint": "Wird als Organisator der von Ihnen erstellten Termine verwendet.",
+      "server": "Server",
+      "serverUrl": "Serveradresse",
+      "username": "Benutzername",
+      "connection": "Verbindung",
+      "reconnectHint": "Geben Sie ein neues App-Passwort ein, wenn das alte widerrufen wurde.",
+      "appPassword": "App-Passwort",
+      "scanQr": "QR-Code scannen",
+      "reconnect": "Neu verbinden",
+      "save": "Speichern",
+      "saved": "Änderungen gespeichert.",
+      "reconnected": "Konto neu verbunden.",
+      "useThisAccount": "Dieses Konto verwenden",
+      "delete": "Konto entfernen",
+      "errors": {
+        "required": "Dieses Feld ist erforderlich.",
+        "invalidEmail": "Ungültige E-Mail-Adresse.",
+        "accountMismatch": "Dieser QR-Code gehört zu einem anderen Konto."
+      },
+      "connectionLost": "Die Verbindung zu diesem Server ist abgelaufen. Verbinden Sie sich neu, um weiter zu synchronisieren.",
+      "use": "Verwenden",
+      "editOnNextcloud": "In Nextcloud bearbeiten"
+    },
+    "accountActive": "Aktiv"
   },
   "widget": {
     "liveRemaining": "noch {{duration}}",

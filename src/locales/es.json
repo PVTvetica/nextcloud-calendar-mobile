@@ -11,7 +11,8 @@
     "errorNotFound": "Este elemento ya no existe en el servidor.",
     "errorServer": "El servidor no está disponible temporalmente. Inténtalo más tarde.",
     "errorRateLimited": "Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.",
-    "errorRateLimitedRetry": "Demasiadas solicitudes. Inténtalo de nuevo en {{seconds}} s."
+    "errorRateLimitedRetry": "Demasiadas solicitudes. Inténtalo de nuevo en {{seconds}} s.",
+    "back": "Atrás"
   },
   "tabs": {
     "calendar": "Calendario",
@@ -136,6 +137,19 @@
   "settings": {
     "title": "Ajustes",
     "appearance": "Apariencia",
+    "calendar": "Calendario",
+    "accessibility": {
+      "title": "Accesibilidad",
+      "haptics": "Respuesta háptica",
+      "hapticsHint": "Vibrar al tocar e interactuar.",
+      "reduceMotion": "Reducir movimiento",
+      "reduceMotionHint": "Minimizar las animaciones en la app."
+    },
+    "sections": {
+      "general": "General",
+      "alerts": "Alertas",
+      "app": "Aplicación"
+    },
     "theme": "Tema",
     "themeSystem": "Sistema",
     "themeLight": "Claro",
@@ -157,6 +171,7 @@
     "removeMsg": "¿Eliminar «{{name}}» de este dispositivo?",
     "version": "v{{version}}",
     "about": {
+      "title": "Acerca de",
       "name": "Nextcloud Calendar",
       "description": "Una aplicación de calendario móvil de código abierto para Nextcloud.",
       "github": "Ver en GitHub",
@@ -195,7 +210,36 @@
       "useDefault": "Predeterminado",
       "timedHint": "Se aplica a los eventos sin alerta propia.",
       "allDayHint": "Se activa a las 9:00 del día elegido."
-    }
+    },
+    "account": {
+      "title": "Cuenta",
+      "notFound": "Cuenta no encontrada.",
+      "displayName": "Nombre visible",
+      "email": "Correo electrónico",
+      "emailHint": "Se usa como organizador de los eventos que creas.",
+      "server": "Servidor",
+      "serverUrl": "Dirección del servidor",
+      "username": "Nombre de usuario",
+      "connection": "Conexión",
+      "reconnectHint": "Introduce una nueva contraseña de aplicación si la anterior fue revocada.",
+      "appPassword": "Contraseña de aplicación",
+      "scanQr": "Escanear un código QR",
+      "reconnect": "Reconectar",
+      "save": "Guardar",
+      "saved": "Cambios guardados.",
+      "reconnected": "Cuenta reconectada.",
+      "useThisAccount": "Usar esta cuenta",
+      "delete": "Eliminar cuenta",
+      "errors": {
+        "required": "Este campo es obligatorio.",
+        "invalidEmail": "Dirección de correo no válida.",
+        "accountMismatch": "Este código QR pertenece a otra cuenta."
+      },
+      "connectionLost": "La conexión con este servidor ha caducado. Vuelve a conectarte para seguir sincronizando.",
+      "use": "Usar",
+      "editOnNextcloud": "Editar en Nextcloud"
+    },
+    "accountActive": "Activo"
   },
   "widget": {
     "liveRemaining": "quedan {{duration}}",

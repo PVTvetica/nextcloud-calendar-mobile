@@ -1,6 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { asyncStorage as AsyncStorage } from '@/storage';
 import type { Account } from '@/types';
+import { fetchUserInfo } from './nextcloud';
 
 const ACCOUNT_IDS_KEY = 'account_ids';
 const ACTIVE_ACCOUNT_KEY = 'active_account_id';
@@ -28,6 +29,23 @@ export async function loadAccounts(): Promise<Account[]> {
     })
   );
   return results.filter((a): a is Account => a !== null);
+}
+
+export async function refreshAccountProfiles(): Promise<Account[]> {
+  const accounts = await loadAccounts();
+  for (const account of accounts) {
+    try {
+      const info = await fetchUserInfo(account);
+      const displayName = info.displayName || account.displayName;
+      const timezone = info.timezone || account.timezone;
+      const email = info.email || account.email;
+      if (displayName !== account.displayName || timezone !== account.timezone || email !== account.email) {
+        await saveAccount({ ...account, displayName, timezone, email });
+      }
+    } catch {
+    }
+  }
+  return loadAccounts();
 }
 
 export async function deleteAccount(id: string): Promise<void> {

@@ -1,6 +1,5 @@
 import { useDeferredValue } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Globe } from 'lucide-react-native';
 import CountryFlag from 'react-native-country-flag';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -37,9 +36,10 @@ export function LanguageSheet({ variant = 'row' }: { variant?: 'row' | 'icon' } 
       options={options}
       onChange={setLanguage}
       variant={variant}
+      glass={variant === 'icon'}
       busy={switching}
       accessibilityLabel={t('common.language')}
-      icon={(color) => <Globe size={24} color={color} />}
+      icon={() => <Flag code={language} size={26} />}
     />
   );
 }
