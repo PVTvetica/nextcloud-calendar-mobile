@@ -338,6 +338,11 @@ export function EventForm({
             value={location}
             onChangeText={setLocation}
             placeholder={t('event.locationPlaceholder')}
+            autoCapitalize="none"
+            autoCorrect={false}
+            spellCheck={false}
+            autoComplete="off"
+            textContentType="none"
             onFocus={() => scrollToField('location')}
           />
         </View>
@@ -366,6 +371,10 @@ export function EventForm({
                   placeholder={t('event.attendeePlaceholder')}
                   autoCapitalize="none"
                   keyboardType="email-address"
+                  autoCorrect={false}
+                  spellCheck={false}
+                  autoComplete="email"
+                  textContentType="emailAddress"
                   onSubmitEditing={addAttendee}
                   onFocus={() => scrollToField('attendee')}
                   onBlur={() => { attendeeFocused.current = false; }}
