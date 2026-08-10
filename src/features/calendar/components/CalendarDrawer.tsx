@@ -33,7 +33,7 @@ interface CalendarDrawerProps {
   toggleCalendarVisibility: (id: string) => void;
   toggleCalendarNotifications: (id: string) => void;
   onClose: () => void;
-  onNavigateSettings: () => void;
+  onOpenAccount: () => void;
 }
 
 export function CalendarDrawer({
@@ -49,7 +49,7 @@ export function CalendarDrawer({
   toggleCalendarVisibility,
   toggleCalendarNotifications,
   onClose,
-  onNavigateSettings,
+  onOpenAccount,
 }: CalendarDrawerProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -100,7 +100,7 @@ export function CalendarDrawer({
           <View style={styles.header}>
             <List>
               <Item
-                onPress={onNavigateSettings}
+                onPress={onOpenAccount}
                 leading={activeAccount ? <AvatarImage account={activeAccount} size={40} /> : undefined}
                 title={
                   <Typography variant="body1" numberOfLines={1} ellipsizeMode="tail">
