@@ -105,6 +105,7 @@ export default function CalendarScreen() {
           event,
           input: { ...eventToInput(event, activeAccount), dtstart: nextStart, dtend: nextEnd },
           scope,
+          datesOnly: true,
         });
       };
       const decision = decideMoveEventScope(event);

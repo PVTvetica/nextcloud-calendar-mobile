@@ -108,7 +108,9 @@ function serialize(veventBody: string[]): string {
     .join('');
 }
 
-export interface BuildIcsParams {
+type ExtraLines = { extraLines?: string[] };
+
+export interface BuildIcsParams extends ExtraLines {
   uid: string;
   summary: string;
   description: string;
@@ -125,7 +127,7 @@ export interface BuildIcsParams {
 }
 
 export function buildIcs(params: BuildIcsParams): string {
-  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, timezone, rrule, alarmMinutes, sequence = 0 } = params;
+  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, timezone, rrule, alarmMinutes, sequence = 0, extraLines = [] } = params;
 
   return serialize([
     `UID:${uid}`,
@@ -136,6 +138,7 @@ export function buildIcs(params: BuildIcsParams): string {
     ...textLines(summary, description, location),
     ...(rrule ? [rruleLine(rrule)] : []),
     ...schedulingLines(organizerName, organizerEmail, attendees),
+    ...extraLines,
     ...alarmLines(alarmMinutes),
   ]);
 }
@@ -143,7 +146,7 @@ export function buildIcs(params: BuildIcsParams): string {
 export type BuildAllDayIcsParams = Omit<BuildIcsParams, 'timezone'>;
 
 export function buildAllDayIcs(params: BuildAllDayIcsParams): string {
-  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, rrule, alarmMinutes, sequence = 0 } = params;
+  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, rrule, alarmMinutes, sequence = 0, extraLines = [] } = params;
   const endExclusive = new Date(dtend.getFullYear(), dtend.getMonth(), dtend.getDate() + 1);
 
   return serialize([
@@ -155,12 +158,13 @@ export function buildAllDayIcs(params: BuildAllDayIcsParams): string {
     ...textLines(summary, description, location),
     ...(rrule ? [rruleLine(rrule)] : []),
     ...schedulingLines(organizerName, organizerEmail, attendees),
+    ...extraLines,
     ...alarmLines(alarmMinutes),
   ]);
 }
 
 export function buildExceptionIcs(params: BuildIcsParams & { recurrenceId: Date }): string {
-  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, timezone, recurrenceId, alarmMinutes, sequence = 0 } = params;
+  const { uid, summary, description, location, dtstart, dtend, organizerEmail, organizerName, attendees, timezone, recurrenceId, alarmMinutes, sequence = 0, extraLines = [] } = params;
 
   return serialize([
     `UID:${uid}`,
@@ -171,8 +175,36 @@ export function buildExceptionIcs(params: BuildIcsParams & { recurrenceId: Date 
     `DTEND;TZID=${timezone}:${localStamp(dtend, timezone)}`,
     ...textLines(summary, description, location),
     ...schedulingLines(organizerName, organizerEmail, attendees),
+    ...extraLines,
     ...alarmLines(alarmMinutes),
   ]);
+}
+
+export function shiftIcsDates(
+  masterIcs: string,
+  newStart: Date,
+  newEnd: Date,
+  timezone: string,
+  allDay: boolean,
+  sequence: number,
+): string {
+  const startLine = allDay
+    ? `DTSTART;VALUE=DATE:${dateStamp(newStart)}`
+    : `DTSTART;TZID=${timezone}:${localStamp(newStart, timezone)}`;
+  const endExclusive = new Date(newEnd.getFullYear(), newEnd.getMonth(), newEnd.getDate() + 1);
+  const endLine = allDay
+    ? `DTEND;VALUE=DATE:${dateStamp(endExclusive)}`
+    : `DTEND;TZID=${timezone}:${localStamp(newEnd, timezone)}`;
+
+  let out = masterIcs
+    .replace(/^DTSTART[^\r\n]*/m, startLine)
+    .replace(/^DTEND[^\r\n]*/m, endLine);
+
+  out = /^SEQUENCE:/m.test(out)
+    ? out.replace(/^SEQUENCE:[^\r\n]*/m, `SEQUENCE:${sequence}`)
+    : out.replace(/^(UID:[^\r\n]*\r?\n)/m, `$1SEQUENCE:${sequence}\r\n`);
+
+  return out;
 }
 
 export function injectExdate(masterIcs: string, occurrenceDtstart: Date, timezone: string): string {

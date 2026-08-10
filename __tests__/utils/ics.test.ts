@@ -1,4 +1,4 @@
-import { buildIcs, buildAllDayIcs } from '@/utils/ics';
+import { buildIcs, buildAllDayIcs, shiftIcsDates } from '@/utils/ics';
 import type { Attendee } from '../../src/types';
 
 const base = {
@@ -130,5 +130,68 @@ describe('buildAllDayIcs', () => {
   it('does not contain a TZID in DTSTART', () => {
     const ics = buildAllDayIcs(allDayBase);
     expect(ics).not.toContain('TZID');
+  });
+});
+
+describe('shiftIcsDates', () => {
+  const serverIcs = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Nextcloud//EN',
+    'BEGIN:VEVENT',
+    'UID:evt-1',
+    'DTSTAMP:20260101T090000Z',
+    'SEQUENCE:2',
+    'DTSTART;TZID=Europe/Paris:20260810T120000',
+    'DTEND;TZID=Europe/Paris:20260810T130000',
+    'SUMMARY:Jkjkjkjkjkj',
+    'DESCRIPTION:Talk: https://cloud.example.com/call/atapii4b',
+    'LOCATION:https://cloud.example.com/call/atapii4b',
+    'X-NEXTCLOUD-TALK:atapii4b',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+
+  it('moves DTSTART/DTEND and bumps SEQUENCE while keeping every other property', () => {
+    const out = shiftIcsDates(
+      serverIcs,
+      new Date('2026-08-10T07:45:00Z'),
+      new Date('2026-08-10T08:45:00Z'),
+      'Europe/Paris',
+      false,
+      3,
+    );
+
+    expect(out).toContain('DTSTART;TZID=Europe/Paris:20260810T094500');
+    expect(out).toContain('DTEND;TZID=Europe/Paris:20260810T104500');
+    expect(out).toContain('SEQUENCE:3');
+    expect(out).not.toContain('SEQUENCE:2');
+    // Untouched properties survive the move — this is the drag-loses-data fix.
+    expect(out).toContain('SUMMARY:Jkjkjkjkjkj');
+    expect(out).toContain('DESCRIPTION:Talk: https://cloud.example.com/call/atapii4b');
+    expect(out).toContain('LOCATION:https://cloud.example.com/call/atapii4b');
+    expect(out).toContain('X-NEXTCLOUD-TALK:atapii4b');
+    // Each date property replaced exactly once.
+    expect(out.match(/DTSTART/g)).toHaveLength(1);
+    expect(out.match(/DTEND/g)).toHaveLength(1);
+  });
+
+  it('writes all-day dates with an exclusive end', () => {
+    const allDayServer = serverIcs
+      .replace('DTSTART;TZID=Europe/Paris:20260810T120000', 'DTSTART;VALUE=DATE:20260810')
+      .replace('DTEND;TZID=Europe/Paris:20260810T130000', 'DTEND;VALUE=DATE:20260811');
+
+    const out = shiftIcsDates(
+      allDayServer,
+      new Date(2026, 7, 12),
+      new Date(2026, 7, 12),
+      'Europe/Paris',
+      true,
+      3,
+    );
+
+    expect(out).toContain('DTSTART;VALUE=DATE:20260812');
+    expect(out).toContain('DTEND;VALUE=DATE:20260813');
+    expect(out).toContain('LOCATION:https://cloud.example.com/call/atapii4b');
   });
 });
