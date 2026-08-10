@@ -65,7 +65,10 @@
     "offlineBanner": "Offline — a mostrar eventos guardados",
     "noEvents": "Sem eventos",
     "allDay": "Dia inteiro",
-    "noTitle": "(Sem título)"
+    "noTitle": "(Sem título)",
+    "drawerNoCalendars": "Nenhum calendário",
+    "calendarNotifications": "Notificações de {{name}}",
+    "calendarVisibility": "Mostrar {{name}}"
   },
   "event": {
     "titleLabel": "Título *",

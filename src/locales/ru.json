@@ -65,7 +65,10 @@
     "offlineBanner": "Офлайн — показаны сохранённые события",
     "noEvents": "Нет событий",
     "allDay": "Весь день",
-    "noTitle": "(Без названия)"
+    "noTitle": "(Без названия)",
+    "drawerNoCalendars": "Нет календарей",
+    "calendarNotifications": "Уведомления календаря «{{name}}»",
+    "calendarVisibility": "Показывать «{{name}}»"
   },
   "event": {
     "titleLabel": "Название *",

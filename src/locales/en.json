@@ -65,7 +65,10 @@
     "offlineBanner": "Offline — showing saved events",
     "noEvents": "No events",
     "allDay": "All day",
-    "noTitle": "(No title)"
+    "noTitle": "(No title)",
+    "drawerNoCalendars": "No calendar",
+    "calendarNotifications": "Notifications for {{name}}",
+    "calendarVisibility": "Show {{name}}"
   },
   "event": {
     "titleLabel": "Title *",

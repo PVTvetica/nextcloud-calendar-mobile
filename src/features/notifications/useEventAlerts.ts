@@ -4,6 +4,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { useAccountStore } from '@/stores/accountStore';
 import { EVENT_OBSERVED_COLUMNS } from '@/database/observedColumns';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useCalendarStore } from '@/stores/calendarStore';
 import { observeTodayEventsQuery } from '@/features/widget/core/readEvents';
 
 import { scheduleEventAlerts } from './scheduleAlerts';
@@ -12,6 +13,7 @@ export function useEventAlerts(): void {
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
   const timedAlert = useSettingsStore((s) => s.timedAlert);
   const allDayAlert = useSettingsStore((s) => s.allDayAlert);
+  const notifDisabledCalendarIds = useCalendarStore((s) => s.notifDisabledCalendarIds);
 
   useEffect(() => {
     if (!activeAccountId) return;
@@ -33,5 +35,5 @@ export function useEventAlerts(): void {
       sub.unsubscribe();
       appSub.remove();
     };
-  }, [activeAccountId, timedAlert, allDayAlert]);
+  }, [activeAccountId, timedAlert, allDayAlert, notifDisabledCalendarIds]);
 }

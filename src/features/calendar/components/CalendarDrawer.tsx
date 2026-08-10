@@ -1,31 +1,37 @@
-import {
-  Animated,
-  ScrollView,
-  Switch,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { useCallback } from 'react';
+import { Animated, ScrollView, StyleSheet, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { scheduleOnRN } from 'react-native-worklets';
 
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AvatarImage } from '@/components/AvatarImage';
+import { ChevronRight } from 'lucide-react-native';
 import { useTheme } from 'expo-router';
+
+import { setActiveAccountId } from '@/services/nextcloud/auth';
+import { useAccounts } from '@/hooks/useAccounts';
+import { useAccountStore } from '@/stores/accountStore';
+import { haptic } from '@/utils/haptics';
+import { AvatarImage } from '@/components/AvatarImage';
+import { Item, List, SectionHeader, Stack, Typography } from '@/ui/components';
 import type { Account, CalendarMeta } from '@/types';
 
-const DRAWER_WIDTH = 280;
+import { CalendarDrawerRow } from './CalendarDrawerRow';
+
+const SWIPE_THRESHOLD = 40;
 
 interface CalendarDrawerProps {
   open: boolean;
   drawerAnim: Animated.Value;
   overlayAnim: Animated.Value;
+  drawerWidth: number;
   insets: { top: number };
   activeAccount: Account | null;
   calendars: CalendarMeta[];
   hiddenCalendarIds: string[];
+  notifDisabledCalendarIds: string[];
   toggleCalendarVisibility: (id: string) => void;
+  toggleCalendarNotifications: (id: string) => void;
   onClose: () => void;
   onNavigateSettings: () => void;
 }
@@ -34,23 +40,41 @@ export function CalendarDrawer({
   open,
   drawerAnim,
   overlayAnim,
+  drawerWidth,
   insets,
   activeAccount,
   calendars,
   hiddenCalendarIds,
+  notifDisabledCalendarIds,
   toggleCalendarVisibility,
+  toggleCalendarNotifications,
   onClose,
   onNavigateSettings,
 }: CalendarDrawerProps) {
-  const theme = useTheme();
+  const { colors } = useTheme();
   const { t } = useTranslation();
   const safeInsets = useSafeAreaInsets();
-  const [headerHeight, setHeaderHeight] = useState(0);
-  const [drawerHeight, setDrawerHeight] = useState(0);
 
-  const scrollHeight = drawerHeight > 0 && headerHeight > 0
-    ? drawerHeight - headerHeight - safeInsets.bottom - 16
-    : undefined;
+  const accounts = useAccounts();
+  const activeAccountId = useAccountStore((s) => s.activeAccountId);
+  const setStoreId = useAccountStore((s) => s.setActiveAccountId);
+
+  const cycleAccount = useCallback((dir: 1 | -1) => {
+    if (accounts.length < 2) return;
+    const idx = accounts.findIndex((a) => a.id === activeAccountId);
+    const next = accounts[((idx < 0 ? 0 : idx) + dir + accounts.length) % accounts.length];
+    if (!next || next.id === activeAccountId) return;
+    haptic();
+    void setActiveAccountId(next.id).then(() => setStoreId(next.id));
+  }, [accounts, activeAccountId, setStoreId]);
+
+  const accountSwipe = Gesture.Pan()
+    .activeOffsetY([-16, 16])
+    .failOffsetX([-16, 16])
+    .onEnd((e) => {
+      if (e.translationY <= -SWIPE_THRESHOLD) scheduleOnRN(cycleAccount, 1);
+      else if (e.translationY >= SWIPE_THRESHOLD) scheduleOnRN(cycleAccount, -1);
+    });
 
   return (
     <>
@@ -62,54 +86,64 @@ export function CalendarDrawer({
       />
       <Animated.View
         pointerEvents={open ? 'auto' : 'none'}
-        onLayout={(e) => setDrawerHeight(e.nativeEvent.layout.height)}
         style={[
           styles.drawer,
-          { transform: [{ translateX: drawerAnim }], paddingTop: insets.top, backgroundColor: theme.colors.surface },
+          {
+            width: drawerWidth,
+            transform: [{ translateX: drawerAnim }],
+            paddingTop: insets.top + 12,
+            backgroundColor: colors.background,
+          },
         ]}
       >
-        <View onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
-          <Text style={[styles.drawerSection, { color: theme.colors.textTertiary }]}>{t('calendar.drawerAccount')}</Text>
-          <View style={styles.drawerAccountRow}>
-            {activeAccount && <AvatarImage account={activeAccount} size={48} />}
-            <View style={styles.drawerAccountText}>
-              <Text style={[styles.drawerAccount, { color: theme.colors.text }]} numberOfLines={1}>
-                {activeAccount?.displayName ?? activeAccount?.username ?? '—'}
-              </Text>
-              <Text style={[styles.drawerAccountSub, { color: theme.colors.textSecondary }]} numberOfLines={1}>
-                {activeAccount?.username}
-              </Text>
-            </View>
+        <GestureDetector gesture={accountSwipe}>
+          <View style={styles.header}>
+            <List>
+              <Item
+                onPress={onNavigateSettings}
+                leading={activeAccount ? <AvatarImage account={activeAccount} size={40} /> : undefined}
+                title={
+                  <Typography variant="body1" numberOfLines={1} ellipsizeMode="tail">
+                    {activeAccount?.displayName ?? activeAccount?.username ?? '—'}
+                  </Typography>
+                }
+                description={
+                  <Typography variant="caption" color="secondary" numberOfLines={1} ellipsizeMode="middle">
+                    {activeAccount?.username ?? ''}
+                  </Typography>
+                }
+                trailing={<ChevronRight size={20} color={colors.textTertiary} />}
+              />
+            </List>
           </View>
-          <TouchableOpacity style={styles.drawerSettingsBtn} onPress={onNavigateSettings}>
-            <Text style={[styles.drawerSettingsBtnText, { color: theme.colors.primary }]}>{t('calendar.manageAccounts')}</Text>
-          </TouchableOpacity>
-          <View style={[styles.drawerDivider, { backgroundColor: theme.colors.border }]} />
-          <Text style={[styles.drawerSection, { color: theme.colors.textTertiary }]}>{t('calendar.drawerCalendars')}</Text>
-        </View>
+        </GestureDetector>
 
         <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: safeInsets.bottom + 24 }]}
           showsVerticalScrollIndicator={false}
-          style={scrollHeight != null ? { height: scrollHeight } : { flex: 1 }}
         >
-          {calendars.map((cal) => {
-            const visible = !hiddenCalendarIds.includes(cal.id);
-            return (
-              <View key={cal.id} style={styles.drawerCalRow}>
-                <View style={[styles.calDot, { backgroundColor: cal.color }]} />
-                <Text style={[styles.drawerCalName, { color: theme.colors.text }]} numberOfLines={1}>
-                  {cal.displayName}
-                </Text>
-                <Switch
-                  value={visible}
-                  onValueChange={() => toggleCalendarVisibility(cal.id)}
-                  trackColor={{ true: cal.color, false: theme.colors.border }}
-                  thumbColor="#fff"
-                  style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+          <SectionHeader title={t('calendar.drawerCalendars')} />
+          {calendars.length === 0 ? (
+            <Stack padding={[8, 4]}>
+              <Typography variant="caption" color="secondary">
+                {t('calendar.drawerNoCalendars')}
+              </Typography>
+            </Stack>
+          ) : (
+            <List>
+              {calendars.map((cal) => (
+                <CalendarDrawerRow
+                  key={cal.id}
+                  calendar={cal}
+                  visible={!hiddenCalendarIds.includes(cal.id)}
+                  notifies={!notifDisabledCalendarIds.includes(cal.id)}
+                  onToggleVisibility={() => toggleCalendarVisibility(cal.id)}
+                  onToggleNotifications={() => toggleCalendarNotifications(cal.id)}
                 />
-              </View>
-            );
-          })}
+              ))}
+            </List>
+          )}
         </ScrollView>
       </Animated.View>
     </>
@@ -120,20 +154,11 @@ const styles = StyleSheet.create({
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.35)', zIndex: 10 },
   drawer: {
     position: 'absolute', left: 0, top: 0, bottom: 0,
-    width: DRAWER_WIDTH,
-    zIndex: 11, paddingHorizontal: 20,
+    zIndex: 11,
     shadowColor: '#000', shadowOffset: { width: 2, height: 0 },
     shadowOpacity: 0.2, shadowRadius: 8, elevation: 10,
   },
-  drawerSection: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginTop: 14, marginBottom: 6 },
-  drawerAccount: { fontSize: 16, fontWeight: '700' },
-  drawerAccountSub: { fontSize: 13, marginTop: 2 },
-  drawerSettingsBtn: { marginTop: 8 },
-  drawerSettingsBtnText: { fontSize: 13 },
-  drawerDivider: { height: StyleSheet.hairlineWidth, marginVertical: 10 },
-  drawerCalRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 10 },
-  calDot: { width: 12, height: 12, borderRadius: 6, flexShrink: 0 },
-  drawerCalName: { flex: 1, fontSize: 14 },
-  drawerAccountRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 },
-  drawerAccountText: { flex: 1 },
+  header: { paddingHorizontal: 12, paddingBottom: 20 },
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: 12 },
 });
