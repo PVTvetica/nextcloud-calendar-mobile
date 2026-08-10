@@ -1,24 +1,16 @@
-import { useCallback } from 'react';
 import { Animated, ScrollView, StyleSheet, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { scheduleOnRN } from 'react-native-worklets';
 
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronsUpDown, Settings } from 'lucide-react-native';
 import { useTheme } from 'expo-router';
 
-import { setActiveAccountId } from '@/services/nextcloud/auth';
-import { useAccounts } from '@/hooks/useAccounts';
-import { useAccountStore } from '@/stores/accountStore';
-import { haptic } from '@/utils/haptics';
 import { AvatarImage } from '@/components/AvatarImage';
+import { AccountSwitcher } from '@/features/account/components/AccountSwitcher';
 import { Item, List, SectionHeader, Stack, Typography } from '@/ui/components';
 import type { Account, CalendarMeta } from '@/types';
 
 import { CalendarDrawerRow } from './CalendarDrawerRow';
-
-const SWIPE_THRESHOLD = 40;
 
 interface CalendarDrawerProps {
   open: boolean;
@@ -33,7 +25,7 @@ interface CalendarDrawerProps {
   toggleCalendarVisibility: (id: string) => void;
   toggleCalendarNotifications: (id: string) => void;
   onClose: () => void;
-  onOpenAccount: () => void;
+  onNavigateSettings: () => void;
 }
 
 export function CalendarDrawer({
@@ -49,32 +41,11 @@ export function CalendarDrawer({
   toggleCalendarVisibility,
   toggleCalendarNotifications,
   onClose,
-  onOpenAccount,
+  onNavigateSettings,
 }: CalendarDrawerProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const safeInsets = useSafeAreaInsets();
-
-  const accounts = useAccounts();
-  const activeAccountId = useAccountStore((s) => s.activeAccountId);
-  const setStoreId = useAccountStore((s) => s.setActiveAccountId);
-
-  const cycleAccount = useCallback((dir: 1 | -1) => {
-    if (accounts.length < 2) return;
-    const idx = accounts.findIndex((a) => a.id === activeAccountId);
-    const next = accounts[((idx < 0 ? 0 : idx) + dir + accounts.length) % accounts.length];
-    if (!next || next.id === activeAccountId) return;
-    haptic();
-    void setActiveAccountId(next.id).then(() => setStoreId(next.id));
-  }, [accounts, activeAccountId, setStoreId]);
-
-  const accountSwipe = Gesture.Pan()
-    .activeOffsetY([-16, 16])
-    .failOffsetX([-16, 16])
-    .onEnd((e) => {
-      if (e.translationY <= -SWIPE_THRESHOLD) scheduleOnRN(cycleAccount, 1);
-      else if (e.translationY >= SWIPE_THRESHOLD) scheduleOnRN(cycleAccount, -1);
-    });
 
   return (
     <>
@@ -96,27 +67,35 @@ export function CalendarDrawer({
           },
         ]}
       >
-        <GestureDetector gesture={accountSwipe}>
-          <View style={styles.header}>
-            <List>
+        <View style={styles.header}>
+          <AccountSwitcher
+            trigger={
+              <List>
+                <Item
+                  leading={activeAccount ? <AvatarImage account={activeAccount} size={40} /> : undefined}
+                  title={
+                    <Typography variant="body1" numberOfLines={1} ellipsizeMode="tail">
+                      {activeAccount?.displayName ?? activeAccount?.username ?? '—'}
+                    </Typography>
+                  }
+                  description={
+                    <Typography variant="caption" color="secondary" numberOfLines={1} ellipsizeMode="middle">
+                      {activeAccount?.username ?? ''}
+                    </Typography>
+                  }
+                  trailing={<ChevronsUpDown size={20} color={colors.textTertiary} />}
+                />
+              </List>
+            }
+            footer={(close) => (
               <Item
-                onPress={onOpenAccount}
-                leading={activeAccount ? <AvatarImage account={activeAccount} size={40} /> : undefined}
-                title={
-                  <Typography variant="body1" numberOfLines={1} ellipsizeMode="tail">
-                    {activeAccount?.displayName ?? activeAccount?.username ?? '—'}
-                  </Typography>
-                }
-                description={
-                  <Typography variant="caption" color="secondary" numberOfLines={1} ellipsizeMode="middle">
-                    {activeAccount?.username ?? ''}
-                  </Typography>
-                }
-                trailing={<ChevronRight size={20} color={colors.textTertiary} />}
+                onPress={() => { close(); onNavigateSettings(); }}
+                leading={<Settings size={20} color={colors.textSecondary} />}
+                title={t('settings.title')}
               />
-            </List>
-          </View>
-        </GestureDetector>
+            )}
+          />
+        </View>
 
         <ScrollView
           style={styles.scroll}
