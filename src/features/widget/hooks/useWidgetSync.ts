@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { useAccountStore } from '@/stores/accountStore';
+import { useCalendarStore } from '@/stores/calendarStore';
 import { EVENT_OBSERVED_COLUMNS } from '@/database/observedColumns';
 
 import { observeAgendaEventsQuery } from '../core/readEvents';
@@ -13,7 +14,12 @@ const REFRESH_MS = 60_000;
 
 export function useWidgetSync(): void {
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
+  const hiddenCalendarIds = useCalendarStore((s) => s.hiddenCalendarIds);
   const prevAccountRef = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (activeAccountId) void syncWidget();
+  }, [hiddenCalendarIds, activeAccountId]);
 
   useEffect(() => {
     const prevAccount = prevAccountRef.current;

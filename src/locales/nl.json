@@ -65,7 +65,10 @@
     "offlineBanner": "Offline — opgeslagen afspraken worden getoond",
     "noEvents": "Geen afspraken",
     "allDay": "Hele dag",
-    "noTitle": "(Geen titel)"
+    "noTitle": "(Geen titel)",
+    "drawerNoCalendars": "Geen agenda",
+    "calendarNotifications": "Meldingen van {{name}}",
+    "calendarVisibility": "{{name}} tonen"
   },
   "event": {
     "titleLabel": "Titel *",

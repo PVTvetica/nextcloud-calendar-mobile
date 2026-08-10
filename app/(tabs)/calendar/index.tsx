@@ -42,6 +42,8 @@ export default function CalendarScreen() {
   const language = useSettingsStore((s) => s.language);
   const hiddenCalendarIds = useCalendarStore((s) => s.hiddenCalendarIds);
   const toggleCalendarVisibility = useCalendarStore((s) => s.toggleCalendarVisibility);
+  const notifDisabledCalendarIds = useCalendarStore((s) => s.notifDisabledCalendarIds);
+  const toggleCalendarNotifications = useCalendarStore((s) => s.toggleCalendarNotifications);
 
   const nav = useCalendarNavigation();
   const { viewMode, date, fetchDate, agendaVisibleDate, navigateMonth } = nav;
@@ -214,13 +216,19 @@ export default function CalendarScreen() {
         open={drawer.drawerOpen}
         drawerAnim={drawer.drawerAnim}
         overlayAnim={drawer.overlayAnim}
+        drawerWidth={drawer.drawerWidth}
         insets={insets}
         activeAccount={activeAccount}
         calendars={calendars}
         hiddenCalendarIds={hiddenCalendarIds}
+        notifDisabledCalendarIds={notifDisabledCalendarIds}
         toggleCalendarVisibility={toggleCalendarVisibility}
+        toggleCalendarNotifications={toggleCalendarNotifications}
         onClose={drawer.closeDrawer}
-        onNavigateSettings={() => { drawer.closeDrawer(); router.push('/(tabs)/settings'); }}
+        onOpenAccount={() => {
+          drawer.closeDrawer();
+          router.push(activeAccount ? `/(tabs)/settings/account/${activeAccount.id}` : '/(tabs)/settings');
+        }}
       />
     </ViewContainer>
   );

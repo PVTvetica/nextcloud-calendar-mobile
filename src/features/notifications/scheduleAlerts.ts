@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 
 import { readUpcomingEvents } from '@/features/widget/core/readEvents';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useCalendarStore } from '@/stores/calendarStore';
 import i18n from '@/utils/i18n';
 
 import { alertBody } from './alertContent';
@@ -54,7 +55,9 @@ export async function scheduleEventAlerts(now: Date = new Date()): Promise<void>
 
       await ensureChannel();
 
-      const events = await readUpcomingEvents(HORIZON_DAYS, now);
+      const notifDisabled = useCalendarStore.getState().notifDisabledCalendarIds;
+      const events = (await readUpcomingEvents(HORIZON_DAYS, now))
+        .filter((event) => !notifDisabled.includes(event.calendarId));
 
       const due = events
         .map((event) => ({ event, at: alertTime(event, timedAlert, allDayAlert) }))
