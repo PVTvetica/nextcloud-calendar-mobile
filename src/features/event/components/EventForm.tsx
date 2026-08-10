@@ -131,17 +131,7 @@ export function EventForm({
   }
 
   function applyEnd(d: Date) {
-    if (!seeded.current) {
-      seeded.current = true;
-      const endBeforeStart = allDay
-        ? dayjs(d).isBefore(dayjs(dtstart), 'day')
-        : d <= dtstart;
-      setDtend(d);
-      if (endBeforeStart) {
-        setDtstart(allDay ? d : dayjs(d).subtract(1, 'hour').toDate());
-      }
-      return;
-    }
+    seeded.current = true;
     const invalid = allDay
       ? dayjs(d).isBefore(dayjs(dtstart), 'day')
       : d <= dtstart;
