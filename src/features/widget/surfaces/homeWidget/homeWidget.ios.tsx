@@ -1,10 +1,10 @@
 import React from 'react';
 import { HStack, Link, RoundedRectangle, Text, VStack } from '@expo/ui/swift-ui';
-import { background, containerBackground, cornerRadius, font, foregroundStyle, frame, padding } from '@expo/ui/swift-ui/modifiers';
+import { containerBackground, font, foregroundStyle, frame, padding } from '@expo/ui/swift-ui/modifiers';
 import type { WidgetEnvironment } from 'expo-widgets';
 import { createWidget } from 'expo-widgets';
 
-import type { AgendaEventItem, AgendaSnapshot, WidgetSurface } from '../../core/types';
+import type { AgendaEventItem, AgendaSnapshot, AgendaTimelineEntry, WidgetSurface } from '../../core/types';
 import { openAppLink } from '../../core/types';
 
 const WIDGET_NAME = 'NextcloudCalendarWidget';
@@ -13,7 +13,6 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
   'widget';
 
   const WIDGET_TYPE = { time: 12, caption: 13, body: 15, title: 17, heading: 22 };
-  const WIDGET_RADIUS = { sm: 8, md: 12, lg: 16 };
   const WIDGET_SPACING = { xs: 4, sm: 8, md: 12, lg: 16 };
   const LIGHT_PALETTE = {
     background: '#ffffff',
@@ -36,19 +35,6 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
   const AGENDA_EMPTY_LABEL = 'No upcoming event';
   const LARGE_BUDGET = 4;
   const ACCESSORY_FAMILIES = ['accessoryInline', 'accessoryCircular', 'accessoryRectangular'];
-
-  function parseHex(hex: string): [number, number, number] {
-    let h = hex.replace('#', '');
-    if (h.length === 3) h = h.split('').map((c) => c + c).join('');
-    const n = parseInt(h.slice(0, 6), 16);
-    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-  }
-
-  function onEventColor(color: string) {
-    const rgb = parseHex(color);
-    const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
-    return luminance > 0.6 ? '#1a1a1a' : '#ffffff';
-  }
 
   function agendaPalette(snapshot: AgendaSnapshot | null) {
     return (snapshot?.scheme ?? 'light') === 'dark' ? DARK_PALETTE : LIGHT_PALETTE;
@@ -79,18 +65,6 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
     return groups;
   }
 
-  function EventCard({ event }: { event: AgendaEventItem }) {
-    const fg = onEventColor(event.color);
-    return (
-      <Link destination={event.deepLink}>
-        <VStack alignment="leading" modifiers={[padding({ horizontal: 12, vertical: 12 }), frame({ maxWidth: Infinity, alignment: 'leading' }), background(event.color), cornerRadius(WIDGET_RADIUS.sm)]}>
-          <Text modifiers={[font({ weight: 'medium', size: WIDGET_TYPE.body }), foregroundStyle(fg)]}>{event.title}</Text>
-          <Text modifiers={[font({ size: WIDGET_TYPE.time }), foregroundStyle(fg), padding({ top: 2 })]}>{event.timeLabel}</Text>
-        </VStack>
-      </Link>
-    );
-  }
-
   function EventRow({ event }: { event: AgendaEventItem }) {
     return (
       <Link destination={event.deepLink}>
@@ -117,7 +91,7 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
         <Text key={`h-${group.key}`} modifiers={[font({ weight: 'semibold', size: WIDGET_TYPE.caption }), foregroundStyle(group.isToday ? palette.primary : palette.textSecondary)]}>{group.header}</Text>
       );
       for (const event of group.items) {
-        cells.push(<EventCard key={`${group.key}-${event.uid}-${event.startIso}`} event={event} />);
+        cells.push(<EventRow key={`${group.key}-${event.uid}-${event.startIso}`} event={event} />);
       }
     }
     return (
@@ -214,11 +188,12 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
 
 const widget = createWidget<{ snapshot: AgendaSnapshot | null }>(WIDGET_NAME, CalendarWidget);
 
-export const homeWidget: WidgetSurface<AgendaSnapshot> = {
+export const homeWidget: WidgetSurface<AgendaTimelineEntry[]> = {
   id: 'homeWidget',
   isSupported: () => true,
-  update: async (snapshot) => {
-    widget.updateSnapshot({ snapshot });
+  update: async (entries) => {
+    if (entries.length === 0) return;
+    widget.updateTimeline(entries.map((e) => ({ date: new Date(e.atIso), props: { snapshot: e.snapshot } })));
   },
   clear: async () => {
     widget.updateSnapshot({ snapshot: null });

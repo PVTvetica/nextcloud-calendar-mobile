@@ -42,11 +42,16 @@ export function buildMonthGrid(year: number, month: number, weekStartsOn: 0 | 1)
   return rows;
 }
 
+function lastDayOf(e: CalendarEvent): dayjs.Dayjs {
+  const end = dayjs(e.dtend);
+  if (e.allDay) return end.startOf('day');
+  return (end.isSame(end.startOf('day')) ? end.subtract(1, 'millisecond') : end).startOf('day');
+}
+
 export function eventDayKeys(e: CalendarEvent): string[] {
   const start = dayjs(e.dtstart);
   const startKey = start.format('YYYY-MM-DD');
-  if (!e.allDay) return [startKey];
-  const endDay = dayjs(e.dtend).startOf('day');
+  const endDay = lastDayOf(e);
   const keys: string[] = [];
   let cur = start.startOf('day');
   while (!cur.isAfter(endDay, 'day') && keys.length <= 366) {
@@ -58,8 +63,7 @@ export function eventDayKeys(e: CalendarEvent): string[] {
 
 export function eventCoversDay(e: CalendarEvent, dayKey: string): boolean {
   const startKey = dayjs(e.dtstart).format('YYYY-MM-DD');
-  if (!e.allDay) return startKey === dayKey;
-  const endKey = dayjs(e.dtend).format('YYYY-MM-DD');
+  const endKey = lastDayOf(e).format('YYYY-MM-DD');
   return dayKey >= startKey && dayKey <= (endKey < startKey ? startKey : endKey);
 }
 
@@ -85,12 +89,6 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
     };
 
     for (const ev of events) {
-      if (ev.allDay) continue;
-      add(dayjs(ev.dtstart).format('YYYY-MM-DD'), ev.color);
-    }
-
-    for (const ev of events) {
-      if (!ev.allDay) continue;
       for (const key of eventDayKeys(ev)) add(key, ev.color);
     }
     return map;

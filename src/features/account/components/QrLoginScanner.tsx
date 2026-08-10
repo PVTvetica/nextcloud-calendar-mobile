@@ -5,6 +5,9 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'expo-router';
+import { X } from 'lucide-react-native';
+
+import { IconButton, ScreenHeader } from '@/ui/components';
 
 import { parseNcLoginUrl } from '../utils/ncLoginUrl';
 import type { NcLoginData } from '../utils/ncLoginUrl';
@@ -69,19 +72,25 @@ export function QrLoginScanner({ visible, onClose, onScanned }: Props) {
   if (!permission.granted) {
     return (
       <Modal visible animationType="slide" onRequestClose={onClose}>
-        <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
-          <Text style={[styles.permText, { color: theme.colors.text }]}>
-            {t('setup.qrCameraDenied')}
-          </Text>
-          <TouchableOpacity
-            style={[styles.btn, { backgroundColor: theme.colors.primary }]}
-            onPress={() => Linking.openSettings()}
-          >
-            <Text style={styles.btnText}>{t('setup.qrOpenSettings')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelLink} onPress={onClose}>
-            <Text style={{ color: theme.colors.textSecondary }}>{t('common.cancel')}</Text>
-          </TouchableOpacity>
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+          <ScreenHeader
+            left={
+              <IconButton variant="ghost" round size={40} onPress={onClose} accessibilityLabel={t('common.close')}>
+                <X size={22} color={theme.colors.text} />
+              </IconButton>
+            }
+          />
+          <View style={styles.center}>
+            <Text style={[styles.permText, { color: theme.colors.text }]}>
+              {t('setup.qrCameraDenied')}
+            </Text>
+            <TouchableOpacity
+              style={[styles.btn, { backgroundColor: theme.colors.primary }]}
+              onPress={() => Linking.openSettings()}
+            >
+              <Text style={styles.btnText}>{t('setup.qrOpenSettings')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     );
@@ -108,11 +117,9 @@ export function QrLoginScanner({ visible, onClose, onScanned }: Props) {
         </View>
 
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <Text style={styles.closeBtnText}>✕</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('setup.qrHeaderTitle')}</Text>
-          <View style={{ width: 44 }} />
+          <IconButton variant="plain" glass round size={40} onPress={onClose} accessibilityLabel={t('common.close')}>
+            <X size={22} color="#fff" />
+          </IconButton>
         </View>
 
         <View style={styles.footer}>
@@ -156,13 +163,10 @@ const styles = StyleSheet.create({
   dimBottom: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)' },
   header: {
     position: 'absolute', top: 0, left: 0, right: 0,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    flexDirection: 'row', alignItems: 'center',
     paddingTop: 56, paddingHorizontal: 16, paddingBottom: 12,
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
-  closeBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  closeBtnText: { color: '#fff', fontSize: 18 },
-  headerTitle: { color: '#fff', fontSize: 17, fontWeight: '600' },
   footer: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: 'rgba(0,0,0,0.55)',
@@ -174,5 +178,4 @@ const styles = StyleSheet.create({
   permText: { fontSize: 16, textAlign: 'center', marginBottom: 24, lineHeight: 22 },
   btn: { borderRadius: 10, paddingVertical: 13, paddingHorizontal: 28, alignItems: 'center' },
   btnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  cancelLink: { marginTop: 16 },
 });

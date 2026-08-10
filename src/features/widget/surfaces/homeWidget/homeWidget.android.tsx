@@ -8,10 +8,10 @@ import {
   TextWidget,
 } from 'react-native-android-widget';
 
-import type { AgendaEventItem, AgendaSnapshot, WidgetSurface } from '../../core/types';
+import type { AgendaEventItem, AgendaSnapshot, AgendaTimelineEntry, WidgetSurface } from '../../core/types';
 import { type AgendaGroup, agendaGroups, agendaHeader, agendaPalette, compactEvents, emptyLabel } from '../../core/agendaView';
 import { onEventColor, widgetPalette, widgetRadius, widgetSpacing, widgetType } from '../../core/theme';
-import { readAgendaSnapshot, writeAgendaSnapshot } from '../../storage/widgetStore';
+import { readAgendaSnapshot, writeAgendaTimeline } from '../../storage/widgetStore';
 
 type Palette = ReturnType<typeof widgetPalette>;
 
@@ -137,11 +137,13 @@ export const widgetTaskHandler = async (props: WidgetTaskHandlerProps) => {
   props.renderWidget(<AndroidWidget widgetName={props.widgetInfo.widgetName} snapshot={snapshot} />);
 };
 
-export const homeWidget: WidgetSurface<AgendaSnapshot> = {
+export const homeWidget: WidgetSurface<AgendaTimelineEntry[]> = {
   id: 'homeWidget',
   isSupported: () => true,
-  update: async (snapshot) => {
-    writeAgendaSnapshot(snapshot);
+  update: async (entries) => {
+    if (entries.length === 0) return;
+    writeAgendaTimeline(entries);
+    const snapshot = entries[0].snapshot;
     await Promise.all(
       WIDGET_NAMES.map((widgetName) =>
         requestWidgetUpdate({
@@ -152,6 +154,7 @@ export const homeWidget: WidgetSurface<AgendaSnapshot> = {
     );
   },
   clear: async () => {
+    writeAgendaTimeline([]);
     await Promise.all(
       WIDGET_NAMES.map((widgetName) =>
         requestWidgetUpdate({ widgetName, renderWidget: () => <AndroidWidget widgetName={widgetName} snapshot={null} /> }),

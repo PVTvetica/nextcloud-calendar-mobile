@@ -120,6 +120,22 @@ export async function syncCalendars(account: Account): Promise<CalendarMeta[]> {
   return remote;
 }
 
+
+let localWrites = 0;
+
+export function markLocalWrite(): void {
+  localWrites += 1;
+}
+
+export function localWriteEpoch(): number {
+  return localWrites;
+}
+
+export function seriesBaseUid(uid: string): string {
+  const i = uid.indexOf('_occ_');
+  return i === -1 ? uid : uid.slice(0, i);
+}
+
 export async function syncEvents(
   account: Account,
   calendars: CalendarMeta[],
@@ -127,6 +143,7 @@ export async function syncEvents(
   end: Date,
   deleteMissing = true,
 ): Promise<void> {
+  const epoch = localWriteEpoch();
   const remote = await fetchEventsForCalendars(account, calendars, start, end);
   const db = getDatabaseInstance();
   const events = db.get<Event>('events');
@@ -141,6 +158,16 @@ export async function syncEvents(
         Q.where('end', Q.gt(startMs)),
       )
       .fetch();
+
+    // A local write during either fetch above (the remote pull or this query)
+    // means this pull is now stale, so it must yield. Bail here, before any
+    // prepareUpdate/prepareMarkAsDeleted: those mutate the cached record
+    // instances synchronously and are cleared only by db.batch. Preparing and
+    // then returning would strand an instance with pending changes, and the
+    // next sync's prepareUpdate on that same cached instance throws "Cannot
+    // update a record with pending changes". Everything from here to the batch
+    // is synchronous, so a single check now covers the whole window.
+    if (localWriteEpoch() !== epoch) return;
 
     const byKey = new Map<string, Event>();
     const ops = [];

@@ -1,6 +1,7 @@
 import type { CalendarEvent } from '@/types';
 import i18n from '@/utils/i18n';
-import { type AgendaDaySection, type AgendaEventItem, type AgendaSnapshot, eventDeepLink } from './types';
+import { zonedWallTimeToUtc } from '@/utils/timezone';
+import { type AgendaDaySection, type AgendaEventItem, type AgendaSnapshot, type AgendaTimelineEntry, eventDeepLink } from './types';
 
 export interface BuildAgendaOptions {
   now?: Date;
@@ -14,23 +15,59 @@ export interface BuildAgendaOptions {
 
 const DAY_MS = 86_400_000;
 
-function zonedKey(d: Date, tz: string): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(d);
+type FmtKind = 'dayKey' | 'weekdayShort' | 'dayNumber' | 'weekdayLong' | 'fullDate' | 'time';
+
+const FMT_OPTS: Record<FmtKind, Intl.DateTimeFormatOptions> = {
+  dayKey: { year: 'numeric', month: '2-digit', day: '2-digit' },
+  weekdayShort: { weekday: 'short' },
+  dayNumber: { day: 'numeric' },
+  weekdayLong: { weekday: 'long' },
+  fullDate: { weekday: 'long', day: 'numeric', month: 'long' },
+  time: { hour: '2-digit', minute: '2-digit' },
+};
+
+const FMT_CACHE = new Map<string, Intl.DateTimeFormat>();
+
+function fmt(kind: FmtKind, locale: string | undefined, tz: string): Intl.DateTimeFormat {
+  const key = `${kind}|${locale ?? ''}|${tz}`;
+  let f = FMT_CACHE.get(key);
+  if (!f) {
+    f = new Intl.DateTimeFormat(kind === 'dayKey' ? 'en-CA' : locale, {
+      timeZone: tz,
+      ...FMT_OPTS[kind],
+    });
+    FMT_CACHE.set(key, f);
+  }
+  return f;
 }
 
-function sameZonedDay(a: Date, b: Date, timeZone: string): boolean {
-  const fmt = new Intl.DateTimeFormat('en-CA', {
-    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
-  });
-  return fmt.format(a) === fmt.format(b);
+function zonedKey(d: Date, tz: string): string {
+  return fmt('dayKey', undefined, tz).format(d);
 }
 
 function timeLabel(event: CalendarEvent, locale: string | undefined, tz: string): string {
   if (event.allDay) return 'All day';
-  const fmt = new Intl.DateTimeFormat(locale, { timeZone: tz, hour: '2-digit', minute: '2-digit' });
-  return `${fmt.format(event.dtstart)} – ${fmt.format(event.dtend)}`;
+  const f = fmt('time', locale, tz);
+  return `${f.format(event.dtstart)} – ${f.format(event.dtend)}`;
+}
+
+interface EventIndex {
+  byKey: Map<string, CalendarEvent[]>;
+}
+
+function indexEvents(events: CalendarEvent[], tz: string): EventIndex {
+  const dayKey = fmt('dayKey', undefined, tz);
+  const byKey = new Map<string, CalendarEvent[]>();
+  for (const e of events) {
+    const key = dayKey.format(e.dtstart);
+    const bucket = byKey.get(key);
+    if (bucket) bucket.push(e);
+    else byKey.set(key, [e]);
+  }
+  for (const bucket of byKey.values()) {
+    bucket.sort((a, b) => a.dtstart.getTime() - b.dtstart.getTime());
+  }
+  return { byKey };
 }
 
 function toItem(event: CalendarEvent, locale: string | undefined, tz: string): AgendaEventItem {
@@ -40,7 +77,7 @@ function toItem(event: CalendarEvent, locale: string | undefined, tz: string): A
     startIso: event.dtstart.toISOString(),
     endIso: event.dtend.toISOString(),
     allDay: event.allDay,
-    color: event.color,
+    color: event.color || '#3b82f6',
     timeLabel: timeLabel(event, locale, tz),
     deepLink: eventDeepLink(event.uid),
   };
@@ -52,30 +89,20 @@ export function buildAgendaSnapshot(
     now = new Date(), locale, timeZone,
     maxEvents = 3, days = 0, maxPerSection = 3, scheme = 'light',
   }: BuildAgendaOptions = {},
+  index?: EventIndex,
 ): AgendaSnapshot {
   const tz = timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const { byKey } = index ?? indexEvents(events, tz);
 
-  const todays = events
-    .filter((e) => sameZonedDay(e.dtstart, now, tz))
-    .filter((e) => e.allDay || e.dtend.getTime() > now.getTime())
-    .sort((a, b) => a.dtstart.getTime() - b.dtstart.getTime());
+  const todays = (byKey.get(zonedKey(now, tz)) ?? [])
+    .filter((e) => e.allDay || e.dtend.getTime() > now.getTime());
 
-  const dayLabel = new Intl.DateTimeFormat(locale, { timeZone: tz, weekday: 'short' })
-    .format(now).toUpperCase();
-  const dayNumber = new Intl.DateTimeFormat(locale, { timeZone: tz, day: 'numeric' })
-    .format(now);
+  const dayLabel = fmt('weekdayShort', locale, tz).format(now).toUpperCase();
+  const dayNumber = fmt('dayNumber', locale, tz).format(now);
 
   const relativeLabel = todays.length > 0
-    ? new Intl.DateTimeFormat(locale, { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long' }).format(now)
+    ? fmt('fullDate', locale, tz).format(now)
     : i18n.t('widget.emptyAgenda');
-
-  const byKey = new Map<string, CalendarEvent[]>();
-  for (const e of events) {
-    const key = zonedKey(e.dtstart, tz);
-    const bucket = byKey.get(key);
-    if (bucket) bucket.push(e);
-    else byKey.set(key, [e]);
-  }
 
   const sections: AgendaDaySection[] = [];
   for (let i = 0; i <= days; i++) {
@@ -83,20 +110,19 @@ export function buildAgendaSnapshot(
     const key = zonedKey(dayDate, tz);
     const isToday = i === 0;
     const dayEvents = (byKey.get(key) ?? [])
-      .filter((e) => e.allDay || !isToday || e.dtend.getTime() > now.getTime())
-      .sort((a, b) => a.dtstart.getTime() - b.dtstart.getTime());
+      .filter((e) => e.allDay || !isToday || e.dtend.getTime() > now.getTime());
     if (dayEvents.length === 0 && !isToday) continue;
     sections.push({
       dayKey: key,
-      dayLabel: new Intl.DateTimeFormat(locale, { timeZone: tz, weekday: 'short' }).format(dayDate).toUpperCase(),
-      dayNumber: new Intl.DateTimeFormat(locale, { timeZone: tz, day: 'numeric' }).format(dayDate),
-      weekdayLong: new Intl.DateTimeFormat(locale, { timeZone: tz, weekday: 'long' }).format(dayDate),
+      dayLabel: fmt('weekdayShort', locale, tz).format(dayDate).toUpperCase(),
+      dayNumber: fmt('dayNumber', locale, tz).format(dayDate),
+      weekdayLong: fmt('weekdayLong', locale, tz).format(dayDate),
       isToday,
       items: dayEvents.slice(0, maxPerSection).map((e) => toItem(e, locale, tz)),
     });
   }
 
-  const nextEvent = sections.flatMap((s) => s.items)[0] ?? null;
+  const nextEvent = sections.flatMap((s) => s.items)[0];
 
   return {
     generatedAtIso: now.toISOString(),
@@ -107,6 +133,43 @@ export function buildAgendaSnapshot(
     relativeLabel,
     events: todays.slice(0, maxEvents).map((e) => toItem(e, locale, tz)),
     sections,
-    nextEvent,
+    ...(nextEvent ? { nextEvent } : {}),
   };
+}
+
+function nextZonedMidnight(after: Date, tz: string): Date {
+  const [y, m, d] = zonedKey(after, tz).split('-').map(Number);
+  return zonedWallTimeToUtc(y, m, d + 1, 0, 0, 0, tz);
+}
+
+export function buildAgendaTimeline(
+  events: CalendarEvent[],
+  options: BuildAgendaOptions = {},
+  maxEntries = 24,
+): AgendaTimelineEntry[] {
+  const now = options.now ?? new Date();
+  const tz = options.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const horizon = now.getTime() + ((options.days ?? 0) + 1) * DAY_MS;
+  const index = indexEvents(events, tz);
+
+  const boundaries = new Set<number>([now.getTime()]);
+
+  for (const e of events) {
+    const end = e.dtend.getTime();
+    if (end > now.getTime() && end < horizon) boundaries.add(end);
+  }
+
+  let midnight = nextZonedMidnight(now, tz);
+  while (midnight.getTime() < horizon) {
+    boundaries.add(midnight.getTime());
+    midnight = nextZonedMidnight(midnight, tz);
+  }
+
+  return [...boundaries]
+    .sort((a, b) => a - b)
+    .slice(0, maxEntries)
+    .map((at) => ({
+      atIso: new Date(at).toISOString(),
+      snapshot: buildAgendaSnapshot(events, { ...options, now: new Date(at), timeZone: tz }, index),
+    }));
 }

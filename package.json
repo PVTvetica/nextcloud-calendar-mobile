@@ -1,6 +1,6 @@
 {
   "name": "nextcloud-calendar",
-  "version": "1.4.6",
+  "version": "1.4.7",
   "main": "expo-router/entry",
   "expo": {
     "autolinking": {
@@ -60,7 +60,6 @@
     "react-i18next": "^17.0.8",
     "react-native": "0.86.0",
     "react-native-android-widget": "^0.21.0",
-    "react-native-big-calendar": "5.0.0-beta.12",
     "react-native-country-flag": "^2.0.2",
     "react-native-gesture-handler": "~2.32.0",
     "react-native-infinite-pager": "^0.3.18",

@@ -77,9 +77,6 @@ export function EventForm({
   const [calendarError, setCalendarError] = useState<string | null>(null);
   const [endError, setEndError] = useState<string | null>(null);
 
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
-
   const [androidStep, setAndroidStep] = useState<AndroidPickerStep>(null);
 
   const scrollRef = useRef<ScrollView>(null);
@@ -95,22 +92,13 @@ export function EventForm({
     inputOffsets.current[key] = event.nativeEvent.layout.y;
   }
 
+  // iOS embeds the native compact pickers inline; only Android opens a picker.
   function openStartPicker() {
-    if (Platform.OS === 'android') {
-      setAndroidStep({ target: 'start', step: 'date' });
-    } else {
-      setShowEndPicker(false);
-      setShowStartPicker((v) => !v);
-    }
+    setAndroidStep({ target: 'start', step: 'date' });
   }
 
   function openEndPicker() {
-    if (Platform.OS === 'android') {
-      setAndroidStep({ target: 'end', step: 'date' });
-    } else {
-      setShowStartPicker(false);
-      setShowEndPicker((v) => !v);
-    }
+    setAndroidStep({ target: 'end', step: 'date' });
   }
 
   const seeded = useRef(!!initialValues);
@@ -131,12 +119,7 @@ export function EventForm({
   }
 
   function applyEnd(d: Date) {
-    if (!seeded.current) {
-      seeded.current = true;
-      setDtend(d);
-      setDtstart(allDay ? d : dayjs(d).subtract(1, 'hour').toDate());
-      return;
-    }
+    seeded.current = true;
     const invalid = allDay
       ? dayjs(d).isBefore(dayjs(dtstart), 'day')
       : d <= dtstart;
@@ -219,28 +202,53 @@ export function EventForm({
 
   const startBlock = (
     <View style={twoColDates ? styles.grow : undefined}>
-      <DateField
-        label={t('event.start')}
-        value={dayjs(dtstart).format('ddd ll')}
-        time={allDay ? undefined : dayjs(dtstart).format('LT')}
-        onPress={openStartPicker}
-      />
-      {Platform.OS === 'ios' && showStartPicker && (
-        <DateTimePicker value={dtstart} mode={allDay ? 'date' : 'datetime'} onChange={handleIosStartChange} />
+      {Platform.OS === 'ios' ? (
+        <View style={styles.iosPickerRow}>
+          <Typography variant="body2" color="secondary">{t('event.start')}</Typography>
+          <DateTimePicker
+            value={dtstart}
+            mode={allDay ? 'date' : 'datetime'}
+            display="compact"
+            accentColor={theme.colors.primary}
+            onChange={handleIosStartChange}
+          />
+        </View>
+      ) : (
+        <DateField
+          label={t('event.start')}
+          value={dayjs(dtstart).format('ddd ll')}
+          time={allDay ? undefined : dayjs(dtstart).format('LT')}
+          onPress={openStartPicker}
+        />
       )}
     </View>
   );
   const endBlock = (
     <View style={twoColDates ? styles.grow : undefined}>
-      <DateField
-        label={t('event.end')}
-        value={dayjs(dtend).format('ddd ll')}
-        time={allDay ? undefined : dayjs(dtend).format('LT')}
-        onPress={openEndPicker}
-        error={endError ?? undefined}
-      />
-      {Platform.OS === 'ios' && showEndPicker && (
-        <DateTimePicker value={dtend} mode={allDay ? 'date' : 'datetime'} onChange={handleIosEndChange} />
+      {Platform.OS === 'ios' ? (
+        <>
+          <View style={styles.iosPickerRow}>
+            <Typography variant="body2" color="secondary">{t('event.end')}</Typography>
+            <DateTimePicker
+              value={dtend}
+              mode={allDay ? 'date' : 'datetime'}
+              display="compact"
+              accentColor={theme.colors.primary}
+              onChange={handleIosEndChange}
+            />
+          </View>
+          {endError ? (
+            <Typography variant="caption" color="danger">{endError}</Typography>
+          ) : null}
+        </>
+      ) : (
+        <DateField
+          label={t('event.end')}
+          value={dayjs(dtend).format('ddd ll')}
+          time={allDay ? undefined : dayjs(dtend).format('LT')}
+          onPress={openEndPicker}
+          error={endError ?? undefined}
+        />
       )}
     </View>
   );
@@ -319,6 +327,7 @@ export function EventForm({
           />
         )}
 
+
         <Stack
           direction={twoColDates ? 'horizontal' : 'vertical'}
           gap={twoColDates ? 12 : 16}
@@ -338,6 +347,11 @@ export function EventForm({
             value={location}
             onChangeText={setLocation}
             placeholder={t('event.locationPlaceholder')}
+            autoCapitalize="none"
+            autoCorrect={false}
+            spellCheck={false}
+            autoComplete="off"
+            textContentType="none"
             onFocus={() => scrollToField('location')}
           />
         </View>
@@ -366,6 +380,10 @@ export function EventForm({
                   placeholder={t('event.attendeePlaceholder')}
                   autoCapitalize="none"
                   keyboardType="email-address"
+                  autoCorrect={false}
+                  spellCheck={false}
+                  autoComplete="email"
+                  textContentType="emailAddress"
                   onSubmitEditing={addAttendee}
                   onFocus={() => scrollToField('attendee')}
                   onBlur={() => { attendeeFocused.current = false; }}
@@ -418,4 +436,5 @@ const styles = StyleSheet.create({
   chipRow: { gap: 8 },
   grow: { flex: 1 },
   pushRight: { marginLeft: 'auto' },
+  iosPickerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
 });

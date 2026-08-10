@@ -1,4 +1,5 @@
 import type { Attendee, CalendarEvent } from '@/types';
+import { dedupeAttendees } from '@/utils/attendees';
 
 import Event from '../models/Event';
 
@@ -6,7 +7,7 @@ function parseAttendees(raw?: string): Attendee[] {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as Attendee[]) : [];
+    return Array.isArray(parsed) ? dedupeAttendees(parsed as Attendee[]) : [];
   } catch {
     return [];
   }

@@ -1,18 +1,17 @@
-import { syncCalendarDelta } from '../../src/database/sync';
-import { syncCollection, fetchEventsByHrefs } from '../../src/services/nextcloud/caldav';
+import { syncCalendarDelta, syncEvents, markLocalWrite } from '../../src/database/sync';
+import { syncCollection, fetchEventsByHrefs, fetchEventsForCalendars } from '../../src/services/nextcloud/caldav';
 import { getDatabaseInstance } from '../../src/database/DatabaseProvider';
 import type { Account, CalendarMeta, CalendarEvent } from '../../src/types';
 
 jest.mock('../../src/services/nextcloud/caldav');
 jest.mock('../../src/database/DatabaseProvider');
-// Passthrough so the real safeWrite's 30s watchdog timer doesn't leak as an
-// open handle; the fake db.write already runs the operation.
 jest.mock('../../src/database/utils/safeTransaction', () => ({
   safeWrite: (_db: unknown, fn: () => Promise<unknown>) => fn(),
 }));
 
 const mockSyncCollection = syncCollection as jest.Mock;
 const mockFetchByHrefs = fetchEventsByHrefs as jest.Mock;
+const mockFetchForCalendars = fetchEventsForCalendars as jest.Mock;
 const mockGetDb = getDatabaseInstance as jest.Mock;
 
 const account: Account = {
@@ -81,7 +80,7 @@ beforeEach(() => jest.clearAllMocks());
 describe('syncCalendarDelta — non-destructive guards', () => {
   it('does NOT wipe when a full sync enumerates hrefs but parses zero events', async () => {
     mockSyncCollection.mockResolvedValue({ changed: ['h1', 'h2'], deleted: [], newToken: 't2', reset: false });
-    mockFetchByHrefs.mockResolvedValue([]); // parse/fetch failure
+    mockFetchByHrefs.mockResolvedValue([]);
     const existing = [makeRow('h1'), makeRow('h2')];
     const { db, batch } = makeDb({ calendarRow: noTokenRow(), eventRows: existing });
     mockGetDb.mockReturnValue(db);
@@ -102,22 +101,22 @@ describe('syncCalendarDelta — non-destructive guards', () => {
     await syncCalendarDelta(account, calendar);
 
     expect(existing[0].prepareMarkAsDeleted).not.toHaveBeenCalled();
-    expect(batch).toHaveBeenCalled(); // token refresh op only
+    expect(batch).toHaveBeenCalled();
   });
 
   it('full sync reconcile: replaces fetched hrefs and removes stale ones', async () => {
     mockSyncCollection.mockResolvedValue({ changed: ['h1', 'h2'], deleted: [], newToken: 't2', reset: false });
     mockFetchByHrefs.mockResolvedValue([evt('h1'), evt('h2')]);
     const h1old = makeRow('h1');
-    const h3stale = makeRow('h3'); // not enumerated → stale
+    const h3stale = makeRow('h3');
     const { db, batch, prepareCreate } = makeDb({ calendarRow: noTokenRow(), eventRows: [h1old, h3stale] });
     mockGetDb.mockReturnValue(db);
 
     await syncCalendarDelta(account, calendar);
 
-    expect(h1old.prepareMarkAsDeleted).toHaveBeenCalled(); // replaced
-    expect(h3stale.prepareMarkAsDeleted).toHaveBeenCalled(); // stale removed
-    expect(prepareCreate).toHaveBeenCalledTimes(2); // both fetched inserted
+    expect(h1old.prepareMarkAsDeleted).toHaveBeenCalled();
+    expect(h3stale.prepareMarkAsDeleted).toHaveBeenCalled();
+    expect(prepareCreate).toHaveBeenCalledTimes(2);
     expect(batch).toHaveBeenCalled();
   });
 
@@ -126,15 +125,108 @@ describe('syncCalendarDelta — non-destructive guards', () => {
     mockFetchByHrefs.mockResolvedValue([evt('h1')]);
     const h1old = makeRow('h1');
     const h2gone = makeRow('h2');
-    const h9other = makeRow('h9'); // not in changed/deleted → must survive
+    const h9other = makeRow('h9');
     const { db, prepareCreate } = makeDb({ calendarRow: tokenRow(), eventRows: [h1old, h2gone, h9other] });
     mockGetDb.mockReturnValue(db);
 
     await syncCalendarDelta(account, calendar);
 
-    expect(h1old.prepareMarkAsDeleted).toHaveBeenCalled(); // replaced
-    expect(h2gone.prepareMarkAsDeleted).toHaveBeenCalled(); // explicit delete
-    expect(h9other.prepareMarkAsDeleted).not.toHaveBeenCalled(); // untouched
+    expect(h1old.prepareMarkAsDeleted).toHaveBeenCalled();
+    expect(h2gone.prepareMarkAsDeleted).toHaveBeenCalled();
+    expect(h9other.prepareMarkAsDeleted).not.toHaveBeenCalled();
     expect(prepareCreate).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('syncEvents — local writes win over an in-flight pull', () => {
+  const start = new Date('2026-07-01T00:00:00Z');
+  const end = new Date('2026-08-01T00:00:00Z');
+
+  function windowRow(uid: string) {
+    return {
+      uid,
+      href: `h-${uid}`,
+      accountId: account.id,
+      calendarId: calendar.id,
+      summary: 'old',
+      prepareMarkAsDeleted: jest.fn(() => ({ _op: 'del', uid })),
+      prepareUpdate: jest.fn(() => ({ _op: 'upd', uid })),
+    };
+  }
+
+  it('does not resurrect an event deleted while the fetch was running', async () => {
+    // Remote snapshot predates the deletion: it still carries the event, and the
+    // local row is already gone.
+    mockFetchForCalendars.mockImplementation(async () => {
+      markLocalWrite();
+      return [{ ...evt('h1'), uid: 'gone-uid' }];
+    });
+    const { db, batch } = makeDb({ eventRows: [] });
+    mockGetDb.mockReturnValue(db);
+
+    await syncEvents(account, [calendar], start, end);
+
+    expect(batch).not.toHaveBeenCalled();
+  });
+
+  it('does not overwrite an edit made while the fetch was running', async () => {
+    const row = windowRow('edited-uid');
+    mockFetchForCalendars.mockImplementation(async () => {
+      markLocalWrite();
+      return [{ ...evt('h1'), uid: 'edited-uid', summary: 'stale' }];
+    });
+    const { db, batch } = makeDb({ eventRows: [row] });
+    mockGetDb.mockReturnValue(db);
+
+    await syncEvents(account, [calendar], start, end);
+
+    expect(batch).not.toHaveBeenCalled();
+  });
+
+  it('aborts before preparing any record, leaving none with pending changes', async () => {
+    // The regression: prepareUpdate / prepareMarkAsDeleted mutate the cached
+    // WatermelonDB instance synchronously and are cleared only by db.batch. If
+    // the epoch guard aborts AFTER preparing, the instance keeps its pending
+    // state, and the next sync's prepareUpdate on that same cached instance
+    // throws "Cannot update a record with pending changes". So on abort, nothing
+    // may be prepared at all.
+    const edited = windowRow('edited-uid');
+    const dropped = windowRow('dropped-uid');
+    mockFetchForCalendars.mockImplementation(async () => {
+      markLocalWrite();
+      return [{ ...evt('h1'), uid: 'edited-uid', summary: 'stale' }];
+    });
+    const { db, batch } = makeDb({ eventRows: [edited, dropped] });
+    mockGetDb.mockReturnValue(db);
+
+    await syncEvents(account, [calendar], start, end);
+
+    expect(batch).not.toHaveBeenCalled();
+    expect(edited.prepareUpdate).not.toHaveBeenCalled();
+    expect(dropped.prepareMarkAsDeleted).not.toHaveBeenCalled();
+  });
+
+  it('still removes a row the server dropped when nothing was written locally', async () => {
+    const stale = windowRow('stale-uid');
+    mockFetchForCalendars.mockResolvedValue([]);
+    const { db, batch } = makeDb({ eventRows: [stale] });
+    mockGetDb.mockReturnValue(db);
+
+    await syncEvents(account, [calendar], start, end);
+
+    expect(stale.prepareMarkAsDeleted).toHaveBeenCalled();
+    expect(batch).toHaveBeenCalled();
+  });
+
+  it('applies remote changes when the local write happened before the fetch', async () => {
+    markLocalWrite();
+    const row = windowRow('old-edit-uid');
+    mockFetchForCalendars.mockResolvedValue([{ ...evt('h1'), uid: 'old-edit-uid' }]);
+    const { db, batch } = makeDb({ eventRows: [row] });
+    mockGetDb.mockReturnValue(db);
+
+    await syncEvents(account, [calendar], start, end);
+
+    expect(batch).toHaveBeenCalled();
   });
 });
