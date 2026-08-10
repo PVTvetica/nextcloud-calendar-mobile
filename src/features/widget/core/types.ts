@@ -29,7 +29,7 @@ export interface AgendaSnapshot {
   relativeLabel: string;
   events: AgendaEventItem[];
   sections: AgendaDaySection[];
-  nextEvent: AgendaEventItem | null;
+  nextEvent?: AgendaEventItem;
 }
 
 export interface AgendaTimelineEntry {

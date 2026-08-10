@@ -168,6 +168,14 @@ function trackedInstance(): LiveActivity<ActivityProps> | null {
   return instance;
 }
 
+function sameContent(a: LiveEventState, b: LiveEventState): boolean {
+  return a.title === b.title
+    && a.startIso === b.startIso
+    && a.endIso === b.endIso
+    && a.location === b.location
+    && a.color === b.color;
+}
+
 export const liveActivity: WidgetSurface<LiveEventState> = {
   id: 'liveActivity',
   isSupported: () => typeof activity?.start === 'function',
@@ -178,14 +186,23 @@ export const liveActivity: WidgetSurface<LiveEventState> = {
     let current = trackedInstance();
 
     if (sameEvent && current) {
-      if (scheduledEnd) return;
-      try {
-        await current.update(props);
-        writeLiveEvent(state);
-        return;
-      } catch {
+      if (scheduledEnd) {
+        if (!previous || sameContent(previous, state)) return;
+        try {
+          await current.end('immediate');
+        } catch {
+        }
         instance = null;
         current = null;
+      } else {
+        try {
+          await current.update(props);
+          writeLiveEvent(state);
+          return;
+        } catch {
+          instance = null;
+          current = null;
+        }
       }
     } else if (current) {
       try {

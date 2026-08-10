@@ -35,6 +35,14 @@ describe('buildAgendaSnapshot', () => {
     expect(snap.relativeLabel).toBe('No upcoming event');
   });
 
+  it('falls back to a valid colour so an uncoloured event never crashes the native render', () => {
+    const events = [
+      ev({ uid: 'nocolor', color: undefined as unknown as string, dtstart: new Date('2026-08-01T12:00:00Z'), dtend: new Date('2026-08-01T13:00:00Z') }),
+    ];
+    const snap = buildAgendaSnapshot(events, { now, timeZone: TZ, locale: 'en-US' });
+    expect(snap.events[0].color).toBe('#3b82f6');
+  });
+
   it('respects maxEvents', () => {
     const events = [1, 2, 3, 4].map((h) =>
       ev({ uid: `e${h}`, dtstart: new Date(`2026-08-01T1${h}:00:00Z`), dtend: new Date(`2026-08-01T1${h}:30:00Z`) }),
@@ -74,7 +82,7 @@ describe('buildAgendaSnapshot', () => {
     const snap = buildAgendaSnapshot([], { now, timeZone: TZ, locale: 'en-US' });
     expect(snap.sections).toHaveLength(1);
     expect(snap.sections[0].isToday).toBe(true);
-    expect(snap.nextEvent).toBeNull();
+    expect(snap.nextEvent).toBeUndefined();
   });
 });
 

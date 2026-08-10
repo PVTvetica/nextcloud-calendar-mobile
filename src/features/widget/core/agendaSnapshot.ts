@@ -77,7 +77,7 @@ function toItem(event: CalendarEvent, locale: string | undefined, tz: string): A
     startIso: event.dtstart.toISOString(),
     endIso: event.dtend.toISOString(),
     allDay: event.allDay,
-    color: event.color,
+    color: event.color || '#3b82f6',
     timeLabel: timeLabel(event, locale, tz),
     deepLink: eventDeepLink(event.uid),
   };
@@ -122,7 +122,7 @@ export function buildAgendaSnapshot(
     });
   }
 
-  const nextEvent = sections.flatMap((s) => s.items)[0] ?? null;
+  const nextEvent = sections.flatMap((s) => s.items)[0];
 
   return {
     generatedAtIso: now.toISOString(),
@@ -133,7 +133,7 @@ export function buildAgendaSnapshot(
     relativeLabel,
     events: todays.slice(0, maxEvents).map((e) => toItem(e, locale, tz)),
     sections,
-    nextEvent,
+    ...(nextEvent ? { nextEvent } : {}),
   };
 }
 
