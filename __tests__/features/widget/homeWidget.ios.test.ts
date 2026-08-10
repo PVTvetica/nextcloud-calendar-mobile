@@ -32,7 +32,6 @@ function makeSnapshot(): AgendaSnapshot {
     relativeLabel: 'Wednesday, 29 July',
     events: [],
     sections: [],
-    nextEvent: null,
   };
 }
 

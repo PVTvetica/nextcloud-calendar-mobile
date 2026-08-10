@@ -36,7 +36,6 @@ function snapshot(partial: Partial<AgendaSnapshot>): AgendaSnapshot {
     relativeLabel: 'Saturday 1 August',
     events: [],
     sections: [],
-    nextEvent: null,
     ...partial,
   };
 }

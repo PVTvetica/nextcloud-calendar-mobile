@@ -131,11 +131,28 @@ describe('liveActivity (ios)', () => {
     expect(created.end).toHaveBeenCalledTimes(1);
     expect(created.end.mock.calls[0][0]).toEqual({ after: new Date('2026-07-29T09:30:00.000Z') });
 
-    // The 60s sync loop firing again for the same event must not restart or
-    // touch it — iOS owns the scheduled dismissal now.
-    await liveActivity.update(makeState({ title: 'changed' }));
+    await liveActivity.update(makeState());
     expect(mockStart).toHaveBeenCalledTimes(1);
     expect(created.update).not.toHaveBeenCalled();
+
+    jest.useRealTimers();
+  });
+
+  it('restarts a scheduled short event when an edit changes its content', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-07-29T09:10:00.000Z'));
+    mockGetInstances.mockReturnValue([]);
+    mockReadLiveEvent.mockReturnValue(makeState());
+    const created = { update: jest.fn().mockResolvedValue(undefined), end: jest.fn().mockResolvedValue(undefined) };
+    mockStart.mockReturnValue(created);
+
+    const { liveActivity } = require('@/features/widget/surfaces/liveActivity/liveActivity.ios');
+    await liveActivity.update(makeState());
+    expect(mockStart).toHaveBeenCalledTimes(1);
+
+    await liveActivity.update(makeState({ title: 'Renamed standup' }));
+    expect(created.end).toHaveBeenCalledWith('immediate');
+    expect(mockStart).toHaveBeenCalledTimes(2);
+    expect(mockStart.mock.calls[1][0]).toMatchObject({ title: 'Renamed standup' });
 
     jest.useRealTimers();
   });
@@ -146,7 +163,6 @@ describe('liveActivity (ios)', () => {
     const created = { update: jest.fn().mockResolvedValue(undefined), end: jest.fn().mockResolvedValue(undefined) };
     mockStart.mockReturnValue(created);
 
-    // 6h event: outside the ~4h dismissal window, so no native auto-dismiss.
     const longEvent = makeState({ endIso: '2026-07-29T15:00:00.000Z' });
     const { liveActivity } = require('@/features/widget/surfaces/liveActivity/liveActivity.ios');
     await liveActivity.update(longEvent);
