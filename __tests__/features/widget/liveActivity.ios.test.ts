@@ -31,7 +31,7 @@ function makeState(overrides: Partial<LiveEventState> = {}): LiveEventState {
     startIso: '2026-07-29T09:00:00.000Z',
     endIso: '2026-07-29T09:30:00.000Z',
     color: '#3b82f6',
-    deepLink: 'nextcloud-calendar://event/evt-1',
+    link: 'nextcloud-calendar://event/evt-1',
     location: '',
     attendees: [],
     ...overrides,
@@ -94,7 +94,7 @@ describe('liveActivity (ios)', () => {
     const fresh = { update: jest.fn(), end: jest.fn() };
     mockStart.mockReturnValue(fresh);
 
-    const moved = makeState({ uid: 'evt-2', deepLink: 'nextcloud-calendar://event/evt-2' });
+    const moved = makeState({ uid: 'evt-2', link: 'nextcloud-calendar://event/evt-2' });
     const { liveActivity } = require('@/features/widget/surfaces/liveActivity/liveActivity.ios');
     await liveActivity.update(moved);
 
