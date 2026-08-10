@@ -14,7 +14,6 @@ const TALK_URL_PATTERN = /\/call\//;
 
 const MAX_OCCURRENCES = 1000;
 
-
 function firstAlarmMinutes(vevent: ICAL.Component): number | undefined {
   const alarm = vevent.getFirstSubcomponent('valarm');
   const trigger = alarm?.getFirstProperty('trigger');
@@ -88,14 +87,20 @@ export function parseIcsItem(
       const icalEvent = new ICAL.Event(vevent, { strictExceptions: false });
       const tzid = eventTzid(vevent);
 
+      // const attendees: Attendee[] = dedupeAttendees(
+      //   vevent.getAllProperties('attendee').map((prop: ICAL.Property) => {
+      //     const value = (prop.getFirstValue() as string) ?? '';
+      //     const email = value.replace(/^mailto:/i, '');
+      //     const displayName = (prop.getParameter('cn') as string) ?? undefined;
+      //     return { email, displayName };
+      //   })
+      // );
       const seenAttendees = new Set<string>();
       const attendees: Attendee[] = [];
       for (const prop of vevent.getAllProperties('attendee')) {
         const value = (prop.getFirstValue() as string) ?? '';
         const email = value.replace(/^mailto:/i, '');
         const displayName = (prop.getParameter('cn') as string) ?? undefined;
-        // ICS can repeat the same ATTENDEE (e.g. organizer listed again) — a
-        // duplicate email would collide as a React key downstream. Keep first.
         const key = email.toLowerCase();
         if (email && seenAttendees.has(key)) continue;
         if (email) seenAttendees.add(key);
@@ -188,6 +193,24 @@ export function extractDtstartTzid(ics: string): string | undefined {
   return tzid && isValidTimeZone(tzid) ? tzid : undefined;
 }
 
+export function extractDtstartDtend(ics: string): { dtstart: Date; dtend: Date } | undefined {
+  try {
+    const comp = new ICAL.Component(parseIcsToJcal(ics));
+    const master = comp
+      .getAllSubcomponents('vevent')
+      .find((v: ICAL.Component) => !v.getFirstPropertyValue('recurrence-id'));
+    if (!master) return undefined;
+    const icalEvent = new ICAL.Event(master, { strictExceptions: false });
+    const tzid = eventTzid(master);
+    return {
+      dtstart: resolveInstant(icalEvent.startDate, tzid),
+      dtend: resolveInstant(icalEvent.endDate, tzid, true),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 export function extractSequence(ics: string): number {
   const m = ics.match(/^SEQUENCE:(\d+)/m);
   const n = m ? Number(m[1]) : 0;
@@ -207,7 +230,6 @@ export function parseIcsObjects(
   }
   return events;
 }
-
 
 export async function parseIcsObjectsAsync(
   items: { ics: string; href: string }[],

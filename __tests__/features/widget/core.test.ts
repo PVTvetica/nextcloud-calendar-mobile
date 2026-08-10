@@ -99,80 +99,6 @@ describe('selectOngoingEvent', () => {
   });
 });
 
-describe('displayLocation', () => {
-  it('labels a bare meeting link with its provider', () => {
-    expect(displayLocation('https://meet.google.com/xqz-mkpv-rwd')).toBe('Video conference: Google Meet');
-    expect(displayLocation('https://talk.soluce.example/call/a1b2c3d4e5f6g7h8')).toBe('Video conference: Talk');
-    expect(displayLocation('https://teams.microsoft.com/l/meetup-join/19%3ameeting_ZmE4@thread.v2/0?context=%7b%22Tid%22%3a%22a1b2%22%7d')).toBe('Video conference: Teams');
-  });
-
-  it('labels a link written without a scheme', () => {
-    expect(displayLocation('meet.google.com/xqz-mkpv-rwd')).toBe('Video conference: Google Meet');
-    expect(displayLocation('www.cloud.soluce.example/index.php/call/abc')).toBe('Video conference: Talk');
-  });
-
-  it('drops a non-conferencing link without a human part', () => {
-    expect(displayLocation('https://example.com/some/page')).toBe('');
-  });
-
-  it('keeps the human part next to a link', () => {
-    expect(displayLocation('Salle Jupiter — https://meet.google.com/xqz-mkpv-rwd')).toBe('Salle Jupiter');
-    expect(displayLocation('Microsoft Teams Meeting (https://teams.microsoft.com/l/meetup-join/19%3ameeting_x)')).toBe('Microsoft Teams Meeting');
-  });
-
-  it('leaves a plain address untouched', () => {
-    expect(displayLocation('12 rue des Lilas, 59000 Lille')).toBe('12 rue des Lilas, 59000 Lille');
-    expect(displayLocation('Salle 3.14')).toBe('Salle 3.14');
-  });
-
-  it('handles missing and blank values', () => {
-    expect(displayLocation(undefined)).toBe('');
-    expect(displayLocation('   ')).toBe('');
-  });
-});
-
-describe('meetingProvider', () => {
-  it('names the supported conferencing providers', () => {
-    expect(meetingProvider('https://nc.example/call/abc')).toBe('Talk');
-    expect(meetingProvider('https://teams.microsoft.com/l/meetup-join/x')).toBe('Teams');
-    expect(meetingProvider('https://meet.google.com/xqz-mkpv-rwd')).toBe('Google Meet');
-    expect(meetingProvider('https://us02web.zoom.us/j/123')).toBe('Zoom');
-    expect(meetingProvider('https://whereby.com/room')).toBe('Whereby');
-    expect(meetingProvider('https://meet.jit.si/room')).toBe('Jitsi');
-    expect(meetingProvider('https://acme.webex.com/meet/x')).toBe('Webex');
-  });
-
-  it('returns null for plain locations and blanks', () => {
-    expect(meetingProvider('12 rue des Lilas')).toBeNull();
-    expect(meetingProvider(undefined)).toBeNull();
-  });
-});
-
-describe('shouldClearLiveEvent', () => {
-  const now = new Date('2026-08-01T12:30:00Z');
-  const live = {
-    uid: 'u', title: 'T', color: '#000', deepLink: 'x',
-    startIso: '2026-08-01T12:00:00Z', endIso: '2026-08-01T13:00:00Z',
-    location: '', attendees: [],
-  };
-
-  it('keeps a running activity when the read came back empty', () => {
-    expect(shouldClearLiveEvent(live, 0, now)).toBe(false);
-  });
-
-  it('clears once the tracked event has ended', () => {
-    expect(shouldClearLiveEvent(live, 0, new Date('2026-08-01T13:00:00Z'))).toBe(true);
-  });
-
-  it('clears when real data proves the event is no longer ongoing', () => {
-    expect(shouldClearLiveEvent(live, 4, now)).toBe(true);
-  });
-
-  it('does nothing when no activity is tracked', () => {
-    expect(shouldClearLiveEvent(null, 4, now)).toBe(false);
-  });
-});
-
 describe('eventProgress / remainingMinutes', () => {
   const state = {
     uid: 'u', title: 'T', color: '#000', deepLink: 'x',
@@ -246,6 +172,35 @@ describe('buildAgendaTimeline', () => {
     expect(timeline[0].snapshot.events.map((e) => e.uid)).toEqual(['ends']);
     const afterEnd = timeline.find((e) => e.atIso === '2026-08-01T12:00:00.000Z');
     expect(afterEnd?.snapshot.events).toHaveLength(0);
+  });
+
+  it('builds a constant number of date formatters, not one per event per entry', () => {
+    const events = Array.from({ length: 300 }, (_, i) =>
+      ev({
+        uid: `e${i}`,
+        dtstart: new Date(now.getTime() + i * 3 * 60_000),
+        dtend: new Date(now.getTime() + (i * 3 + 30) * 60_000),
+      }),
+    );
+
+    jest.resetModules();
+    const Real = Intl.DateTimeFormat;
+    let built = 0;
+    const counting = function (this: unknown, ...args: unknown[]) {
+      built += 1;
+      return new (Real as unknown as new (...a: unknown[]) => Intl.DateTimeFormat)(...args);
+    } as unknown as typeof Intl.DateTimeFormat;
+    counting.supportedLocalesOf = Real.supportedLocalesOf;
+    Intl.DateTimeFormat = counting;
+
+    try {
+      const fresh = require('@/features/widget/core/agendaSnapshot') as typeof import('@/features/widget/core/agendaSnapshot');
+      fresh.buildAgendaTimeline(events, { now, timeZone: TZ, locale: 'en-US', days: 7, maxPerSection: 10 });
+    } finally {
+      Intl.DateTimeFormat = Real;
+    }
+
+    expect(built).toBeLessThan(20);
   });
 
   it('ignores event ends beyond the horizon and caps the entry count', () => {

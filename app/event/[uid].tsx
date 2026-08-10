@@ -19,8 +19,10 @@ import {
   SectionHeader, Avatar, Spinner, ScreenHeader,
   IconButton,
 } from '@/ui/components';
+import type { CalendarEvent, RecurrenceEditScope } from '@/types';
+import { askRecurrenceScope, type RecurrenceScopeStrings } from '@/features/event/recurrenceScope';
+import { decideMoveEventScope } from '@/features/calendar/utils/moveEventScope';
 import { goBackOrHome } from '@/utils/navigationGuard';
-import type { RecurrenceEditScope } from '@/types';
 
 dayjs.extend(localizedFormat);
 
@@ -36,40 +38,6 @@ async function openTalkRoom(talkUrl: string) {
     return;
   }
   await Linking.openURL(talkUrl);
-}
-
-interface RecurrenceScopeStrings {
-  message: string;
-  thisOnly: string;
-  thisAndFollowing: string;
-  all: string;
-  cancel: string;
-}
-
-function askRecurrenceScope(
-  title: string,
-  strings: RecurrenceScopeStrings,
-  onSelect: (scope: RecurrenceEditScope) => void,
-) {
-  Alert.alert(title, strings.message, [
-    {
-      text: strings.thisOnly,
-      onPress: () => onSelect('this'),
-    },
-    {
-      text: strings.thisAndFollowing,
-      onPress: () => onSelect('thisAndFollowing'),
-    },
-    {
-      text: strings.all,
-      onPress: () => onSelect('all'),
-    },
-    { text: strings.cancel, style: 'cancel' },
-  ],
-    {
-      cancelable: true,
-    },
- );
 }
 
 export default function EventDetailScreen() {
@@ -125,13 +93,18 @@ export default function EventDetailScreen() {
 
   function handleEdit() {
     if (!event) return;
-    if (event.isRecurring) {
-      askRecurrenceScope(t('event.editEvent'), recurrenceScopeStrings, (scope) => {
-        router.push({ pathname: `/event/edit/${uid}`, params: { scope } });
-      });
-    } else {
-      router.push(`/event/edit/${uid}`);
+    const decision = decideMoveEventScope(event);
+    if (decision.kind === 'commit') {
+      if (decision.scope === 'this') {
+        router.push({ pathname: `/event/edit/${uid}`, params: { scope: 'this' } });
+      } else {
+        router.push(`/event/edit/${uid}`);
+      }
+      return;
     }
+    askRecurrenceScope(t('event.editEvent'), recurrenceScopeStrings, (scope) => {
+      router.push({ pathname: `/event/edit/${uid}`, params: { scope } });
+    });
   }
 
   function handleDelete() {

@@ -5,9 +5,9 @@ describe('expansionHorizon', () => {
     const now = new Date('2026-07-22T12:00:00Z');
     const { start, end } = expansionHorizon(now);
     expect(start.getUTCFullYear()).toBe(2025);
-    expect(start.getUTCMonth()).toBe(0); // Jan 2026 - 18mo = Jan 2025
+    expect(start.getUTCMonth()).toBe(0);
     expect(end.getUTCFullYear()).toBe(2028);
-    expect(end.getUTCMonth()).toBe(0); // Jul 2026 + 18mo = Jan 2028
+    expect(end.getUTCMonth()).toBe(0);
   });
 });
 

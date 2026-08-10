@@ -7,7 +7,7 @@ import { putEvent, updateEvent, deleteEvent, moveEvent, fetchEventIcs } from '@/
 import { createTalkRoom } from '@/services/nextcloud/talk';
 import { describeMutationError } from '@/services/shared/errors';
 import { buildIcs, buildAllDayIcs, buildExceptionIcs, injectExdate, truncateRruleUntil } from '@/utils/ics';
-import { parseIcsObjects, extractDtstartTzid, extractSequence } from '@/utils/caldav-parse';
+import { parseIcsObjects, extractDtstartTzid, extractSequence, extractDtstartDtend } from '@/utils/caldav-parse';
 import { isValidTimeZone } from '@/utils/timezone';
 import i18n from '@/utils/i18n';
 import {
@@ -17,10 +17,35 @@ import {
   restoreSeries,
   snapshotByBase,
   seriesBaseUid,
+  shiftSeriesDates,
 } from '@/database/eventWrites';
 import type { Account, CalendarMeta, CalendarEvent, CreateEventInput, RecurrenceEditScope } from '@/types';
 
 const TALK_URL_PATTERN = /\/call\//;
+
+export function seriesDeltas(
+  occurrence: { dtstart: Date; dtend: Date },
+  nextStart: Date,
+  nextEnd: Date,
+): { deltaStart: number; deltaEnd: number } {
+  return {
+    deltaStart: nextStart.getTime() - occurrence.dtstart.getTime(),
+    deltaEnd: nextEnd.getTime() - occurrence.dtend.getTime(),
+  };
+}
+
+export function shiftedMasterInput(
+  input: CreateEventInput,
+  masterBounds: { dtstart: Date; dtend: Date },
+  deltaStart: number,
+  deltaEnd: number,
+): CreateEventInput {
+  return {
+    ...input,
+    dtstart: new Date(masterBounds.dtstart.getTime() + deltaStart),
+    dtend: new Date(masterBounds.dtend.getTime() + deltaEnd),
+  };
+}
 
 function useAction<V>(run: (value: V) => Promise<void>): {
   mutate: (value: V) => void;
@@ -194,23 +219,34 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
       const snapshot = await snapshotByBase(account.id, base);
 
       const { dtstart, dtend } = inputDates(input);
+      const { deltaStart, deltaEnd } = seriesDeltas(event, dtstart, dtend);
+      const shiftsWholeSeries = event.isRecurring && scope === 'all';
       const calendarChanged = !event.isRecurring && input.calendarId !== event.calendarId;
       const targetCal = calendarChanged ? calendars.find((c) => c.id === input.calendarId) : undefined;
-      await patchByUid(account.id, event.uid, {
+
+      const nonTemporalPatch = {
         summary: input.summary,
-        dtstart,
-        dtend,
         allDay: input.allDay,
         description: input.description ?? event.description,
         location: input.location ?? event.location,
         attendees: input.attendees,
         alarmMinutes: input.alarmMinutes,
-        ...(targetCal && {
-          calendarId: targetCal.id,
-          color: targetCal.color,
-          href: `${targetCal.url}${event.uid}.ics`,
-        }),
-      });
+      };
+
+      if (shiftsWholeSeries) {
+        await shiftSeriesDates(account.id, base, deltaStart, deltaEnd, nonTemporalPatch);
+      } else {
+        await patchByUid(account.id, event.uid, {
+          ...nonTemporalPatch,
+          dtstart,
+          dtend,
+          ...(targetCal && {
+            calendarId: targetCal.id,
+            color: targetCal.color,
+            href: `${targetCal.url}${event.uid}.ics`,
+          }),
+        });
+      }
 
       try {
         const { location, description } = await resolveLocationAndDescription(account, input);
@@ -218,14 +254,25 @@ export function useUpdateEvent(account: Account, calendars: CalendarMeta[]) {
         const scheduled = withServerOrganizer(input, event);
 
         if (!event.isRecurring || scope === 'all') {
+          let uid = event.uid;
+          let masterInput = scheduled;
           let sequence = 0;
-          try {
+          if (event.isRecurring) {
             const masterIcs = await fetchEventIcs(account, event.href);
+            timezone = extractDtstartTzid(masterIcs) ?? timezone;
             sequence = extractSequence(masterIcs) + 1;
-            if (event.isRecurring) timezone = extractDtstartTzid(masterIcs) ?? timezone;
-          } catch {
+            const bounds = extractDtstartDtend(masterIcs);
+            if (!bounds) throw new Error('Cannot read the series master to shift it');
+            uid = seriesBaseUid(event.uid);
+            masterInput = shiftedMasterInput(scheduled, bounds, deltaStart, deltaEnd);
+          } else {
+            try {
+              const masterIcs = await fetchEventIcs(account, event.href);
+              sequence = extractSequence(masterIcs) + 1;
+            } catch {
+            }
           }
-          const ics = buildIcsForInput(event.uid, scheduled, location, description, timezone, sequence);
+          const ics = buildIcsForInput(uid, masterInput, location, description, timezone, sequence);
           await updateEvent(account, event.href, ics);
           if (!event.isRecurring && input.calendarId !== event.calendarId) {
             const cal = calendars.find((c) => c.id === input.calendarId);

@@ -9,6 +9,8 @@ import { useEventByUid } from '@/database/useEventByUid';
 import { useCalendars } from '@/hooks/useCalendars';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useUpdateEvent } from '@/features/event/hooks/useMutateEvent';
+import { resolveOrganizer } from '@/features/event/utils/organizer';
+import { parseRrule } from '@/features/calendar/utils/parseRrule';
 import { useAccountStore } from '@/stores/accountStore';
 import { EventForm } from '@/features/event/components/EventForm';
 import {
@@ -77,10 +79,7 @@ export default function EditEventScreen() {
     );
   }
 
-  const organizerEmail = activeAccount.email
-    || (activeAccount.username.includes('@')
-      ? activeAccount.username
-      : `${activeAccount.username}@${new URL(activeAccount.baseUrl).hostname}`);
+  const { organizerEmail, organizerName } = resolveOrganizer(activeAccount);
 
   const initialValues = {
     summary: event.summary,
@@ -92,6 +91,7 @@ export default function EditEventScreen() {
     location: event.location ?? '',
     attendees: event.attendees,
     alarmMinutes: event.alarmMinutes,
+    rrule: parseRrule(event.rrule),
   };
 
   const scopeLabel =
@@ -106,7 +106,7 @@ export default function EditEventScreen() {
         <EventForm
           calendars={calendars}
           organizerEmail={organizerEmail}
-          organizerName={activeAccount.displayName}
+          organizerName={organizerName}
           onSubmit={handleSubmit}
           loading={updateMutation.isPending}
           initialValues={initialValues}
