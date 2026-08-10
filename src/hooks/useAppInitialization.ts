@@ -5,6 +5,7 @@ import {
   loadAccounts,
   getActiveAccountId,
   setActiveAccountId as persistActiveAccountId,
+  refreshAccountProfiles,
 } from '@/services/nextcloud/auth';
 import { fetchCapabilities } from '@/services/nextcloud/nextcloud';
 import { useAccountStore } from '@/stores/accountStore';
@@ -51,6 +52,7 @@ export function useAppInitialization() {
           const activeAccount = accounts.find((a) => a.id === id) ?? accounts[0];
           void syncCalendars(activeAccount).catch(() => undefined);
           fetchCapabilities(activeAccount).then(setCapabilities).catch(() => {});
+          void refreshAccountProfiles().then(setAccounts).catch(() => {});
         }
       } finally {
         if (mounted) setIsAppReady(true);

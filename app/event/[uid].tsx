@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Linking, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
-import * as Haptics from 'expo-haptics';
+import { haptic } from '@/utils/haptics';
 import { Pencil, Clock, CalendarDays, MapPin, Video, Repeat, Trash2, Copy, Check } from 'lucide-react-native';
 import { useLocalSearchParams, useNavigation, useRouter, useTheme } from 'expo-router';
 import dayjs from 'dayjs';
@@ -90,7 +90,7 @@ export default function EventDetailScreen() {
   const handleCopyLocation = useCallback(async () => {
     if (!event?.location) return;
     await Clipboard.setStringAsync(event.location);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    haptic();
     setCopied(true);
     clearTimeout(copyResetRef.current);
     copyResetRef.current = setTimeout(() => setCopied(false), 1500);

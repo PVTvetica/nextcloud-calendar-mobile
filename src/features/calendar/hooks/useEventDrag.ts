@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import * as Haptics from 'expo-haptics';
+import { haptic, ImpactFeedbackStyle } from '@/utils/haptics';
 import { SNAP_MINUTES, resolveDraggedBounds, snapDeltaMinutes } from '../utils/dragMath';
 import { hitTestEvent, type DragMode } from '../utils/hitTest';
 import type { PositionedEvent } from '../utils/eventLayout';
@@ -104,21 +104,8 @@ export function useEventDrag({
     height.value = heightPx;
     translateX.value = leftPx;
 
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    haptic(ImpactFeedbackStyle.Medium);
     setDrag({ event: hit.event, mode: hit.mode, columnIndex, heightPx });
-    // top/height/left/topBase/heightBase/leftBase/modeFlag are listed here (and
-    // below, on `gesture`) even though nothing reads their *identity* — every
-    // access is a `.value` read or write, so any instance of the container
-    // works equally well. Real Reanimated's useSharedValue always returns the
-    // same ref, so in production these deps never change and this memo never
-    // re-runs. This project's Reanimated test mock hands back a fresh object
-    // per render, so under test they do change every render, recreating
-    // `begin`/`gesture` on every render. That's wasted work, not a bug: the
-    // earlier `syncNode`-in-a-layout-effect incident (see TimeGridView.tsx)
-    // came from an *effect* keyed on a churning shared value calling setState
-    // every run, which schedules another render, which churns it again --
-    // there is no effect here keyed on any of these, so there is nothing to
-    // loop.
   }, [translateY, height, translateX, topBase, heightBase, leftBase, modeFlag]);
 
   const commit = useCallback((deltaMinutes: number, rawDeltaColumns: number) => {
@@ -239,12 +226,6 @@ export function useEventDrag({
       .onFinalize(() => {
         scheduleOnRN(cancel);
       });
-    // The shared values below are safe to list despite the mock-vs-production
-    // gap explained on `begin`'s own dependency list above: no effect here is
-    // keyed on any of them, so a churning identity under test just rebuilds
-    // this gesture, it does not loop. `columnIndexSV` is deliberately not
-    // listed, same reasoning, so as not to grow this list beyond the shared
-    // values it already carried.
   }, [
     begin, commit, cancel, hourRowHeight, columnWidth, dates.length,
     translateY, height, translateX, topBase, heightBase, leftBase, modeFlag,

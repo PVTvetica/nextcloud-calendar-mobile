@@ -31,7 +31,7 @@ export async function exchangeOneTimeToken(params: {
 
 export async function fetchUserInfo(
   account: Pick<Account, 'baseUrl' | 'username' | 'appPassword' | 'davUserId'>
-): Promise<{ timezone: string; email: string }> {
+): Promise<{ timezone: string; email: string; displayName: string }> {
   try {
     const url = `${account.baseUrl}/ocs/v2.php/cloud/users/${encodeURIComponent(account.davUserId)}`;
     const res = await fetch(url, {
@@ -42,15 +42,16 @@ export async function fetchUserInfo(
         Accept: 'application/json',
       },
     });
-    if (!res.ok) return { timezone: '', email: '' };
+    if (!res.ok) return { timezone: '', email: '', displayName: '' };
     const json = await res.json();
     const data = json?.ocs?.data;
     return {
       timezone: (data?.timezone as string) || '',
       email: (data?.email as string) || '',
+      displayName: (data?.displayname as string) || (data?.['display-name'] as string) || '',
     };
   } catch {
-    return { timezone: '', email: '' };
+    return { timezone: '', email: '', displayName: '' };
   }
 }
 

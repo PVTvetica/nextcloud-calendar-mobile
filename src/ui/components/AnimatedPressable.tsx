@@ -7,6 +7,8 @@ import Reanimated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
+import { useSettingsStore } from '@/stores/settingsStore';
+import { haptic } from '@/utils/haptics';
 
 const AnimatedPressableBase = Reanimated.createAnimatedComponent(Pressable);
 
@@ -28,7 +30,9 @@ function AnimatedPressable({
   ...rest
 }: AnimatedPressableProps) {
   const scale = useSharedValue(1);
+  const reduceMotion = useSettingsStore((s) => s.reduceMotion);
 
+  const shouldAnimate = animated && !reduceMotion;
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -39,12 +43,12 @@ function AnimatedPressable({
       {...rest}
       style={[rest.style as object, animatedStyle]}
       onPressIn={(e) => {
-        if (animated) scale.value = withTiming(scaleTo, { duration: 100 });
-        if (hapticFeedback) Haptics.impactAsync(hapticFeedback).catch(() => {});
+        if (shouldAnimate) scale.value = withTiming(scaleTo, { duration: 100 });
+        if (hapticFeedback) haptic(hapticFeedback);
         onPressIn?.(e);
       }}
       onPressOut={(e) => {
-        if (animated) scale.value = withTiming(1, { duration: 100 });
+        if (shouldAnimate) scale.value = withTiming(1, { duration: 100 });
         onPressOut?.(e);
       }}
     >

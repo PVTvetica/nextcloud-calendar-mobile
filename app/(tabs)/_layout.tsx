@@ -1,4 +1,3 @@
-import { DynamicColorIOS } from 'react-native';
 import { Tabs, useTheme } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { Calendar, Settings as SettingsIcon, type LucideIcon } from 'lucide-react-native';
@@ -26,7 +25,7 @@ const TAB_ITEMS: TabItem[] = [
     Icon: Calendar,
   },
   {
-    name: 'settings/index',
+    name: 'settings',
     labelKey: 'tabs.settings',
     sf: { default: 'gearshape', selected: 'gearshape.fill' },
     md: { default: 'settings', selected: 'settings' },
@@ -36,17 +35,17 @@ const TAB_ITEMS: TabItem[] = [
 
 function NativeTabsLayout() {
   const { t } = useTranslation();
-  const tint = DynamicColorIOS({ dark: 'white', light: 'black' });
+  const theme = useTheme();
 
   return (
-    <NativeTabs labelStyle={{ color: tint }} tintColor={tint}>
-      {TAB_ITEMS.map((tab) => (
-        <NativeTabs.Trigger key={tab.name} name={tab.name}>
-          <NativeTabs.Trigger.Label>{t(tab.labelKey)}</NativeTabs.Trigger.Label>
-          <NativeTabs.Trigger.Icon sf={tab.sf} md={tab.md} />
-        </NativeTabs.Trigger>
-      ))}
-    </NativeTabs>
+      <NativeTabs labelStyle={{ color: theme.colors.text }} tintColor={theme.colors.primary}>
+        {TAB_ITEMS.map((tab) => (
+            <NativeTabs.Trigger key={tab.name} name={tab.name}>
+              <NativeTabs.Trigger.Label>{t(tab.labelKey)}</NativeTabs.Trigger.Label>
+              <NativeTabs.Trigger.Icon sf={tab.sf} md={tab.md} />
+            </NativeTabs.Trigger>
+        ))}
+      </NativeTabs>
   );
 }
 
@@ -55,34 +54,34 @@ function JsTabsLayout() {
   const { t } = useTranslation();
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.tabBarInactive,
-        tabBarStyle: {
-          backgroundColor: theme.colors.tabBar,
-          borderTopColor: theme.colors.tabBarBorder,
-          borderTopWidth: 1,
-          elevation: 0,
-        },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-      }}
-    >
-      {TAB_ITEMS.map(({ name, labelKey, Icon }) => (
-        <Tabs.Screen
-          key={name}
-          name={name}
-          options={{
-            title: t(labelKey),
-            tabBarLabel: t(labelKey),
-            tabBarIcon: ({ color, focused }) => (
-              <Icon size={focused ? 26 : 24} color={color} strokeWidth={focused ? 2.5 : 2} />
-            ),
+      <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarActiveTintColor: theme.colors.primary,
+            tabBarInactiveTintColor: theme.colors.tabBarInactive,
+            tabBarStyle: {
+              backgroundColor: theme.colors.tabBar,
+              borderTopColor: theme.colors.tabBarBorder,
+              borderTopWidth: 1,
+              elevation: 0,
+            },
+            tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
           }}
-        />
-      ))}
-    </Tabs>
+      >
+        {TAB_ITEMS.map(({ name, labelKey, Icon }) => (
+            <Tabs.Screen
+                key={name}
+                name={name}
+                options={{
+                  title: t(labelKey),
+                  tabBarLabel: t(labelKey),
+                  tabBarIcon: ({ color, focused }) => (
+                      <Icon size={focused ? 26 : 24} color={color} strokeWidth={focused ? 2.5 : 2} />
+                  ),
+                }}
+            />
+        ))}
+      </Tabs>
   );
 }
 
