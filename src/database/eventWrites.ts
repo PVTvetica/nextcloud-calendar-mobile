@@ -5,16 +5,22 @@ import type { CalendarEvent } from '@/types';
 import { getDatabaseInstance } from './DatabaseProvider';
 import { mapEventToShared } from './mappers/event';
 import Event from './models/Event';
-import { eventKey, prepareCreateEvent, writeEvent } from './sync';
+import { eventKey, markLocalWrite, prepareCreateEvent, seriesBaseUid, writeEvent } from './sync';
 import { safeWrite } from './utils/safeTransaction';
 
 const events = () => getDatabaseInstance().get<Event>('events');
 
 const keyOf = (r: Event) => eventKey(r.accountId, r.calendarId, r.uid);
 
-export function seriesBaseUid(uid: string): string {
-  const i = uid.indexOf('_occ_');
-  return i === -1 ? uid : uid.slice(0, i);
+export { seriesBaseUid };
+
+function seriesRows(accountId: string, baseUid: string): Promise<Event[]> {
+  return events()
+    .query(
+      Q.where('account_id', accountId),
+      Q.where('uid', Q.like(`${Q.sanitizeLikeString(baseUid)}%`)),
+    )
+    .fetch();
 }
 
 function applyPatch(row: Event, patch: Partial<CalendarEvent>): void {
@@ -33,6 +39,7 @@ function applyPatch(row: Event, patch: Partial<CalendarEvent>): void {
 export async function insertEvents(list: CalendarEvent[]): Promise<void> {
   if (list.length === 0) return;
   const db = getDatabaseInstance();
+  markLocalWrite();
   await safeWrite(db, async () => {
     const uids = list.map((ev) => ev.uid);
     const existing = await events().query(Q.where('uid', Q.oneOf(uids))).fetch();
@@ -60,6 +67,7 @@ export async function patchByUid(
   patch: Partial<CalendarEvent>,
 ): Promise<void> {
   const db = getDatabaseInstance();
+  markLocalWrite();
   await safeWrite(db, async () => {
     const rows = await events()
       .query(Q.where('account_id', accountId), Q.where('uid', uid))
@@ -68,9 +76,33 @@ export async function patchByUid(
   }, 15000, 'patchByUid');
 }
 
+export async function shiftSeriesDates(
+  accountId: string,
+  baseUid: string,
+  deltaStartMs: number,
+  deltaEndMs: number,
+  patch: Omit<Partial<CalendarEvent>, 'dtstart' | 'dtend'>,
+): Promise<void> {
+  const db = getDatabaseInstance();
+  markLocalWrite();
+  await safeWrite(db, async () => {
+    const rows = await seriesRows(accountId, baseUid);
+    const target = rows.filter((r) => seriesBaseUid(r.uid) === baseUid);
+    await db.batch(
+      target.map((r) =>
+        r.prepareUpdate((row: Event) => {
+          applyPatch(row, patch);
+          row.start = row.start + deltaStartMs;
+          row.end = row.end + deltaEndMs;
+        })
+      )
+    );
+  }, 15000, 'shiftSeriesDates');
+}
+
 export async function snapshotByBase(accountId: string, baseUid: string): Promise<CalendarEvent[]> {
-  const rows = await events().query(Q.where('account_id', accountId)).fetch();
-  return rows.map(mapEventToShared).filter((e) => seriesBaseUid(e.uid) === baseUid);
+  const rows = await seriesRows(accountId, baseUid);
+  return rows.filter((r) => seriesBaseUid(r.uid) === baseUid).map(mapEventToShared);
 }
 
 export async function removeWhere(
@@ -79,6 +111,7 @@ export async function removeWhere(
 ): Promise<CalendarEvent[]> {
   const db = getDatabaseInstance();
   let removed: CalendarEvent[] = [];
+  markLocalWrite();
   await safeWrite(db, async () => {
     const rows = await events().query(Q.where('account_id', accountId)).fetch();
     const target = rows.filter((r) => predicate(mapEventToShared(r)));
@@ -94,8 +127,9 @@ export async function restoreSeries(
   snapshot: CalendarEvent[],
 ): Promise<void> {
   const db = getDatabaseInstance();
+  markLocalWrite();
   await safeWrite(db, async () => {
-    const rows = await events().query(Q.where('account_id', accountId)).fetch();
+    const rows = await seriesRows(accountId, baseUid);
     const baseRows = rows.filter((r) => seriesBaseUid(r.uid) === baseUid);
     const byKey = new Map(baseRows.map((r) => [keyOf(r), r]));
     const snapKeys = new Set(snapshot.map((ev) => eventKey(ev.accountId, ev.calendarId, ev.uid)));

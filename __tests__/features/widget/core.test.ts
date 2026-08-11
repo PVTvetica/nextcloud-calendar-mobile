@@ -1,5 +1,5 @@
 import { buildAgendaSnapshot, buildAgendaTimeline } from '@/features/widget/core/agendaSnapshot';
-import { selectOngoingEvent, eventProgress, formatRemaining, remainingMinutes } from '@/features/widget/core/liveEvent';
+import { selectOngoingEvent, eventProgress, formatRemaining, remainingMinutes, displayLocation, shouldClearLiveEvent, meetingProvider } from '@/features/widget/core/liveEvent';
 import type { CalendarEvent } from '@/types';
 
 function ev(partial: Partial<CalendarEvent> & { dtstart: Date; dtend: Date }): CalendarEvent {
@@ -14,7 +14,7 @@ function ev(partial: Partial<CalendarEvent> & { dtstart: Date; dtend: Date }): C
 const TZ = 'Europe/Berlin';
 
 describe('buildAgendaSnapshot', () => {
-  const now = new Date('2026-08-01T09:00:00Z'); // 11:00 Berlin
+  const now = new Date('2026-08-01T09:00:00Z');
 
   it('keeps only today\'s not-yet-finished events, sorted by start', () => {
     const events = [
@@ -33,6 +33,14 @@ describe('buildAgendaSnapshot', () => {
     const snap = buildAgendaSnapshot([], { now, timeZone: TZ, locale: 'en-US' });
     expect(snap.events).toHaveLength(0);
     expect(snap.relativeLabel).toBe('No upcoming event');
+  });
+
+  it('falls back to a valid colour so an uncoloured event never crashes the native render', () => {
+    const events = [
+      ev({ uid: 'nocolor', color: undefined as unknown as string, dtstart: new Date('2026-08-01T12:00:00Z'), dtend: new Date('2026-08-01T13:00:00Z') }),
+    ];
+    const snap = buildAgendaSnapshot(events, { now, timeZone: TZ, locale: 'en-US' });
+    expect(snap.events[0].color).toBe('#3b82f6');
   });
 
   it('respects maxEvents', () => {
@@ -74,7 +82,7 @@ describe('buildAgendaSnapshot', () => {
     const snap = buildAgendaSnapshot([], { now, timeZone: TZ, locale: 'en-US' });
     expect(snap.sections).toHaveLength(1);
     expect(snap.sections[0].isToday).toBe(true);
-    expect(snap.nextEvent).toBeNull();
+    expect(snap.nextEvent).toBeUndefined();
   });
 });
 
@@ -101,7 +109,7 @@ describe('selectOngoingEvent', () => {
 
 describe('eventProgress / remainingMinutes', () => {
   const state = {
-    uid: 'u', title: 'T', color: '#000', deepLink: 'x',
+    uid: 'u', title: 'T', color: '#000', link: 'x',
     startIso: '2026-08-01T12:00:00Z', endIso: '2026-08-01T13:00:00Z',
     location: '', attendees: [],
   };
@@ -172,6 +180,35 @@ describe('buildAgendaTimeline', () => {
     expect(timeline[0].snapshot.events.map((e) => e.uid)).toEqual(['ends']);
     const afterEnd = timeline.find((e) => e.atIso === '2026-08-01T12:00:00.000Z');
     expect(afterEnd?.snapshot.events).toHaveLength(0);
+  });
+
+  it('builds a constant number of date formatters, not one per event per entry', () => {
+    const events = Array.from({ length: 300 }, (_, i) =>
+      ev({
+        uid: `e${i}`,
+        dtstart: new Date(now.getTime() + i * 3 * 60_000),
+        dtend: new Date(now.getTime() + (i * 3 + 30) * 60_000),
+      }),
+    );
+
+    jest.resetModules();
+    const Real = Intl.DateTimeFormat;
+    let built = 0;
+    const counting = function (this: unknown, ...args: unknown[]) {
+      built += 1;
+      return new (Real as unknown as new (...a: unknown[]) => Intl.DateTimeFormat)(...args);
+    } as unknown as typeof Intl.DateTimeFormat;
+    counting.supportedLocalesOf = Real.supportedLocalesOf;
+    Intl.DateTimeFormat = counting;
+
+    try {
+      const fresh = require('@/features/widget/core/agendaSnapshot') as typeof import('@/features/widget/core/agendaSnapshot');
+      fresh.buildAgendaTimeline(events, { now, timeZone: TZ, locale: 'en-US', days: 7, maxPerSection: 10 });
+    } finally {
+      Intl.DateTimeFormat = Real;
+    }
+
+    expect(built).toBeLessThan(20);
   });
 
   it('ignores event ends beyond the horizon and caps the entry count', () => {

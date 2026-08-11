@@ -11,7 +11,8 @@
     "errorNotFound": "Dit item bestaat niet meer op de server.",
     "errorServer": "De server is tijdelijk niet beschikbaar. Probeer het later opnieuw.",
     "errorRateLimited": "Te veel verzoeken. Wacht even en probeer het opnieuw.",
-    "errorRateLimitedRetry": "Te veel verzoeken. Probeer het opnieuw over {{seconds}}s."
+    "errorRateLimitedRetry": "Te veel verzoeken. Probeer het opnieuw over {{seconds}}s.",
+    "back": "Terug"
   },
   "tabs": {
     "calendar": "Agenda",
@@ -45,7 +46,6 @@
     },
     "qrCameraDenied": "Cameratoegang is geweigerd. Schakel het in bij je apparaatinstellingen om de QR-code te scannen.",
     "qrOpenSettings": "Instellingen openen",
-    "qrHeaderTitle": "Nextcloud-QR scannen",
     "qrInvalidCode": "Geen geldige Nextcloud-login-QR-code. Probeer opnieuw te scannen.",
     "qrTryAgain": "Opnieuw proberen",
     "qrHint": "Open je Nextcloud-dashboard → tik op je avatar → \"Aanmelden via QR-code\""
@@ -65,7 +65,10 @@
     "offlineBanner": "Offline — opgeslagen afspraken worden getoond",
     "noEvents": "Geen afspraken",
     "allDay": "Hele dag",
-    "noTitle": "(Geen titel)"
+    "noTitle": "(Geen titel)",
+    "drawerNoCalendars": "Geen agenda",
+    "calendarNotifications": "Meldingen van {{name}}",
+    "calendarVisibility": "{{name}} tonen"
   },
   "event": {
     "titleLabel": "Titel *",
@@ -137,6 +140,19 @@
   "settings": {
     "title": "Instellingen",
     "appearance": "Weergave",
+    "calendar": "Agenda",
+    "accessibility": {
+      "title": "Toegankelijkheid",
+      "haptics": "Haptische feedback",
+      "hapticsHint": "Trillen bij tikken en interacties.",
+      "reduceMotion": "Beweging verminderen",
+      "reduceMotionHint": "Animaties in de app minimaliseren."
+    },
+    "sections": {
+      "general": "Algemeen",
+      "alerts": "Meldingen",
+      "app": "Applicatie"
+    },
     "theme": "Thema",
     "themeSystem": "Systeem",
     "themeLight": "Licht",
@@ -158,12 +174,12 @@
     "removeMsg": "\"{{name}}\" van dit apparaat verwijderen?",
     "version": "v{{version}}",
     "about": {
+      "title": "Over",
       "name": "Nextcloud Agenda",
       "description": "Een open-source mobiele agenda-app voor Nextcloud.",
       "github": "Bekijken op GitHub",
       "reportBug": "Een bug melden"
     },
-    "accountActive": "Actief",
     "notifications": {
       "title": "Meldingen",
       "liveActivity": "Live-activiteit",
@@ -173,7 +189,6 @@
       "channelName": "Afspraakmeldingen"
     },
     "alerts": {
-      "title": "Meldingen",
       "timed": "Standaardmelding",
       "allDay": "Hele dag",
       "none": "Geen",
@@ -198,13 +213,54 @@
       "useDefault": "Standaard",
       "timedHint": "Geldt voor afspraken zonder eigen melding.",
       "allDayHint": "Gaat af om 9:00 op de gekozen dag."
-    }
+    },
+    "account": {
+      "title": "Account",
+      "notFound": "Account niet gevonden.",
+      "displayName": "Weergavenaam",
+      "email": "E-mail",
+      "emailHint": "Wordt gebruikt als organisator van de afspraken die je aanmaakt.",
+      "server": "Server",
+      "serverUrl": "Serveradres",
+      "username": "Gebruikersnaam",
+      "connection": "Verbinding",
+      "reconnectHint": "Voer een nieuw app-wachtwoord in als het oude is ingetrokken.",
+      "appPassword": "App-wachtwoord",
+      "scanQr": "QR-code scannen",
+      "reconnect": "Opnieuw verbinden",
+      "save": "Opslaan",
+      "saved": "Wijzigingen opgeslagen.",
+      "reconnected": "Account opnieuw verbonden.",
+      "useThisAccount": "Dit account gebruiken",
+      "delete": "Account verwijderen",
+      "errors": {
+        "required": "Dit veld is verplicht.",
+        "invalidEmail": "Ongeldig e-mailadres.",
+        "accountMismatch": "Deze QR-code hoort bij een ander account."
+      },
+      "connectionLost": "De verbinding met deze server is verlopen. Maak opnieuw verbinding om te blijven synchroniseren.",
+      "use": "Gebruiken",
+      "editOnNextcloud": "Bewerken in Nextcloud"
+    },
+    "accountActive": "Actief"
   },
   "widget": {
     "liveRemaining": "nog {{duration}}",
     "liveRemainingShort": "{{duration}}",
     "durationHour": "u",
     "durationMinute": "m",
-    "emptyAgenda": "Geen aankomende afspraken"
+    "emptyAgenda": "Geen aankomende afspraken",
+    "videoConference": "Videovergadering: {{provider}}"
+  },
+  "notifications": {
+    "lead": {
+      "now": "Nu",
+      "minutes": "over {{value}} min",
+      "hours": "over {{value}} u",
+      "hoursMinutes": "over {{value}} u {{minutes}}",
+      "days": "over {{value}} dagen",
+      "today": "Vandaag",
+      "tomorrow": "Morgen"
+    }
   }
 }

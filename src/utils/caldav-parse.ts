@@ -14,7 +14,6 @@ const TALK_URL_PATTERN = /\/call\//;
 
 const MAX_OCCURRENCES = 1000;
 
-
 function firstAlarmMinutes(vevent: ICAL.Component): number | undefined {
   const alarm = vevent.getFirstSubcomponent('valarm');
   const trigger = alarm?.getFirstProperty('trigger');
@@ -88,12 +87,17 @@ export function parseIcsItem(
       const icalEvent = new ICAL.Event(vevent, { strictExceptions: false });
       const tzid = eventTzid(vevent);
 
-      const attendees: Attendee[] = vevent.getAllProperties('attendee').map((prop: ICAL.Property) => {
+      const seenAttendees = new Set<string>();
+      const attendees: Attendee[] = [];
+      for (const prop of vevent.getAllProperties('attendee')) {
         const value = (prop.getFirstValue() as string) ?? '';
         const email = value.replace(/^mailto:/i, '');
         const displayName = (prop.getParameter('cn') as string) ?? undefined;
-        return { email, displayName };
-      });
+        const key = email.toLowerCase();
+        if (email && seenAttendees.has(key)) continue;
+        if (email) seenAttendees.add(key);
+        attendees.push({ email, displayName });
+      }
 
       const location = icalEvent.location ?? undefined;
       const talkUrl = location && TALK_URL_PATTERN.test(location) ? location : undefined;
@@ -181,6 +185,51 @@ export function extractDtstartTzid(ics: string): string | undefined {
   return tzid && isValidTimeZone(tzid) ? tzid : undefined;
 }
 
+export function extractDtstartDtend(ics: string): { dtstart: Date; dtend: Date } | undefined {
+  try {
+    const comp = new ICAL.Component(parseIcsToJcal(ics));
+    const master = comp
+      .getAllSubcomponents('vevent')
+      .find((v: ICAL.Component) => !v.getFirstPropertyValue('recurrence-id'));
+    if (!master) return undefined;
+    const icalEvent = new ICAL.Event(master, { strictExceptions: false });
+    const tzid = eventTzid(master);
+    return {
+      dtstart: resolveInstant(icalEvent.startDate, tzid),
+      dtend: resolveInstant(icalEvent.endDate, tzid, true),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+export function extractSequence(ics: string): number {
+  const m = ics.match(/^SEQUENCE:(\d+)/m);
+  const n = m ? Number(m[1]) : 0;
+  return Number.isFinite(n) ? n : 0;
+}
+
+const WRITER_MANAGED_PROPS = new Set([
+  'uid', 'dtstamp', 'sequence', 'dtstart', 'dtend', 'summary', 'description',
+  'location', 'rrule', 'organizer', 'attendee', 'recurrence-id', 'last-modified', 'prodid',
+]);
+
+export function extractExtraVeventLines(ics: string): string[] {
+  try {
+    const comp = new ICAL.Component(parseIcsToJcal(ics));
+    const vevents = comp.getAllSubcomponents('vevent');
+    if (vevents.length === 0) return [];
+    const master =
+      vevents.find((v: ICAL.Component) => !v.getFirstPropertyValue('recurrence-id')) ?? vevents[0];
+    return master
+      .getAllProperties()
+      .filter((p: ICAL.Property) => !WRITER_MANAGED_PROPS.has(p.name))
+      .map((p: ICAL.Property) => p.toICALString());
+  } catch {
+    return [];
+  }
+}
+
 export function parseIcsObjects(
   items: { ics: string; href: string }[],
   meta: ParseCalMeta,
@@ -194,7 +243,6 @@ export function parseIcsObjects(
   }
   return events;
 }
-
 
 export async function parseIcsObjectsAsync(
   items: { ics: string; href: string }[],

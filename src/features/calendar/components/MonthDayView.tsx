@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, TouchableOpacity, FlatList, StyleSheet,
   useWindowDimensions,
@@ -7,16 +7,23 @@ import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'expo-router';
+import InfinitePager, { type InfinitePagerImperativeApi } from 'react-native-infinite-pager';
 import { useSettingsStore } from '@/stores/settingsStore';
 import type { CalendarEvent } from '@/types';
 
 dayjs.extend(localizedFormat);
 
+// Jumps within this many months slide (animated); farther ones re-anchor
+// instantly rather than spring across a long stretch of empty months.
+const MAX_ANIMATED_JUMP_MONTHS = 2;
+
 interface Props {
   date: Date;
   events: CalendarEvent[];
   weekStartsOn: 0 | 1;
+  jump: { nonce: number; target: Date };
   onSelectDate: (d: Date) => void;
+  onMonthChange: (d: Date) => void;
   onPressEvent: (e: CalendarEvent) => void;
   onPressCell: (d: Date) => void;
 }
@@ -42,11 +49,16 @@ export function buildMonthGrid(year: number, month: number, weekStartsOn: 0 | 1)
   return rows;
 }
 
+function lastDayOf(e: CalendarEvent): dayjs.Dayjs {
+  const end = dayjs(e.dtend);
+  if (e.allDay) return end.startOf('day');
+  return (end.isSame(end.startOf('day')) ? end.subtract(1, 'millisecond') : end).startOf('day');
+}
+
 export function eventDayKeys(e: CalendarEvent): string[] {
   const start = dayjs(e.dtstart);
   const startKey = start.format('YYYY-MM-DD');
-  if (!e.allDay) return [startKey];
-  const endDay = dayjs(e.dtend).startOf('day');
+  const endDay = lastDayOf(e);
   const keys: string[] = [];
   let cur = start.startOf('day');
   while (!cur.isAfter(endDay, 'day') && keys.length <= 366) {
@@ -58,23 +70,89 @@ export function eventDayKeys(e: CalendarEvent): string[] {
 
 export function eventCoversDay(e: CalendarEvent, dayKey: string): boolean {
   const startKey = dayjs(e.dtstart).format('YYYY-MM-DD');
-  if (!e.allDay) return startKey === dayKey;
-  const endKey = dayjs(e.dtend).format('YYYY-MM-DD');
+  const endKey = lastDayOf(e).format('YYYY-MM-DD');
   return dayKey >= startKey && dayKey <= (endKey < startKey ? startKey : endKey);
 }
 
-function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEvent, onPressCell }: Props) {
+function monthDiff(from: Date, to: Date): number {
+  return (dayjs(to).year() - dayjs(from).year()) * 12 + (dayjs(to).month() - dayjs(from).month());
+}
+
+interface MonthGridProps {
+  weeks: (dayjs.Dayjs | null)[][];
+  selected: dayjs.Dayjs;
+  today: dayjs.Dayjs;
+  dotMap: Map<string, Set<string>>;
+  colors: ReturnType<typeof useTheme>['colors'];
+  onDayPress: (d: dayjs.Dayjs) => void;
+  onPressCell: (d: Date) => void;
+}
+
+// One month's 6-week grid. Rendered per pager page so a horizontal swipe slides a
+// full month in and out under the finger instead of the old swipe-then-jump.
+const MonthGrid = memo(function MonthGrid({
+  weeks, selected, today, dotMap, colors, onDayPress, onPressCell,
+}: MonthGridProps) {
+  return (
+    <View style={styles.monthPage}>
+      {weeks.map((week, wi) => (
+        <View key={wi} style={styles.weekRow}>
+          {week.map((d, di) => {
+            if (d === null) {
+              return <View key={di} style={styles.dayCell} />;
+            }
+            const key = d.format('YYYY-MM-DD');
+            const isToday = d.isSame(today, 'day');
+            const isSelected = d.isSame(selected, 'day');
+            const dots = Array.from(dotMap.get(key) ?? []).slice(0, 3);
+
+            return (
+              <TouchableOpacity
+                key={di}
+                style={styles.dayCell}
+                onPress={() => onDayPress(d)}
+                onLongPress={() => onPressCell(d.toDate())}
+              >
+                <View style={[
+                  styles.dayCircle,
+                  { backgroundColor: isSelected ? colors.primary : 'transparent' },
+                  { borderWidth: isToday && !isSelected ? 1.5 : 0, borderColor: colors.primary },
+                ]}>
+                  <Text
+                    numberOfLines={1}
+                    allowFontScaling={false}
+                    style={[
+                      styles.dayNumber,
+                      { color: isSelected
+                        ? colors.primaryText
+                        : isToday
+                          ? colors.primary
+                          : colors.text, fontWeight: isSelected || isToday ? '700' : '400' },
+                    ]}>
+                    {d.date()}
+                  </Text>
+                </View>
+                <View style={styles.dotsRow}>
+                  {dots.map((color, ci) => (
+                    <View key={ci} style={[styles.dot, { backgroundColor: color }]} />
+                  ))}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+});
+
+function MonthDayViewImpl({ date, events, weekStartsOn, jump, onSelectDate, onMonthChange, onPressEvent, onPressCell }: Props) {
   const theme = useTheme();
   const { t } = useTranslation();
   const language = useSettingsStore((s) => s.language);
   const { height } = useWindowDimensions();
 
   const selected = useMemo(() => dayjs(date), [date]);
-
-  const year = dayjs(date).year();
-  const month = dayjs(date).month();
-
-  const grid = useMemo(() => buildMonthGrid(year, month, weekStartsOn), [year, month, weekStartsOn]);
 
   const dotMap = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -85,12 +163,6 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
     };
 
     for (const ev of events) {
-      if (ev.allDay) continue;
-      add(dayjs(ev.dtstart).format('YYYY-MM-DD'), ev.color);
-    }
-
-    for (const ev of events) {
-      if (!ev.allDay) continue;
       for (const key of eventDayKeys(ev)) add(key, ev.color);
     }
     return map;
@@ -103,7 +175,8 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
       .sort((a, b) => a.dtstart.getTime() - b.dtstart.getTime());
   }, [events, selected]);
 
-  const today = dayjs();
+  const todayKey = dayjs().format('YYYY-MM-DD');
+  const today = useMemo(() => dayjs(todayKey), [todayKey]);
 
   const handleDayPress = useCallback((d: dayjs.Dayjs) => {
     onSelectDate(d.toDate());
@@ -120,6 +193,87 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
 
   const gridHeight = height * 0.44;
 
+  // The pager pages by whole months: page `index` renders the month `index`
+  // months from `localAnchor`. localAnchor is only reset on an external jump
+  // (Today button, mode switch); ordinary swiping runs the index up and down
+  // without re-anchoring, so paging never fights its own state.
+  const [localAnchor, setLocalAnchor] = useState(date);
+  const [pagerKey, setPagerKey] = useState(0);
+  const pagerRef = useRef<InfinitePagerImperativeApi>(null);
+  const localAnchorRef = useRef(localAnchor); localAnchorRef.current = localAnchor;
+  const settledIndexRef = useRef(0);
+  // Target index of an in-flight programmatic jump; while set, page-change
+  // callbacks are the animation crossing months, not a user swipe, so they must
+  // not report a month change (the parent already holds the jumped-to date).
+  const jumpTargetRef = useRef<number | null>(null);
+
+  // Re-anchor remounts the pager on a fresh key. A far jump's setPage would
+  // write `translate` across a gap wider than the page buffer, leaving the
+  // mounted pages several widths off-screen (blank) until curIndex caught up a
+  // frame later. A remounted pager comes up at index 0 with translate 0,
+  // consistent from its first commit. useLayoutEffect, not useEffect: the render
+  // that carries the new anchor still sits on the old index, so it must not
+  // paint — landing page 0 before paint removes the blank frame.
+  const firstAnchorReset = useRef(true);
+  useLayoutEffect(() => {
+    if (firstAnchorReset.current) { firstAnchorReset.current = false; return; }
+    settledIndexRef.current = 0;
+    setPagerKey((k) => k + 1);
+  }, [localAnchor]);
+
+  const firstJump = useRef(true);
+  useEffect(() => {
+    if (firstJump.current) { firstJump.current = false; return; }
+    const target = monthDiff(localAnchorRef.current, jump.target);
+    const from = settledIndexRef.current;
+    // Ignore jumps that land on the month already shown (e.g. tapping a day in
+    // the current month).
+    if (target === from) return;
+    // Near jump (Today from a nearby month): slide to it like the other views.
+    // At most MAX_ANIMATED_JUMP_MONTHS so the spring never crosses a page the
+    // buffer has not mounted yet.
+    if (Math.abs(target - from) <= MAX_ANIMATED_JUMP_MONTHS) {
+      jumpTargetRef.current = target;
+      settledIndexRef.current = target;
+      pagerRef.current?.setPage(target, { animated: true });
+      return;
+    }
+    // Too far to animate: re-anchor. The layout effect above remounts the pager
+    // at index 0 on the new anchor, swapping months in a single commit rather
+    // than blanking while the pager catches up.
+    setLocalAnchor(jump.target);
+  }, [jump]);
+
+  const handlePageChange = useCallback((index: number) => {
+    const prev = settledIndexRef.current;
+    settledIndexRef.current = index;
+    if (jumpTargetRef.current !== null) {
+      if (index === jumpTargetRef.current) jumpTargetRef.current = null;
+      return;
+    }
+    // InfinitePager emits the current page once on mount (and after a remount);
+    // that echo is not a swipe. Only a real change of page reports a new month,
+    // which also avoids a setState firing into the parent's render.
+    if (index === prev) return;
+    onMonthChange(dayjs(localAnchorRef.current).add(index, 'month').startOf('month').toDate());
+  }, [onMonthChange]);
+
+  const renderPage = useCallback(({ index }: { index: number }) => {
+    const m = dayjs(localAnchor).add(index, 'month');
+    const weeks = buildMonthGrid(m.year(), m.month(), weekStartsOn);
+    return (
+      <MonthGrid
+        weeks={weeks}
+        selected={selected}
+        today={today}
+        dotMap={dotMap}
+        colors={theme.colors}
+        onDayPress={handleDayPress}
+        onPressCell={onPressCell}
+      />
+    );
+  }, [localAnchor, weekStartsOn, selected, today, dotMap, theme.colors, handleDayPress, onPressCell]);
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={[styles.grid, { height: gridHeight, borderBottomColor: theme.colors.border }]}>
@@ -129,53 +283,17 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
           ))}
         </View>
 
-        {grid.map((week, wi) => (
-          <View key={wi} style={styles.weekRow}>
-            {week.map((d, di) => {
-              if (d === null) {
-                return <View key={di} style={styles.dayCell} />;
-              }
-              const key = d.format('YYYY-MM-DD');
-              const isToday = d.isSame(today, 'day');
-              const isSelected = d.isSame(selected, 'day');
-              const dots = Array.from(dotMap.get(key) ?? []).slice(0, 3);
-
-              return (
-                <TouchableOpacity
-                  key={di}
-                  style={styles.dayCell}
-                  onPress={() => handleDayPress(d)}
-                  onLongPress={() => onPressCell(d.toDate())}
-                >
-                  <View style={[
-                    styles.dayCircle,
-                    { backgroundColor: isSelected ? theme.colors.primary : 'transparent' },
-                    { borderWidth: isToday && !isSelected ? 1.5 : 0, borderColor: theme.colors.primary },
-                  ]}>
-                    <Text
-                      numberOfLines={1}
-                      allowFontScaling={false}
-                      style={[
-                        styles.dayNumber,
-                        { color: isSelected
-                          ? theme.colors.primaryText
-                          : isToday
-                            ? theme.colors.primary
-                            : theme.colors.text, fontWeight: isSelected || isToday ? '700' : '400' },
-                      ]}>
-                      {d.date()}
-                    </Text>
-                  </View>
-                  <View style={styles.dotsRow}>
-                    {dots.map((color, ci) => (
-                      <View key={ci} style={[styles.dot, { backgroundColor: color }]} />
-                    ))}
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        ))}
+        <View style={styles.pagerWrap}>
+          <InfinitePager
+            key={pagerKey}
+            ref={pagerRef}
+            style={styles.fill}
+            pageWrapperStyle={styles.fill}
+            renderPage={renderPage}
+            onPageChange={handlePageChange}
+            pageBuffer={1}
+          />
+        </View>
       </View>
 
       <View style={styles.dayList}>
@@ -187,7 +305,7 @@ function MonthDayViewImpl({ date, events, weekStartsOn, onSelectDate, onPressEve
         ) : (
           <FlatList
             data={dayEvents}
-            keyExtractor={(e) => `${e.calendarId}-${e.uid}-${e.dtstart.getTime()}`}
+            keyExtractor={(e, i) => `${e.calendarId}-${e.uid}-${e.dtstart.getTime()}-${i}`}
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={[styles.eventRow, { borderLeftColor: item.color, backgroundColor: theme.colors.surface }]}
@@ -218,9 +336,12 @@ export const MonthDayView = memo(MonthDayViewImpl);
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  fill: { flex: 1 },
   grid: { borderBottomWidth: StyleSheet.hairlineWidth },
   dowRow: { flexDirection: 'row', paddingVertical: 6 },
   dowLabel: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '600', textTransform: 'uppercase' },
+  pagerWrap: { flex: 1 },
+  monthPage: { flex: 1 },
   weekRow: { flex: 1, flexDirection: 'row' },
   dayCell: { flex: 1, alignItems: 'center', paddingTop: 2 },
   dayCircle: { width: 28, height: 28, borderRadius: 14, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },

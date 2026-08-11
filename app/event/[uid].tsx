@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Linking, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
-import * as Haptics from 'expo-haptics';
+import { haptic } from '@/utils/haptics';
 import { Pencil, Clock, CalendarDays, MapPin, Video, Repeat, Trash2, Copy, Check } from 'lucide-react-native';
-import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter, useTheme } from 'expo-router';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +20,9 @@ import {
   IconButton,
 } from '@/ui/components';
 import type { CalendarEvent, RecurrenceEditScope } from '@/types';
+import { askRecurrenceScope, type RecurrenceScopeStrings } from '@/features/event/recurrenceScope';
+import { decideMoveEventScope } from '@/features/calendar/utils/moveEventScope';
+import { goBackOrHome } from '@/utils/navigationGuard';
 
 dayjs.extend(localizedFormat);
 
@@ -37,40 +40,6 @@ async function openTalkRoom(talkUrl: string) {
   await Linking.openURL(talkUrl);
 }
 
-interface RecurrenceScopeStrings {
-  message: string;
-  thisOnly: string;
-  thisAndFollowing: string;
-  all: string;
-  cancel: string;
-}
-
-function askRecurrenceScope(
-  title: string,
-  strings: RecurrenceScopeStrings,
-  onSelect: (scope: RecurrenceEditScope) => void,
-) {
-  Alert.alert(title, strings.message, [
-    {
-      text: strings.thisOnly,
-      onPress: () => onSelect('this'),
-    },
-    {
-      text: strings.thisAndFollowing,
-      onPress: () => onSelect('thisAndFollowing'),
-    },
-    {
-      text: strings.all,
-      onPress: () => onSelect('all'),
-    },
-    { text: strings.cancel, style: 'cancel' },
-  ],
-    {
-      cancelable: true,
-    },
- );
-}
-
 export default function EventDetailScreen() {
   const { uid } = useLocalSearchParams<{ uid: string }>();
   const router = useRouter();
@@ -83,6 +52,19 @@ export default function EventDetailScreen() {
   const { data: calendars = [] } = useCalendars(activeAccount);
 
   const event = useEventByUid(activeAccountId, uid);
+
+  const navigation = useNavigation();
+  useEffect(() => {
+    const state = navigation.getState();
+    if (!state || state.type !== 'stack') return;
+    const routes = state.routes;
+    const top = routes.length - 1;
+    if (top < 1) return;
+    const topName = routes[top]?.name;
+    const hasDuplicateBelow = routes.slice(0, top).some((r) => r.name === topName);
+    if (!hasDuplicateBelow) return;
+    navigation.reset({ index: 1, routes: [routes[0], routes[top]] } as Parameters<typeof navigation.reset>[0]);
+  }, [navigation]);
 
   const start = useMemo(() => dayjs().subtract(3, 'months').toDate(), []);
   const end = useMemo(() => dayjs().add(3, 'months').toDate(), []);
@@ -108,7 +90,7 @@ export default function EventDetailScreen() {
   const handleCopyLocation = useCallback(async () => {
     if (!event?.location) return;
     await Clipboard.setStringAsync(event.location);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    haptic();
     setCopied(true);
     clearTimeout(copyResetRef.current);
     copyResetRef.current = setTimeout(() => setCopied(false), 1500);
@@ -124,13 +106,18 @@ export default function EventDetailScreen() {
 
   function handleEdit() {
     if (!event) return;
-    if (event.isRecurring) {
-      askRecurrenceScope(t('event.editEvent'), recurrenceScopeStrings, (scope) => {
-        router.push({ pathname: `/event/edit/${uid}`, params: { scope } });
-      });
-    } else {
-      router.push(`/event/edit/${uid}`);
+    const decision = decideMoveEventScope(event);
+    if (decision.kind === 'commit') {
+      if (decision.scope === 'this') {
+        router.push({ pathname: `/event/edit/${uid}`, params: { scope: 'this' } });
+      } else {
+        router.push(`/event/edit/${uid}`);
+      }
+      return;
     }
+    askRecurrenceScope(t('event.editEvent'), recurrenceScopeStrings, (scope) => {
+      router.push({ pathname: `/event/edit/${uid}`, params: { scope } });
+    });
   }
 
   function handleDelete() {
@@ -139,7 +126,7 @@ export default function EventDetailScreen() {
     const doDelete = (scope: RecurrenceEditScope) => {
       Alert.alert(
         t('event.deleteEvent'),
-        scope === 'all'
+        scope === 'all' && event.isRecurring
           ? t('event.deleteAllMsg')
           : scope === 'thisAndFollowing'
           ? t('event.deleteThisAndFollowingMsg')
@@ -150,8 +137,7 @@ export default function EventDetailScreen() {
             text: t('event.delete'), style: 'destructive',
             onPress: async () => {
               await deleteMutation.mutateAsync({ event, scope });
-              if (router.canGoBack()) router.back();
-              else router.replace('/(tabs)/calendar');
+              goBackOrHome(router);
             },
           },
         ]
@@ -178,11 +164,20 @@ export default function EventDetailScreen() {
   }
 
   if (!event) {
+    if (deleteMutation.isPending) {
+      return (
+        <ViewContainer>
+          <Stack flex vAlign="center" hAlign="center">
+            <Spinner size="large" />
+          </Stack>
+        </ViewContainer>
+      );
+    }
     return (
       <ViewContainer>
         <Stack flex vAlign="center" hAlign="center" gap={16}>
           <Typography variant="body1" color="secondary">{t('event.eventNotFound')}</Typography>
-          <Button variant="link" title={t('event.back')} onPress={() => router.back()} />
+          <Button variant="link" title={t('event.back')} onPress={() => goBackOrHome(router)} />
         </Stack>
       </ViewContainer>
     );
@@ -198,9 +193,9 @@ export default function EventDetailScreen() {
     <ViewContainer>
       <SafeAreaView edges={['top']} style={styles.flex}>
         <ScreenHeader
-          onBack={() => router.back()}
+          onBack={() => goBackOrHome(router)}
           right={canEdit ? (
-            <IconButton variant="plain" size={40} onPress={handleEdit}>
+            <IconButton glass round size={40} onPress={handleEdit} accessibilityLabel={t('event.edit')}>
               <Pencil size={20} color={theme.colors.primary} />
             </IconButton>
           ) : undefined}
@@ -273,14 +268,16 @@ export default function EventDetailScreen() {
               <Stack gap={8}>
                 <SectionHeader title={t('event.attendees')} />
                 <List>
-                  {event.attendees.map((att) => (
-                    <Item
-                      key={att.email}
-                      leading={<Avatar name={att.displayName ?? att.email} size={36} />}
-                      title={att.displayName ?? att.email}
-                      description={att.displayName ? att.email : undefined}
-                    />
-                  ))}
+                  {event.attendees
+                    .filter((a, i, arr) => arr.findIndex((b) => (b.email ?? '').toLowerCase() === (a.email ?? '').toLowerCase()) === i)
+                    .map((att, i) => (
+                      <Item
+                        key={att.email || `attendee-${i}`}
+                        leading={<Avatar name={att.displayName ?? att.email} size={36} />}
+                        title={att.displayName ?? att.email}
+                        description={att.displayName ? att.email : undefined}
+                      />
+                    ))}
                 </List>
               </Stack>
             )}

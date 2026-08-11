@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import * as Crypto from 'expo-crypto';
-import { View, StyleSheet, KeyboardAvoidingView, ScrollView } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, KeyboardAvoidingView, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { QrCode, Eye, EyeOff } from 'lucide-react-native';
 import { useRouter, useTheme } from 'expo-router';
 import { validateCredentials } from '@/services/nextcloud/caldav';
 import { HttpError, describeMutationError } from '@/services/shared/errors';
-import { refreshAccounts } from '@/hooks/useAccounts';
+import { refreshAccounts, useAccounts } from '@/hooks/useAccounts';
 import { saveAccount, setActiveAccountId } from '@/services/nextcloud/auth';
 import { fetchUserInfo, exchangeOneTimeToken } from '@/services/nextcloud/nextcloud';
 import { useAccountStore } from '@/stores/accountStore';
@@ -16,20 +16,19 @@ import type { Account } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { LanguageSheet } from '@/components/LanguageSheet';
 import {
-  ViewContainer, Stack, Typography, Button, TextField, Divider, IconButton,
+  ViewContainer, Stack, Typography, Button, TextField, Divider, IconButton, ScreenHeader,
 } from '@/ui/components';
 
 export default function SetupScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
   const setStoreId = useAccountStore((s) => s.setActiveAccountId);
   const { t } = useTranslation();
+  const canGoBack = useAccounts().length > 1 && router.canGoBack();
 
   const [baseUrl, setBaseUrl] = useState('');
   const [username, setUsername] = useState('');
   const [appPassword, setAppPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -39,7 +38,6 @@ export default function SetupScreen() {
     baseUrl: string;
     username: string;
     appPassword: string;
-    displayName: string;
   }) {
     setError(null);
     let normalizedUrl = params.baseUrl.trim().replace(/\/$/, '');
@@ -61,7 +59,7 @@ export default function SetupScreen() {
       });
       const account: Account = {
         id: Crypto.randomUUID(),
-        displayName: params.displayName || params.username,
+        displayName: userInfo.displayName || params.username,
         baseUrl: normalizedUrl,
         username: params.username,
         appPassword: params.appPassword,
@@ -91,7 +89,7 @@ export default function SetupScreen() {
       setError(t('setup.errors.required'));
       return;
     }
-    connectWith({ baseUrl, username, appPassword, displayName });
+    connectWith({ baseUrl, username, appPassword });
   }
 
   async function handleQrScanned(data: NcLoginData) {
@@ -101,7 +99,7 @@ export default function SetupScreen() {
 
     if (!data.oneTime) {
       setAppPassword(data.password);
-      connectWith({ baseUrl: data.server, username: data.user, appPassword: data.password, displayName: '' });
+      connectWith({ baseUrl: data.server, username: data.user, appPassword: data.password });
       return;
     }
 
@@ -126,12 +124,16 @@ export default function SetupScreen() {
     }
     setLoading(false);
     setAppPassword(appPassword);
-    connectWith({ baseUrl: data.server, username: data.user, appPassword, displayName: '' });
+    connectWith({ baseUrl: data.server, username: data.user, appPassword });
   }
 
   return (
     <ViewContainer centered>
       <SafeAreaView style={styles.flex}>
+      <ScreenHeader
+        onBack={canGoBack ? () => router.back() : undefined}
+        right={<LanguageSheet variant="icon" />}
+      />
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Stack gap={8}>
@@ -190,13 +192,6 @@ export default function SetupScreen() {
               }
             />
 
-            <TextField
-              label={`${t('setup.displayName')} ${t('setup.optional')}`}
-              placeholder={t('setup.placeholders.displayName')}
-              value={displayName}
-              onChangeText={setDisplayName}
-            />
-
             {error ? <Typography variant="caption" color="danger">{error}</Typography> : null}
 
             <Button
@@ -216,9 +211,6 @@ export default function SetupScreen() {
         </Stack>
       </KeyboardAvoidingView>
 
-      <View style={[styles.langCorner, { top: insets.top + 8 }]}>
-        <LanguageSheet variant="icon" />
-      </View>
       </SafeAreaView>
 
       <QrLoginScanner
@@ -234,5 +226,4 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { padding: 24 },
   section: { marginTop: 28 },
-  langCorner: { position: 'absolute', right: 16, zIndex: 10 },
 });

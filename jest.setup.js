@@ -1,3 +1,12 @@
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    getItem: jest.fn(() => Promise.resolve(null)),
+    setItem: jest.fn(() => Promise.resolve()),
+    removeItem: jest.fn(() => Promise.resolve()),
+  },
+}));
+
 jest.mock('@nozbe/watermelondb/adapters/sqlite', () => ({
   __esModule: true,
   default: class SQLiteAdapterMock {
@@ -12,14 +21,19 @@ jest.mock('react-native-worklets', () => ({
 }));
 
 jest.mock('react-native-reanimated', () => {
-  const { View } = require('react-native');
+  const { View, ScrollView } = require('react-native');
   return {
     __esModule: true,
-    default: { View, createAnimatedComponent: (c) => c },
+    default: { View, ScrollView, createAnimatedComponent: (c) => c },
     View,
+    ScrollView,
     createAnimatedComponent: (c) => c,
     useSharedValue: (v) => ({ value: v }),
     useAnimatedStyle: () => ({}),
+    useAnimatedRef: () => ({ current: null }),
+    useAnimatedScrollHandler: (h) => h,
+    scrollTo: () => {},
+    useEvent: () => null,
     withTiming: (v) => v,
     withSpring: (v) => v,
     LinearTransition: {},

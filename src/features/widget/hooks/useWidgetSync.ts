@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { useAccountStore } from '@/stores/accountStore';
+import { useCalendarStore } from '@/stores/calendarStore';
 import { EVENT_OBSERVED_COLUMNS } from '@/database/observedColumns';
 
 import { observeAgendaEventsQuery } from '../core/readEvents';
@@ -13,16 +14,32 @@ const REFRESH_MS = 60_000;
 
 export function useWidgetSync(): void {
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
+  const hiddenCalendarIds = useCalendarStore((s) => s.hiddenCalendarIds);
+  const prevAccountRef = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
+    if (activeAccountId) void syncWidget();
+  }, [hiddenCalendarIds, activeAccountId]);
+
+  useEffect(() => {
+    const prevAccount = prevAccountRef.current;
+    prevAccountRef.current = activeAccountId;
+    const accountChanged = prevAccount !== undefined && prevAccount !== activeAccountId;
+
     if (!activeAccountId) {
+      if (accountChanged) void liveActivity.clear().catch(() => undefined);
       void unregisterWidgetBackgroundSync();
       return;
     }
 
-    void liveActivity.requestPermission?.().then(() => syncWidget());
-
-    void syncWidget();
+    void (async () => {
+      try {
+        if (accountChanged) await liveActivity.clear();
+        await liveActivity.requestPermission?.();
+        await syncWidget();
+      } catch {
+      }
+    })();
     void registerWidgetBackgroundSync();
 
     const sub = observeAgendaEventsQuery(activeAccountId, AGENDA_DAYS)

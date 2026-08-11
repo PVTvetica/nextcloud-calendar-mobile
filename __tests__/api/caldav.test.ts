@@ -1,4 +1,4 @@
-import { deleteEvent, moveEvent, syncCollection, fetchEventsByHrefs, MULTIGET_BATCH } from '../../src/services/nextcloud/caldav';
+import { deleteEvent, moveEvent, syncCollection, fetchEventsByHrefs, fetchCalendars, validateCredentials, MULTIGET_BATCH } from '../../src/services/nextcloud/caldav';
 import type { Account, CalendarMeta } from '../../src/types';
 
 const account: Account = {
@@ -165,5 +165,227 @@ describe('fetchEventsByHrefs', () => {
     const events = await fetchEventsByHrefs(account, cal, [], range.s, range.e);
     expect(mockFetch).not.toHaveBeenCalled();
     expect(events).toEqual([]);
+  });
+});
+
+describe('fetchCalendars', () => {
+  const propfind = (displayname: string, extra = '') => `<?xml version="1.0"?>
+<d:multistatus xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav">
+  <d:response>
+    <d:href>/remote.php/dav/calendars/john/comics/</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:resourcetype><d:collection/><c:calendar/></d:resourcetype>
+        <d:displayname>${displayname}</d:displayname>
+        <cs:getctag>42</cs:getctag>
+        ${extra}
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+</d:multistatus>`;
+
+  it('decodes XML entities in the display name', async () => {
+    mockFetch.mockResolvedValue({ status: 207, text: async () => propfind('Calvin &amp; Hobbes') });
+
+    const [cal] = await fetchCalendars(account);
+
+    expect(cal.displayName).toBe('Calvin & Hobbes');
+  });
+
+  it('decodes the other escapes a name can carry', async () => {
+    mockFetch.mockResolvedValue({
+      status: 207,
+      text: async () => propfind('caf&#233; &lt;perso&gt; &quot;2026&quot;'),
+    });
+
+    const [cal] = await fetchCalendars(account);
+
+    expect(cal.displayName).toBe('café <perso> "2026"');
+  });
+
+  it('does not decode twice', async () => {
+    mockFetch.mockResolvedValue({ status: 207, text: async () => propfind('A &amp;amp; B') });
+
+    const [cal] = await fetchCalendars(account);
+
+    expect(cal.displayName).toBe('A &amp; B');
+  });
+
+  it('falls back to the slug when the name is empty', async () => {
+    mockFetch.mockResolvedValue({ status: 207, text: async () => propfind('') });
+
+    const [cal] = await fetchCalendars(account);
+
+    expect(cal.displayName).toBe('comics');
+  });
+
+  it('decodes an ampersand in a subscription source URL', async () => {
+    mockFetch.mockResolvedValue({
+      status: 207,
+      text: async () => propfind(
+        'Feed',
+        '<cs:source><d:href>https://ics.example.com/f?a=1&amp;b=2</d:href></cs:source>',
+      ),
+    });
+
+    const [cal] = await fetchCalendars(account);
+
+    expect(cal.sourceUrl).toBe('https://ics.example.com/f?a=1&b=2');
+  });
+});
+
+describe('validateCredentials davUserId discovery', () => {
+  const creds = { baseUrl: 'https://cloud.example.com', username: 'jdoe', appPassword: 'xxxx' };
+
+  const principalXml = (href: string) =>
+    `<d:multistatus xmlns:d="DAV:"><d:response><d:href>/remote.php/dav/</d:href><d:propstat><d:prop>` +
+    `<d:current-user-principal><d:href>${href}</d:href></d:current-user-principal>` +
+    `</d:prop></d:propstat></d:response></d:multistatus>`;
+  const homeXml = (href: string) =>
+    `<d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav"><d:response><d:href>/x</d:href><d:propstat><d:prop>` +
+    `<cal:calendar-home-set><d:href>${href}</d:href></cal:calendar-home-set>` +
+    `</d:prop></d:propstat></d:response></d:multistatus>`;
+
+  it('returns the calendar-home segment (UUID) for an LDAP account', async () => {
+    const uuid = '143A944C-B602-469F-BB9D-F4241F188524';
+    mockFetch
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => principalXml('/remote.php/dav/principals/users/' + uuid + '/') })
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => homeXml('/remote.php/dav/calendars/' + uuid + '/') });
+
+    const res = await validateCredentials(creds);
+
+    expect(res.davUserId).toBe(uuid);
+    expect(new URL(mockFetch.mock.calls[1][0]).pathname).toBe('/remote.php/dav/principals/users/' + uuid + '/');
+  });
+
+  it('returns the login name unchanged for a database account', async () => {
+    mockFetch
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => principalXml('/remote.php/dav/principals/users/jdoe/') })
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => homeXml('/remote.php/dav/calendars/jdoe/') });
+
+    const res = await validateCredentials(creds);
+
+    expect(res.davUserId).toBe('jdoe');
+  });
+
+  it('falls back to the principal slug when calendar-home-set is not advertised', async () => {
+    mockFetch
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => principalXml('/remote.php/dav/principals/users/jdoe/') })
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => '<d:multistatus xmlns:d="DAV:"></d:multistatus>' });
+
+    const res = await validateCredentials(creds);
+
+    expect(res.davUserId).toBe('jdoe');
+  });
+
+  it('falls back to the principal slug when the home PROPFIND errors', async () => {
+    mockFetch
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => principalXml('/remote.php/dav/principals/users/jdoe/') })
+      .mockResolvedValueOnce({ status: 500, ok: false, text: async () => '' });
+
+    const res = await validateCredentials(creds);
+
+    expect(res.davUserId).toBe('jdoe');
+  });
+
+  it('falls back to the login name when current-user-principal is not advertised', async () => {
+    mockFetch
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => '<d:multistatus xmlns:d="DAV:"></d:multistatus>' })
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => '' });
+
+    const res = await validateCredentials(creds);
+
+    expect(res.davUserId).toBe('jdoe');
+    expect(mockFetch.mock.calls[1][0]).toBe('https://cloud.example.com/remote.php/dav/principals/users/jdoe/');
+  });
+
+  it('resolves the principal against the origin on a subdirectory install', async () => {
+    const uuid = 'ABCDEF';
+    mockFetch
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => principalXml('/nextcloud/remote.php/dav/principals/users/' + uuid + '/') })
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => homeXml('/nextcloud/remote.php/dav/calendars/' + uuid + '/') });
+
+    const res = await validateCredentials({ ...creds, baseUrl: 'https://cloud.example.com/nextcloud' });
+
+    expect(res.davUserId).toBe(uuid);
+    expect(mockFetch.mock.calls[1][0]).toBe('https://cloud.example.com/nextcloud/remote.php/dav/principals/users/' + uuid + '/');
+  });
+});
+
+describe('Nextcloud installed in a subdirectory', () => {
+  const subAccount: Account = {
+    id: 'acc-2',
+    displayName: 'Subfolder',
+    baseUrl: 'https://cloud.example.com/nextcloud',
+    username: 'john',
+    appPassword: 'xxxx',
+    davUserId: 'john',
+  };
+  const subCal: CalendarMeta = {
+    id: 'cal-sub',
+    accountId: 'acc-2',
+    displayName: 'Personal',
+    color: '#1976d2',
+    ctag: '1',
+    url: 'https://cloud.example.com/nextcloud/remote.php/dav/calendars/john/personal/',
+    slug: 'personal',
+  };
+
+  it('syncCollection does not duplicate the subfolder in changed/deleted hrefs', async () => {
+    const xml = `<?xml version="1.0"?>
+<d:multistatus xmlns:d="DAV:">
+  <d:response>
+    <d:href>/nextcloud/remote.php/dav/calendars/john/personal/a.ics</d:href>
+    <d:propstat><d:status>HTTP/1.1 200 OK</d:status></d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/nextcloud/remote.php/dav/calendars/john/personal/gone.ics</d:href>
+    <d:status>HTTP/1.1 404 Not Found</d:status>
+  </d:response>
+  <d:sync-token>http://sabre.io/ns/sync/1</d:sync-token>
+</d:multistatus>`;
+    mockFetch.mockResolvedValue({ status: 207, text: async () => xml });
+
+    const res = await syncCollection(subAccount, subCal, undefined);
+
+    expect(res.changed).toEqual(['https://cloud.example.com/nextcloud/remote.php/dav/calendars/john/personal/a.ics']);
+    expect(res.deleted).toEqual(['https://cloud.example.com/nextcloud/remote.php/dav/calendars/john/personal/gone.ics']);
+  });
+
+  it('fetchCalendars builds the calendar url without duplicating the subfolder', async () => {
+    const xml = `<?xml version="1.0"?>
+<d:multistatus xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav">
+  <d:response>
+    <d:href>/nextcloud/remote.php/dav/calendars/john/personal/</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:resourcetype><d:collection/><c:calendar/></d:resourcetype>
+        <d:displayname>Personal</d:displayname>
+        <cs:getctag>42</cs:getctag>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+</d:multistatus>`;
+    mockFetch.mockResolvedValue({ status: 207, text: async () => xml });
+
+    const [cal] = await fetchCalendars(subAccount);
+
+    expect(cal.url).toBe('https://cloud.example.com/nextcloud/remote.php/dav/calendars/john/personal/');
+  });
+
+  it('fetchEventsByHrefs builds event hrefs without duplicating the subfolder', async () => {
+    const ics = 'BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:a\r\nSUMMARY:a\r\nDTSTART:20260615T090000Z\r\nDTEND:20260615T100000Z\r\nEND:VEVENT\r\nEND:VCALENDAR';
+    const xml = `<d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav"><d:response><d:href>/nextcloud/remote.php/dav/calendars/john/personal/a.ics</d:href><d:propstat><d:prop><cal:calendar-data>${ics}</cal:calendar-data></d:prop></d:propstat></d:response></d:multistatus>`;
+    mockFetch.mockResolvedValue({ status: 207, text: async () => xml });
+
+    const events = await fetchEventsByHrefs(
+      subAccount, subCal,
+      ['https://cloud.example.com/nextcloud/remote.php/dav/calendars/john/personal/a.ics'],
+      new Date('2026-01-01T00:00:00Z'), new Date('2026-12-31T00:00:00Z'),
+    );
+
+    expect(events[0].href).toBe('https://cloud.example.com/nextcloud/remote.php/dav/calendars/john/personal/a.ics');
   });
 });

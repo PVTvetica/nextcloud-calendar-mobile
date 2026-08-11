@@ -11,7 +11,8 @@
     "errorNotFound": "This item no longer exists on the server.",
     "errorServer": "The server is temporarily unavailable. Please try again later.",
     "errorRateLimited": "Too many requests. Please wait a moment and try again.",
-    "errorRateLimitedRetry": "Too many requests. Please try again in {{seconds}}s."
+    "errorRateLimitedRetry": "Too many requests. Please try again in {{seconds}}s.",
+    "back": "Back"
   },
   "tabs": {
     "calendar": "Calendar",
@@ -45,7 +46,6 @@
     },
     "qrCameraDenied": "Camera access is denied. Enable it in your device settings to scan the QR code.",
     "qrOpenSettings": "Open Settings",
-    "qrHeaderTitle": "Scan Nextcloud QR",
     "qrInvalidCode": "Not a valid Nextcloud login QR code. Try scanning again.",
     "qrTryAgain": "Try Again",
     "qrHint": "Open your Nextcloud dashboard → tap your avatar → \"Log in via QR code\""
@@ -65,7 +65,10 @@
     "offlineBanner": "Offline — showing saved events",
     "noEvents": "No events",
     "allDay": "All day",
-    "noTitle": "(No title)"
+    "noTitle": "(No title)",
+    "drawerNoCalendars": "No calendar",
+    "calendarNotifications": "Notifications for {{name}}",
+    "calendarVisibility": "Show {{name}}"
   },
   "event": {
     "titleLabel": "Title *",
@@ -137,6 +140,19 @@
   "settings": {
     "title": "Settings",
     "appearance": "Appearance",
+    "calendar": "Calendar",
+    "accessibility": {
+      "title": "Accessibility",
+      "haptics": "Haptic feedback",
+      "hapticsHint": "Vibrate on taps and interactions.",
+      "reduceMotion": "Reduce motion",
+      "reduceMotionHint": "Minimize animations across the app."
+    },
+    "sections": {
+      "general": "General",
+      "alerts": "Alerts",
+      "app": "Application"
+    },
     "theme": "Theme",
     "themeSystem": "System",
     "themeLight": "Light",
@@ -158,12 +174,12 @@
     "removeMsg": "Remove \"{{name}}\" from this device?",
     "version": "v{{version}}",
     "about": {
+      "title": "About",
       "name": "Nextcloud Calendar",
       "description": "An open-source mobile calendar app for Nextcloud.",
       "github": "View on GitHub",
       "reportBug": "Report a Bug"
     },
-    "accountActive": "Active",
     "notifications": {
       "title": "Notifications",
       "liveActivity": "Live activity",
@@ -173,7 +189,6 @@
       "channelName": "Event alerts"
     },
     "alerts": {
-      "title": "Alerts",
       "timed": "Default alert",
       "allDay": "All-day events",
       "none": "None",
@@ -198,13 +213,54 @@
       "useDefault": "Default",
       "timedHint": "Used by events that carry no alert of their own.",
       "allDayHint": "Fires at 9:00 on the chosen day."
-    }
+    },
+    "account": {
+      "title": "Account",
+      "notFound": "Account not found.",
+      "displayName": "Display name",
+      "email": "Email",
+      "emailHint": "Used as the organiser of the events you create.",
+      "server": "Server",
+      "serverUrl": "Server address",
+      "username": "Username",
+      "connection": "Connection",
+      "reconnectHint": "Enter a new app password if the old one was revoked.",
+      "appPassword": "App password",
+      "scanQr": "Scan a QR code",
+      "reconnect": "Reconnect",
+      "save": "Save",
+      "saved": "Changes saved.",
+      "reconnected": "Account reconnected.",
+      "useThisAccount": "Use this account",
+      "delete": "Remove account",
+      "errors": {
+        "required": "This field is required.",
+        "invalidEmail": "Invalid email address.",
+        "accountMismatch": "This QR code belongs to a different account."
+      },
+      "connectionLost": "The connection to this server has expired. Reconnect to keep syncing.",
+      "use": "Use",
+      "editOnNextcloud": "Edit on Nextcloud"
+    },
+    "accountActive": "Active"
   },
   "widget": {
     "liveRemaining": "{{duration}} left",
     "liveRemainingShort": "{{duration}}",
     "durationHour": "h",
     "durationMinute": "m",
-    "emptyAgenda": "No upcoming event"
+    "emptyAgenda": "No upcoming event",
+    "videoConference": "Video conference: {{provider}}"
+  },
+  "notifications": {
+    "lead": {
+      "now": "Now",
+      "minutes": "in {{value}} min",
+      "hours": "in {{value}} h",
+      "hoursMinutes": "in {{value}} h {{minutes}}",
+      "days": "in {{value}} days",
+      "today": "Today",
+      "tomorrow": "Tomorrow"
+    }
   }
 }

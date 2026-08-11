@@ -4,14 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Menu } from 'lucide-react-native';
 import { useTheme } from 'expo-router';
-import { Stack, Typography, Chip, Icon, AnimatedPressable, Spinner } from '@/ui/components';
+import { Stack, Typography, Chip, Icon, AnimatedPressable } from '@/ui/components';
 import type { ViewMode } from '@/types';
 import { VIEW_MODES } from '../constants';
 
 interface Props {
   headerTitle: string;
   isToday: boolean;
-  todayLoading: boolean;
   viewMode: ViewMode;
   onOpenDrawer: () => void;
   onToday: () => void;
@@ -26,10 +25,10 @@ const VIEW_MODE_KEYS: Record<ViewMode, string> = {
   schedule: 'calendar.schedule',
 };
 
-function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOpenDrawer, onToday, onSwitchMode }: Props) {
+function CalendarTopBarImpl({ headerTitle, isToday, viewMode, onOpenDrawer, onToday, onSwitchMode }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const todayDisabled = isToday || todayLoading;
+  const todayDisabled = isToday;
 
   return (
     <SafeAreaView
@@ -60,15 +59,11 @@ function CalendarTopBarImpl({ headerTitle, isToday, todayLoading, viewMode, onOp
           onPress={onToday}
           disabled={todayDisabled}
           animated={!todayDisabled}
-          style={[styles.todayBtn, { opacity: isToday && !todayLoading ? 0.35 : 1 }]}
+          style={[styles.todayBtn, { opacity: isToday ? 0.35 : 1 }]}
         >
-          {todayLoading ? (
-            <Spinner />
-          ) : (
-            <Typography variant="body2" color="primary" nowrap adjustsFontSizeToFit minimumFontScale={0.8}>
-              {t('calendar.today')}
-            </Typography>
-          )}
+          <Typography variant="body2" color="primary" nowrap adjustsFontSizeToFit minimumFontScale={0.8}>
+            {t('calendar.today')}
+          </Typography>
         </AnimatedPressable>
       </Stack>
 

@@ -1,17 +1,21 @@
 import React, { useRef, useState, type ReactNode } from 'react';
 import { View, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { ChevronUp, ChevronDown, Check } from 'lucide-react-native';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useTheme } from 'expo-router';
 
 import Typography from './Typography';
 import AnimatedPressable from './AnimatedPressable';
 import Spinner from './Spinner';
 
+const LIQUID_GLASS = isLiquidGlassAvailable();
+
 export interface SelectOption<T> {
   value: T;
   label: string;
   leading?: (size: number) => ReactNode;
   hint?: string;
+  description?: string;
 }
 
 interface SelectProps<T> {
@@ -20,9 +24,14 @@ interface SelectProps<T> {
   onChange: (value: T) => void;
   variant?: 'row' | 'icon';
   icon?: (color: string) => ReactNode;
+  glass?: boolean;
   busy?: boolean;
   accessibilityLabel?: string;
   disabled?: boolean;
+  /** Custom trigger; overrides the built-in row/icon trigger. */
+  trigger?: ReactNode;
+  /** Rendered pinned below the option list; receives a close callback. */
+  footer?: (close: () => void) => ReactNode;
 }
 
 const ROW_HEIGHT = 58;
@@ -33,9 +42,11 @@ const ICON_DROPDOWN_WIDTH = 240;
 type Anchor = { x: number; y: number; width: number; height: number };
 
 function Select<T>({
-  value, options, onChange, variant = 'row', icon, busy, accessibilityLabel, disabled,
+  value, options, onChange, variant = 'row', icon, glass = false, busy, accessibilityLabel, disabled,
+  trigger, footer,
 }: SelectProps<T>) {
   const { colors } = useTheme();
+  const onGlass = glass && LIQUID_GLASS;
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const triggerRef = useRef<View>(null);
@@ -69,7 +80,17 @@ function Select<T>({
   return (
     <View>
       <View ref={triggerRef} collapsable={false}>
-        {variant === 'icon' ? (
+        {trigger ? (
+          <AnimatedPressable
+            accessibilityRole="button"
+            accessibilityLabel={accessibilityLabel}
+            accessibilityState={{ expanded: open, disabled }}
+            disabled={disabled}
+            onPress={toggle}
+          >
+            {trigger}
+          </AnimatedPressable>
+        ) : variant === 'icon' ? (
           <AnimatedPressable
             accessibilityRole="button"
             accessibilityLabel={accessibilityLabel}
@@ -77,7 +98,21 @@ function Select<T>({
             hitSlop={10}
             onPress={toggle}
           >
-            {busy ? <Spinner size="small" color="secondary" /> : icon?.(colors.textSecondary)}
+            <View
+              style={[
+                styles.iconButton,
+                {
+                  backgroundColor: onGlass ? 'transparent' : colors.surface,
+                  borderWidth: onGlass ? 0 : 1.5,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              {onGlass && (
+                <GlassView glassEffectStyle="regular" isInteractive style={[StyleSheet.absoluteFill, styles.iconGlass]} />
+              )}
+              {busy ? <Spinner size="small" color="secondary" /> : icon?.(colors.text)}
+            </View>
           </AnimatedPressable>
         ) : (
           <AnimatedPressable
@@ -124,17 +159,30 @@ function Select<T>({
                 onPress={() => select(option.value)}
               >
                 {option.leading?.(30)}
-                <Typography variant="body1" color="text" style={option.leading ? styles.name : undefined}>
-                  {option.label}
-                </Typography>
-                {option.hint ? (
-                  <Typography color={colors.textTertiary} weight="400" style={styles.hint}>{option.hint}</Typography>
-                ) : null}
-                <View style={styles.spacer} />
+                <View style={[styles.optionBody, option.leading && styles.optionBodyIndent]}>
+                  <View style={styles.optionMain}>
+                    <Typography variant="body1" color="text">
+                      {option.label}
+                    </Typography>
+                    {option.hint ? (
+                      <Typography color={colors.textTertiary} weight="400" style={styles.hint}>{option.hint}</Typography>
+                    ) : null}
+                  </View>
+                  {option.description ? (
+                    <Typography variant="caption" color="secondary" nowrap style={styles.optionDesc}>
+                      {option.description}
+                    </Typography>
+                  ) : null}
+                </View>
                 {option.value === value && <Check size={20} color={colors.primary} />}
               </AnimatedPressable>
             ))}
           </ScrollView>
+          {footer ? (
+            <View style={[styles.footer, { borderTopColor: colors.border }]}>
+              {footer(() => setOpen(false))}
+            </View>
+          ) : null}
         </View>
       </Modal>
     </View>
@@ -142,6 +190,15 @@ function Select<T>({
 }
 
 const styles = StyleSheet.create({
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  iconGlass: { borderRadius: 20 },
   trigger: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -170,6 +227,11 @@ const styles = StyleSheet.create({
   name: { fontSize: 16, marginLeft: 14 },
   hint: { fontSize: 15, marginLeft: 6 },
   spacer: { flex: 1 },
+  optionBody: { flex: 1 },
+  optionBodyIndent: { marginLeft: 14 },
+  optionMain: { flexDirection: 'row', alignItems: 'center' },
+  optionDesc: { marginTop: 2 },
+  footer: { borderTopWidth: StyleSheet.hairlineWidth },
 });
 
 export default Select;

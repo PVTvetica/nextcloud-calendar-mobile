@@ -11,6 +11,10 @@ function calUrl(account: Account, path = ''): string {
   return `${account.baseUrl}/remote.php/dav/calendars/${encodeURIComponent(account.davUserId)}/${path}`;
 }
 
+function absUrl(account: Pick<Account, 'baseUrl'>, pathOrHref: string): string {
+  return /^https?:\/\//i.test(pathOrHref) ? pathOrHref : new URL(pathOrHref, account.baseUrl).href;
+}
+
 function extractSlug(url: string): string {
   const slug = url.replace(/\/$/, '').split('/').pop() ?? '';
   try {
@@ -97,13 +101,27 @@ export async function validateCredentials(params: {
   if (res.status !== 207 && !res.ok) throw httpErrorFrom(res, 'validateCredentials');
 
   const principalPath = extractPropHref(await res.text(), 'current-user-principal');
-  const davUserId = principalPath ? extractSlug(principalPath) : '';
-  if (davUserId) return { davUserId };
 
-  const principalUrl = `${params.baseUrl}/remote.php/dav/principals/users/${encodeURIComponent(params.username)}/`;
-  const fallback = await davFetch(principalUrl, params, { method: 'PROPFIND', headers: { Depth: '0', 'Content-Type': 'application/xml' } });
-  if (fallback.status !== 207 && !fallback.ok) throw httpErrorFrom(fallback, 'validateCredentials');
-  return { davUserId: params.username };
+  if (!principalPath) {
+    const principalUrl = `${params.baseUrl}/remote.php/dav/principals/users/${encodeURIComponent(params.username)}/`;
+    const fallback = await davFetch(principalUrl, params, { method: 'PROPFIND', headers: { Depth: '0', 'Content-Type': 'application/xml' } });
+    if (fallback.status !== 207 && !fallback.ok) throw httpErrorFrom(fallback, 'validateCredentials');
+    return { davUserId: params.username };
+  }
+
+  const principalUrl = new URL(principalPath, new URL(params.baseUrl).origin).toString();
+  const homeRes = await davFetch(principalUrl, params, {
+    method: 'PROPFIND',
+    headers: { Depth: '0', 'Content-Type': 'application/xml' },
+    body: '<?xml version="1.0" encoding="utf-8"?>' +
+    '<d:propfind xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav"><d:prop><cal:calendar-home-set/></d:prop></d:propfind>',
+  });
+  if (homeRes.status !== 207 && !homeRes.ok) {
+    return { davUserId: extractSlug(principalPath) || params.username };
+  }
+
+  const homePath = extractPropHref(await homeRes.text(), 'calendar-home-set');
+  return { davUserId: extractSlug(homePath ?? principalPath) || params.username };
 }
 
 export interface SyncCollectionResult {
@@ -143,7 +161,7 @@ export async function syncCollection(
   for (const chunk of splitResponses(xml)) {
     const hrefMatch = chunk.match(/<d:href>([^<]+)<\/d:href>/);
     if (!hrefMatch) continue;
-    const abs = `${account.baseUrl}${hrefMatch[1]}`;
+    const abs = absUrl(account, hrefMatch[1]);
     if (/<d:status>[^<]*\b404\b/.test(chunk)) deleted.push(abs);
     else changed.push(abs);
   }
@@ -189,11 +207,11 @@ export async function fetchCalendars(account: Account): Promise<CalendarMeta[]> 
     const hrefMatch = chunk.match(/<d:href>([^<]+)<\/d:href>/);
     if (!hrefMatch) continue;
     const path = hrefMatch[1];
-    const calFullUrl = `${account.baseUrl}${path}`;
+    const calFullUrl = absUrl(account, path);
     const slug = extractSlug(path);
 
     const displayNameMatch = chunk.match(/<d:displayname>([^<]*)<\/d:displayname>/);
-    const displayName = displayNameMatch?.[1]?.trim() || slug;
+    const displayName = decodeXmlEntities(displayNameMatch?.[1] ?? '').trim() || slug;
 
     const colorMatch = chunk.match(/<\w+:calendar-color[^>]*>([^<]+)<\/\w+:calendar-color>/);
     const rawColor = colorMatch?.[1]?.trim() || '';
@@ -203,7 +221,7 @@ export async function fetchCalendars(account: Account): Promise<CalendarMeta[]> 
     const ctag = ctagMatch?.[1]?.trim() || '';
 
     const sourceMatch = chunk.match(/<cs:source[^>]*>[\s\S]*?<d:href>([^<]+)<\/d:href>[\s\S]*?<\/cs:source>/);
-    const sourceUrl = sourceMatch?.[1]?.trim();
+    const sourceUrl = sourceMatch ? decodeXmlEntities(sourceMatch[1]).trim() : undefined;
 
     const hasPrivilegeSet = chunk.includes('current-user-privilege-set');
     const hasAll = chunk.includes('<d:all');
@@ -283,7 +301,7 @@ export async function fetchEvents(
     const hrefMatch = chunk.match(/<d:href>([^<]+)<\/d:href>/);
     const dataMatch = chunk.match(/<cal:calendar-data[^>]*>([\s\S]*?)<\/cal:calendar-data>/);
     if (dataMatch?.[1] && hrefMatch?.[1]) {
-      const href = `${account.baseUrl}${hrefMatch[1]}`;
+      const href = absUrl(account, hrefMatch[1]);
       items.push({ ics: decodeXmlEntities(dataMatch[1].trim()), href });
     }
   }
@@ -373,9 +391,8 @@ export async function deleteEvent(
   account: Account,
   href: string
 ): Promise<void> {
-  console.log('[deleteEvent] DELETE', href);
   const res = await davFetch(href, account, { method: 'DELETE' });
-  console.log('[deleteEvent] status:', res.status);
+  if (res.status === 404) console.warn('[deleteEvent] 404, nothing deleted at', href);
   if (!res.ok && res.status !== 404) throw httpErrorFrom(res, 'deleteEvent');
 }
 
@@ -417,7 +434,7 @@ export async function fetchEventsByHrefs(
       const hrefMatch = chunk.match(/<d:href>([^<]+)<\/d:href>/);
       const dataMatch = chunk.match(/<cal:calendar-data[^>]*>([\s\S]*?)<\/cal:calendar-data>/);
       if (dataMatch?.[1] && hrefMatch?.[1]) {
-        items.push({ ics: decodeXmlEntities(dataMatch[1].trim()), href: `${account.baseUrl}${hrefMatch[1]}` });
+        items.push({ ics: decodeXmlEntities(dataMatch[1].trim()), href: absUrl(account, hrefMatch[1]) });
       }
     }
 

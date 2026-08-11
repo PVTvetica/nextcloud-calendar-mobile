@@ -29,7 +29,7 @@ export interface AgendaSnapshot {
   relativeLabel: string;
   events: AgendaEventItem[];
   sections: AgendaDaySection[];
-  nextEvent: AgendaEventItem | null;
+  nextEvent?: AgendaEventItem;
 }
 
 export interface AgendaTimelineEntry {
@@ -43,8 +43,9 @@ export interface LiveEventState {
   startIso: string;
   endIso: string;
   color: string;
-  deepLink: string;
+  link: string;
   location: string;
+  videoProvider?: string;
   attendees: string[];
 }
 

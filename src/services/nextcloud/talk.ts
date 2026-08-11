@@ -5,12 +5,6 @@ export interface TalkRoom {
   url: string;
 }
 
-/**
- * Nextcloud Talk API roomType values:
- *   1 = OneToOne   (not used here)
- *   2 = Group      → invite-only, participants must be added explicitly
- *   3 = Public     → anyone with the share link can join
- */
 export async function createTalkRoom(
   account: Account,
   name: string,

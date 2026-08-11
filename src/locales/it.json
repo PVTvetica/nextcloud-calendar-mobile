@@ -11,7 +11,8 @@
     "errorNotFound": "Questo elemento non esiste più sul server.",
     "errorServer": "Il server è temporaneamente non disponibile. Riprova più tardi.",
     "errorRateLimited": "Troppe richieste. Attendi un momento e riprova.",
-    "errorRateLimitedRetry": "Troppe richieste. Riprova tra {{seconds}} s."
+    "errorRateLimitedRetry": "Troppe richieste. Riprova tra {{seconds}} s.",
+    "back": "Indietro"
   },
   "tabs": {
     "calendar": "Calendario",
@@ -45,7 +46,6 @@
     },
     "qrCameraDenied": "L'accesso alla fotocamera è negato. Attivalo nelle impostazioni del dispositivo per scansionare il codice QR.",
     "qrOpenSettings": "Apri impostazioni",
-    "qrHeaderTitle": "Scansiona QR Nextcloud",
     "qrInvalidCode": "Codice QR di accesso Nextcloud non valido. Riprova a scansionare.",
     "qrTryAgain": "Riprova",
     "qrHint": "Apri la dashboard di Nextcloud → tocca il tuo avatar → \"Accedi tramite codice QR\""
@@ -65,7 +65,10 @@
     "offlineBanner": "Offline — visualizzazione eventi salvati",
     "noEvents": "Nessun evento",
     "allDay": "Tutto il giorno",
-    "noTitle": "(Senza titolo)"
+    "noTitle": "(Senza titolo)",
+    "drawerNoCalendars": "Nessun calendario",
+    "calendarNotifications": "Notifiche di {{name}}",
+    "calendarVisibility": "Mostra {{name}}"
   },
   "event": {
     "titleLabel": "Titolo *",
@@ -137,6 +140,19 @@
   "settings": {
     "title": "Impostazioni",
     "appearance": "Aspetto",
+    "calendar": "Calendario",
+    "accessibility": {
+      "title": "Accessibilità",
+      "haptics": "Feedback aptico",
+      "hapticsHint": "Vibra ai tocchi e alle interazioni.",
+      "reduceMotion": "Riduci movimento",
+      "reduceMotionHint": "Riduci le animazioni nell'app."
+    },
+    "sections": {
+      "general": "Generale",
+      "alerts": "Avvisi",
+      "app": "Applicazione"
+    },
     "theme": "Tema",
     "themeSystem": "Sistema",
     "themeLight": "Chiaro",
@@ -158,12 +174,12 @@
     "removeMsg": "Rimuovere \"{{name}}\" da questo dispositivo?",
     "version": "v{{version}}",
     "about": {
+      "title": "Informazioni",
       "name": "Nextcloud Calendar",
       "description": "Un'app di calendario mobile open source per Nextcloud.",
       "github": "Vedi su GitHub",
       "reportBug": "Segnala un bug"
     },
-    "accountActive": "Attivo",
     "notifications": {
       "title": "Notifiche",
       "liveActivity": "Attività in tempo reale",
@@ -173,7 +189,6 @@
       "channelName": "Avvisi eventi"
     },
     "alerts": {
-      "title": "Avvisi",
       "timed": "Avviso predefinito",
       "allDay": "Eventi di tutto il giorno",
       "none": "Nessuno",
@@ -198,13 +213,54 @@
       "useDefault": "Predefinito",
       "timedHint": "Si applica agli eventi senza un avviso proprio.",
       "allDayHint": "Si attiva alle 9:00 del giorno scelto."
-    }
+    },
+    "account": {
+      "title": "Account",
+      "notFound": "Account non trovato.",
+      "displayName": "Nome visualizzato",
+      "email": "Email",
+      "emailHint": "Usato come organizzatore degli eventi che crei.",
+      "server": "Server",
+      "serverUrl": "Indirizzo del server",
+      "username": "Nome utente",
+      "connection": "Connessione",
+      "reconnectHint": "Inserisci una nuova password dell'app se quella precedente è stata revocata.",
+      "appPassword": "Password dell'app",
+      "scanQr": "Scansiona un codice QR",
+      "reconnect": "Riconnetti",
+      "save": "Salva",
+      "saved": "Modifiche salvate.",
+      "reconnected": "Account riconnesso.",
+      "useThisAccount": "Usa questo account",
+      "delete": "Rimuovi account",
+      "errors": {
+        "required": "Questo campo è obbligatorio.",
+        "invalidEmail": "Indirizzo email non valido.",
+        "accountMismatch": "Questo codice QR appartiene a un altro account."
+      },
+      "connectionLost": "La connessione a questo server è scaduta. Riconnettiti per continuare a sincronizzare.",
+      "use": "Usa",
+      "editOnNextcloud": "Modifica su Nextcloud"
+    },
+    "accountActive": "Attivo"
   },
   "widget": {
     "liveRemaining": "{{duration}} rimanenti",
     "liveRemainingShort": "{{duration}}",
     "durationHour": "h",
     "durationMinute": "m",
-    "emptyAgenda": "Nessun evento in programma"
+    "emptyAgenda": "Nessun evento in programma",
+    "videoConference": "Videoconferenza: {{provider}}"
+  },
+  "notifications": {
+    "lead": {
+      "now": "Ora",
+      "minutes": "tra {{value}} min",
+      "hours": "tra {{value}} h",
+      "hoursMinutes": "tra {{value}} h {{minutes}}",
+      "days": "tra {{value}} giorni",
+      "today": "Oggi",
+      "tomorrow": "Domani"
+    }
   }
 }
