@@ -1,4 +1,4 @@
-import { deleteEvent, moveEvent, syncCollection, fetchEventsByHrefs, fetchCalendars, MULTIGET_BATCH } from '../../src/services/nextcloud/caldav';
+import { deleteEvent, moveEvent, syncCollection, fetchEventsByHrefs, fetchCalendars, validateCredentials, MULTIGET_BATCH } from '../../src/services/nextcloud/caldav';
 import type { Account, CalendarMeta } from '../../src/types';
 
 const account: Account = {
@@ -232,6 +232,84 @@ describe('fetchCalendars', () => {
     const [cal] = await fetchCalendars(account);
 
     expect(cal.sourceUrl).toBe('https://ics.example.com/f?a=1&b=2');
+  });
+});
+
+describe('validateCredentials davUserId discovery', () => {
+  const creds = { baseUrl: 'https://cloud.example.com', username: 'jdoe', appPassword: 'xxxx' };
+
+  const principalXml = (href: string) =>
+    `<d:multistatus xmlns:d="DAV:"><d:response><d:href>/remote.php/dav/</d:href><d:propstat><d:prop>` +
+    `<d:current-user-principal><d:href>${href}</d:href></d:current-user-principal>` +
+    `</d:prop></d:propstat></d:response></d:multistatus>`;
+  const homeXml = (href: string) =>
+    `<d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav"><d:response><d:href>/x</d:href><d:propstat><d:prop>` +
+    `<cal:calendar-home-set><d:href>${href}</d:href></cal:calendar-home-set>` +
+    `</d:prop></d:propstat></d:response></d:multistatus>`;
+
+  it('returns the calendar-home segment (UUID) for an LDAP account', async () => {
+    const uuid = '143A944C-B602-469F-BB9D-F4241F188524';
+    mockFetch
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => principalXml('/remote.php/dav/principals/users/' + uuid + '/') })
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => homeXml('/remote.php/dav/calendars/' + uuid + '/') });
+
+    const res = await validateCredentials(creds);
+
+    expect(res.davUserId).toBe(uuid);
+    expect(new URL(mockFetch.mock.calls[1][0]).pathname).toBe('/remote.php/dav/principals/users/' + uuid + '/');
+  });
+
+  it('returns the login name unchanged for a database account', async () => {
+    mockFetch
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => principalXml('/remote.php/dav/principals/users/jdoe/') })
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => homeXml('/remote.php/dav/calendars/jdoe/') });
+
+    const res = await validateCredentials(creds);
+
+    expect(res.davUserId).toBe('jdoe');
+  });
+
+  it('falls back to the principal slug when calendar-home-set is not advertised', async () => {
+    mockFetch
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => principalXml('/remote.php/dav/principals/users/jdoe/') })
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => '<d:multistatus xmlns:d="DAV:"></d:multistatus>' });
+
+    const res = await validateCredentials(creds);
+
+    expect(res.davUserId).toBe('jdoe');
+  });
+
+  it('falls back to the principal slug when the home PROPFIND errors', async () => {
+    mockFetch
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => principalXml('/remote.php/dav/principals/users/jdoe/') })
+      .mockResolvedValueOnce({ status: 500, ok: false, text: async () => '' });
+
+    const res = await validateCredentials(creds);
+
+    expect(res.davUserId).toBe('jdoe');
+  });
+
+  it('falls back to the login name when current-user-principal is not advertised', async () => {
+    mockFetch
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => '<d:multistatus xmlns:d="DAV:"></d:multistatus>' })
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => '' });
+
+    const res = await validateCredentials(creds);
+
+    expect(res.davUserId).toBe('jdoe');
+    expect(mockFetch.mock.calls[1][0]).toBe('https://cloud.example.com/remote.php/dav/principals/users/jdoe/');
+  });
+
+  it('resolves the principal against the origin on a subdirectory install', async () => {
+    const uuid = 'ABCDEF';
+    mockFetch
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => principalXml('/nextcloud/remote.php/dav/principals/users/' + uuid + '/') })
+      .mockResolvedValueOnce({ status: 207, ok: true, text: async () => homeXml('/nextcloud/remote.php/dav/calendars/' + uuid + '/') });
+
+    const res = await validateCredentials({ ...creds, baseUrl: 'https://cloud.example.com/nextcloud' });
+
+    expect(res.davUserId).toBe(uuid);
+    expect(mockFetch.mock.calls[1][0]).toBe('https://cloud.example.com/nextcloud/remote.php/dav/principals/users/' + uuid + '/');
   });
 });
 

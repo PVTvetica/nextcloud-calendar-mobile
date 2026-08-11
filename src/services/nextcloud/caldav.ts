@@ -101,13 +101,27 @@ export async function validateCredentials(params: {
   if (res.status !== 207 && !res.ok) throw httpErrorFrom(res, 'validateCredentials');
 
   const principalPath = extractPropHref(await res.text(), 'current-user-principal');
-  const davUserId = principalPath ? extractSlug(principalPath) : '';
-  if (davUserId) return { davUserId };
 
-  const principalUrl = `${params.baseUrl}/remote.php/dav/principals/users/${encodeURIComponent(params.username)}/`;
-  const fallback = await davFetch(principalUrl, params, { method: 'PROPFIND', headers: { Depth: '0', 'Content-Type': 'application/xml' } });
-  if (fallback.status !== 207 && !fallback.ok) throw httpErrorFrom(fallback, 'validateCredentials');
-  return { davUserId: params.username };
+  if (!principalPath) {
+    const principalUrl = `${params.baseUrl}/remote.php/dav/principals/users/${encodeURIComponent(params.username)}/`;
+    const fallback = await davFetch(principalUrl, params, { method: 'PROPFIND', headers: { Depth: '0', 'Content-Type': 'application/xml' } });
+    if (fallback.status !== 207 && !fallback.ok) throw httpErrorFrom(fallback, 'validateCredentials');
+    return { davUserId: params.username };
+  }
+
+  const principalUrl = new URL(principalPath, new URL(params.baseUrl).origin).toString();
+  const homeRes = await davFetch(principalUrl, params, {
+    method: 'PROPFIND',
+    headers: { Depth: '0', 'Content-Type': 'application/xml' },
+    body: '<?xml version="1.0" encoding="utf-8"?>' +
+    '<d:propfind xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav"><d:prop><cal:calendar-home-set/></d:prop></d:propfind>',
+  });
+  if (homeRes.status !== 207 && !homeRes.ok) {
+    return { davUserId: extractSlug(principalPath) || params.username };
+  }
+
+  const homePath = extractPropHref(await homeRes.text(), 'calendar-home-set');
+  return { davUserId: extractSlug(homePath ?? principalPath) || params.username };
 }
 
 export interface SyncCollectionResult {
