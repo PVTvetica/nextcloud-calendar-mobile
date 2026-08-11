@@ -13,6 +13,21 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
 
+let mockCapturedPagerProps: any[] = [];
+
+// Render the pager's current page directly; the real pager pulls Reanimated
+// hooks the jest mock does not provide.
+jest.mock('react-native-infinite-pager', () => {
+  const React = require('react');
+  return {
+    __esModule: true,
+    default: React.forwardRef((props: any, _ref: any) => {
+      mockCapturedPagerProps.push(props);
+      return props.renderPage ? props.renderPage({ index: 0 }) : null;
+    }),
+  };
+});
+
 const june10 = new Date(2026, 5, 10);
 const june15 = new Date(2026, 5, 15);
 
@@ -29,7 +44,9 @@ function view(date: Date) {
       date={date}
       events={[event]}
       weekStartsOn={0}
+      jump={{ nonce: 0, target: date }}
       onSelectDate={jest.fn()}
+      onMonthChange={jest.fn()}
       onPressEvent={jest.fn()}
       onPressCell={jest.fn()}
     />
@@ -136,6 +153,38 @@ describe('MonthDayView', () => {
     expect(getByText(dayjs(june15).format('dddd, LL'))).toBeTruthy();
     expect(queryByText('Birthday Party')).toBeTruthy();
   });
+
+  it('reports the first day of the paged-to month through onMonthChange', () => {
+    mockCapturedPagerProps = [];
+    const onMonthChange = jest.fn();
+    render(
+      <MonthDayView
+        date={june10}
+        events={[event]}
+        weekStartsOn={0}
+        jump={{ nonce: 0, target: june10 }}
+        onSelectDate={jest.fn()}
+        onMonthChange={onMonthChange}
+        onPressEvent={jest.fn()}
+        onPressCell={jest.fn()}
+      />
+    );
+
+    const pager = mockCapturedPagerProps.find((p) => typeof p.onPageChange === 'function');
+
+    // The pager echoes the current page (0) on mount; that is not a swipe and
+    // must not report a month change (which would setState into the parent's
+    // render and snap the selection to the 1st).
+    pager.onPageChange(0);
+    expect(onMonthChange).not.toHaveBeenCalled();
+
+    pager.onPageChange(1);
+    expect(onMonthChange).toHaveBeenCalledTimes(1);
+    expect(dayjs(onMonthChange.mock.calls[0][0]).format('YYYY-MM-DD')).toBe('2026-07-01');
+
+    pager.onPageChange(-2);
+    expect(dayjs(onMonthChange.mock.calls[1][0]).format('YYYY-MM-DD')).toBe('2026-04-01');
+  });
 });
 
 describe('MonthDayView multi-day all-day events', () => {
@@ -152,7 +201,9 @@ describe('MonthDayView multi-day all-day events', () => {
         date={date}
         events={[conference]}
         weekStartsOn={0}
+        jump={{ nonce: 0, target: date }}
         onSelectDate={jest.fn()}
+        onMonthChange={jest.fn()}
         onPressEvent={jest.fn()}
         onPressCell={jest.fn()}
       />

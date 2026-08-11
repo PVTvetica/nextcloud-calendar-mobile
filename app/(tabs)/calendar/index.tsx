@@ -1,8 +1,6 @@
 import { useCallback, useDeferredValue, useMemo, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { scheduleOnRN } from 'react-native-worklets';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import dayjs from 'dayjs';
@@ -46,7 +44,7 @@ export default function CalendarScreen() {
   const toggleCalendarNotifications = useCalendarStore((s) => s.toggleCalendarNotifications);
 
   const nav = useCalendarNavigation();
-  const { viewMode, date, fetchDate, agendaVisibleDate, navigateMonth } = nav;
+  const { viewMode, date, fetchDate, agendaVisibleDate } = nav;
 
   const deferredViewMode = useDeferredValue(viewMode);
   const deferredDate = useDeferredValue(date);
@@ -120,18 +118,6 @@ export default function CalendarScreen() {
     [activeAccount, mutateAsync, t, recurrenceScopeStrings]
   );
 
-  const monthSwipeGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .activeOffsetX([-30, 30])
-        .failOffsetY([-15, 15])
-        .onEnd((e) => {
-          if (e.translationX < -50) scheduleOnRN(navigateMonth, 1);
-          else if (e.translationX > 50) scheduleOnRN(navigateMonth, -1);
-        }),
-    [navigateMonth]
-  );
-
   const isToday = viewMode === 'schedule'
     ? dayjs(agendaVisibleDate).isSame(dayjs(), 'day')
     : dayjs(date).isSame(dayjs(), 'day');
@@ -160,18 +146,16 @@ export default function CalendarScreen() {
 
       <View style={styles.viewArea}>
         <ViewLayer visible={deferredViewMode === 'month'}>
-          <GestureDetector gesture={monthSwipeGesture}>
-            <View style={styles.fill}>
-              <MonthDayView
-                date={deferredDate}
-                events={allEvents}
-                weekStartsOn={deferredWeekStartsOn}
-                onSelectDate={nav.setDate}
-                onPressEvent={handlePressEventFromMonth}
-                onPressCell={handlePressCell}
-              />
-            </View>
-          </GestureDetector>
+          <MonthDayView
+            date={deferredDate}
+            events={allEvents}
+            weekStartsOn={deferredWeekStartsOn}
+            jump={nav.jump}
+            onSelectDate={nav.setDate}
+            onMonthChange={nav.onPageChange}
+            onPressEvent={handlePressEventFromMonth}
+            onPressCell={handlePressCell}
+          />
         </ViewLayer>
 
         <ViewLayer visible={deferredViewMode === 'schedule'}>
@@ -236,6 +220,5 @@ export default function CalendarScreen() {
 
 const styles = StyleSheet.create({
   viewArea: { flex: 1 },
-  fill: { flex: 1 },
   smallLoader: { position: 'absolute', bottom: 24, left: 16, zIndex: 5 },
 });
