@@ -7,11 +7,11 @@ import {
   setActiveAccountId as persistActiveAccountId,
   refreshAccountProfiles,
 } from '@/services/nextcloud/auth';
-import { fetchCapabilities } from '@/services/nextcloud/nextcloud';
 import { useAccountStore } from '@/stores/accountStore';
 import { useCalendarStore } from '@/stores/calendarStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { setAccounts } from '@/hooks/useAccounts';
+import { fetchCapabilities } from '@/services/nextcloud/nextcloud';
 import { setupOnlineManager } from '@/services/shared/network';
 import { initializeDatabaseOnStartup } from '@/database/utils/initialization';
 import { syncCalendars } from '@/database/sync';
@@ -51,8 +51,9 @@ export function useAppInitialization() {
 
           const activeAccount = accounts.find((a) => a.id === id) ?? accounts[0];
           void syncCalendars(activeAccount).catch(() => undefined);
-          fetchCapabilities(activeAccount).then(setCapabilities).catch(() => {});
           void refreshAccountProfiles().then(setAccounts).catch(() => {});
+          const caps = await fetchCapabilities(activeAccount).catch(() => undefined);
+          if (mounted && caps) setCapabilities(caps);
         }
       } finally {
         if (mounted) setIsAppReady(true);

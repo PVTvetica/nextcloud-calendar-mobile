@@ -51,6 +51,11 @@
     "qrHint": "Open je Nextcloud-dashboard → tik op je avatar → \"Aanmelden via QR-code\""
   },
   "calendar": {
+    "unavailable": {
+      "title": "Agenda niet ingesteld",
+      "body": "De Agenda-app is niet ingeschakeld op deze Nextcloud-instantie. Vraag je beheerder om deze in te schakelen.",
+      "retry": "Opnieuw proberen"
+    },
     "today": "Vandaag",
     "day": "Dag",
     "week": "Week",

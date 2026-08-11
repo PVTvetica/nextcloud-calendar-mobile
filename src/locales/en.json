@@ -51,6 +51,11 @@
     "qrHint": "Open your Nextcloud dashboard → tap your avatar → \"Log in via QR code\""
   },
   "calendar": {
+    "unavailable": {
+      "title": "Calendar not set up",
+      "body": "The Calendar app isn't enabled on this Nextcloud instance. Ask your administrator to enable it.",
+      "retry": "Retry"
+    },
     "today": "Today",
     "day": "Day",
     "week": "Week",

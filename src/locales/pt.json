@@ -51,6 +51,11 @@
     "qrHint": "Abra o painel do Nextcloud → toque no seu avatar → \"Iniciar sessão via código QR\""
   },
   "calendar": {
+    "unavailable": {
+      "title": "Calendário não configurado",
+      "body": "O aplicativo Calendário não está ativado nesta instância do Nextcloud. Peça ao seu administrador para ativá-lo.",
+      "retry": "Tentar novamente"
+    },
     "today": "Hoje",
     "day": "Dia",
     "week": "Semana",

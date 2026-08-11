@@ -8,7 +8,7 @@ describe('accountStore', () => {
   beforeEach(() => {
     useAccountStore.setState({
       activeAccountId: null,
-      capabilities: { calendarEnabled: true, talkEnabled: false },
+      capabilities: { talkEnabled: false, calendarApp: 'unknown' },
     });
   });
 
@@ -24,7 +24,7 @@ describe('accountStore', () => {
   });
 
   it('sets capabilities', () => {
-    useAccountStore.getState().setCapabilities({ calendarEnabled: true, talkEnabled: true });
+    useAccountStore.getState().setCapabilities({ talkEnabled: true, calendarApp: 'available' });
     expect(useAccountStore.getState().capabilities.talkEnabled).toBe(true);
   });
 });
