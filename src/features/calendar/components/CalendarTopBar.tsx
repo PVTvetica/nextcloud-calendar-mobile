@@ -81,9 +81,9 @@ function CalendarTopBarImpl({ headerTitle, isToday, viewMode, onOpenDrawer, onTo
 export const CalendarTopBar = memo(CalendarTopBarImpl);
 
 const styles = StyleSheet.create({
-  headerRow: { height: 44, paddingHorizontal: 12, paddingBottom: 4 },
+  headerRow: { height: 44, paddingHorizontal: 12, paddingBottom: 4, alignItems: 'center' },
   hamburger: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginLeft: -4 },
-  title: { flex: 1, marginHorizontal: 4, height: 44, textAlignVertical: 'center' },
+  title: { flex: 1, marginHorizontal: 4 },
   todayBtn: { minWidth: 44, height: 44, paddingLeft: 6, alignItems: 'flex-end', justifyContent: 'center' },
   pills: { paddingHorizontal: 12, paddingBottom: 8, gap: 8 },
 });
