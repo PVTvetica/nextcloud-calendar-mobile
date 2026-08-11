@@ -15,11 +15,13 @@ const REFRESH_MS = 60_000;
 export function useWidgetSync(): void {
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
   const hiddenCalendarIds = useCalendarStore((s) => s.hiddenCalendarIds);
+  const notifDisabledCalendarIds = useCalendarStore((s) => s.notifDisabledCalendarIds);
+  const widgetDisabledCalendarIds = useCalendarStore((s) => s.widgetDisabledCalendarIds);
   const prevAccountRef = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
     if (activeAccountId) void syncWidget();
-  }, [hiddenCalendarIds, activeAccountId]);
+  }, [hiddenCalendarIds, notifDisabledCalendarIds, widgetDisabledCalendarIds, activeAccountId]);
 
   useEffect(() => {
     const prevAccount = prevAccountRef.current;
