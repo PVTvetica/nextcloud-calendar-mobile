@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import dayjs from 'dayjs';
 import { useCalendarStore } from '@/stores/calendarStore';
 import { trailingDebounce } from '@/utils/debounce';
 import type { AgendaViewHandle } from '@/features/calendar/components/AgendaView';
@@ -63,10 +62,6 @@ export function useCalendarNavigation() {
     }
   }, [setDate]);
 
-  const navigateMonth = useCallback((dir: 1 | -1) => {
-    setDate(dayjs(dateRef.current).add(dir, 'month').toDate());
-  }, [setDate]);
-
   return {
     viewMode,
     isCalendarMode,
@@ -80,7 +75,6 @@ export function useCalendarNavigation() {
     agendaRef,
     switchMode,
     goToday,
-    navigateMonth,
     onPageChange,
   };
 }
