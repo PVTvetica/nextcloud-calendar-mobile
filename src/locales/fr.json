@@ -51,6 +51,11 @@
     "qrHint": "Ouvrez votre tableau de bord Nextcloud → appuyez sur votre avatar → « Se connecter via QR code »"
   },
   "calendar": {
+    "unavailable": {
+      "title": "Calendrier non configuré",
+      "body": "L'application Calendrier n'est pas activée sur cette instance Nextcloud. Contactez votre administrateur pour l'activer.",
+      "retry": "Réessayer"
+    },
     "today": "Aujourd'hui",
     "day": "Jour",
     "week": "Semaine",
@@ -188,6 +193,12 @@
       "openSettings": "Ouvrir les réglages système",
       "channelName": "Alertes d'événement"
     },
+    "widgets": {
+      "title": "Widgets",
+      "calendars": "Agendas sur les widgets",
+      "calendarsHint": "Choisissez les agendas affichés sur les widgets de l'écran d'accueil et l'activité en direct.",
+      "calendarHidden": "Masqué de l'agenda"
+    },
     "alerts": {
       "timed": "Alerte par défaut",
       "allDay": "Journée entière",
@@ -211,8 +222,8 @@
         "sameDay": "Le jour même (9h00)"
       },
       "useDefault": "Par défaut",
-      "timedHint": "S'applique aux événements sans alerte propre.",
-      "allDayHint": "Se déclenche à 9h00 le jour choisi."
+      "timedHint": "Rappel par défaut pour les événements sans rappel propre. Ceux qui en ont un gardent le leur.",
+      "allDayHint": "Rappel par défaut des événements journée entière sans rappel propre, déclenché à 9h00 le jour choisi."
     },
     "account": {
       "title": "Compte",

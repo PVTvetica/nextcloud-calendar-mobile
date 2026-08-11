@@ -78,9 +78,11 @@ export type CreateEventInput = {
   alarmMinutes?: number;
 };
 
+export type CalendarAppStatus = 'unknown' | 'available' | 'unconfigured';
+
 export type ServerCapabilities = {
-  calendarEnabled: boolean;
   talkEnabled: boolean;
+  calendarApp: CalendarAppStatus;
 };
 
 export type ViewMode = 'month' | 'week' | '3days' | 'day' | 'schedule';

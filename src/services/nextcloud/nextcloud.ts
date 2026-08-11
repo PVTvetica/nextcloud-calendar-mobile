@@ -1,4 +1,4 @@
-import type { Account, ServerCapabilities } from '@/types';
+import type { Account, CalendarAppStatus, ServerCapabilities } from '@/types';
 import { httpErrorFrom } from '../shared/errors';
 
 function basicAuth(account: Pick<Account, 'username' | 'appPassword'>): string {
@@ -55,9 +55,32 @@ export async function fetchUserInfo(
   }
 }
 
-export async function fetchCapabilities(
+export async function fetchCalendarApp(
   account: Pick<Account, 'baseUrl' | 'username' | 'appPassword'>
-): Promise<ServerCapabilities> {
+): Promise<CalendarAppStatus> {
+  try {
+    const url = `${account.baseUrl}/ocs/v2.php/core/navigation/apps`;
+    const res = await fetch(url, {
+      credentials: 'omit',
+      headers: {
+        Authorization: basicAuth(account),
+        'OCS-APIRequest': 'true',
+        Accept: 'application/json',
+      },
+    });
+    if (!res.ok) return 'unknown';
+    const json = await res.json();
+    const apps = json?.ocs?.data;
+    if (!Array.isArray(apps)) return 'unknown';
+    return apps.some((a) => a?.id === 'calendar') ? 'available' : 'unconfigured';
+  } catch {
+    return 'unknown';
+  }
+}
+
+async function fetchServerCaps(
+  account: Pick<Account, 'baseUrl' | 'username' | 'appPassword'>
+): Promise<Omit<ServerCapabilities, 'calendarApp'>> {
   try {
     const url = `${account.baseUrl}/ocs/v2.php/cloud/capabilities`;
     const res = await fetch(url, {
@@ -68,15 +91,22 @@ export async function fetchCapabilities(
         Accept: 'application/json',
       },
     });
-    if (!res.ok) return { calendarEnabled: true, talkEnabled: false };
+    if (!res.ok) return { talkEnabled: false };
     const json = await res.json();
     const apps: Record<string, unknown> = json?.ocs?.data?.capabilities ?? {};
 
-    const calendarEnabled = 'dav' in apps || 'calendar' in apps;
-    const talkEnabled = 'spreed' in apps;
-
-    return { calendarEnabled, talkEnabled };
+    return { talkEnabled: 'spreed' in apps };
   } catch {
-    return { calendarEnabled: true, talkEnabled: false };
+    return { talkEnabled: false };
   }
+}
+
+export async function fetchCapabilities(
+  account: Pick<Account, 'baseUrl' | 'username' | 'appPassword'>
+): Promise<ServerCapabilities> {
+  const [caps, calendarApp] = await Promise.all([
+    fetchServerCaps(account),
+    fetchCalendarApp(account),
+  ]);
+  return { ...caps, calendarApp };
 }

@@ -10,6 +10,7 @@ describe('calendarStore', () => {
       viewMode: 'week',
       selectedDate: null,
       hiddenCalendarIds: [],
+      widgetDisabledCalendarIds: [],
       hourRowHeight: 60,
     });
   });
@@ -34,6 +35,17 @@ describe('calendarStore', () => {
     useCalendarStore.setState({ hiddenCalendarIds: ['cal-1'] });
     useCalendarStore.getState().toggleCalendarVisibility('cal-1');
     expect(useCalendarStore.getState().hiddenCalendarIds).not.toContain('cal-1');
+  });
+
+  it('toggles a calendar off the widgets', () => {
+    useCalendarStore.getState().toggleCalendarWidget('cal-1');
+    expect(useCalendarStore.getState().widgetDisabledCalendarIds).toContain('cal-1');
+  });
+
+  it('toggles a calendar back onto the widgets', () => {
+    useCalendarStore.setState({ widgetDisabledCalendarIds: ['cal-1'] });
+    useCalendarStore.getState().toggleCalendarWidget('cal-1');
+    expect(useCalendarStore.getState().widgetDisabledCalendarIds).not.toContain('cal-1');
   });
 
   it('sets hour row height', () => {

@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView, Alert, Linking, Platform } from 'react-na
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { haptic } from '@/utils/haptics';
-import { Pencil, Clock, CalendarDays, MapPin, Video, Repeat, Trash2, Copy, Check } from 'lucide-react-native';
+import { Pencil, Clock, CalendarDays, MapPin, Video, Repeat, Trash2, Copy, Check, Bell } from 'lucide-react-native';
 import { useLocalSearchParams, useNavigation, useRouter, useTheme } from 'expo-router';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
@@ -22,6 +22,10 @@ import {
 import type { CalendarEvent, RecurrenceEditScope } from '@/types';
 import { askRecurrenceScope, type RecurrenceScopeStrings } from '@/features/event/recurrenceScope';
 import { decideMoveEventScope } from '@/features/calendar/utils/moveEventScope';
+import {
+  TIMED_ALERTS, ALL_DAY_ALERTS, timedAlertLabelKey, allDayAlertLabelKey,
+  type TimedAlert, type AllDayAlert,
+} from '@/features/notifications/alerts';
 import { goBackOrHome } from '@/utils/navigationGuard';
 
 dayjs.extend(localizedFormat);
@@ -189,6 +193,20 @@ export default function EventDetailScreen() {
         : `${dayjs(event.dtstart).format('ll')} – ${dayjs(event.dtend).format('ll')}`)
     : `${dayjs(event.dtstart).format('lll')} – ${dayjs(event.dtend).format('LT')}`;
 
+  const reminderLabel = (() => {
+    if (event.alarmMinutes === undefined) return null;
+    const m = event.alarmMinutes;
+    if (event.allDay) {
+      const days = m / 1440;
+      return (ALL_DAY_ALERTS as (number | null)[]).includes(days)
+        ? t(allDayAlertLabelKey(days as AllDayAlert))
+        : t('event.alert');
+    }
+    return (TIMED_ALERTS as (number | null)[]).includes(m)
+      ? t(timedAlertLabelKey(m as TimedAlert))
+      : t('event.reminder');
+  })();
+
   return (
     <ViewContainer>
       <SafeAreaView edges={['top']} style={styles.flex}>
@@ -221,6 +239,12 @@ export default function EventDetailScreen() {
                 leading={<Icon size={20}><Clock color={theme.colors.textSecondary} /></Icon>}
                 title={timeStr}
               />
+              {reminderLabel && (
+                <Item
+                  leading={<Icon size={20}><Bell color={theme.colors.textSecondary} /></Icon>}
+                  title={reminderLabel}
+                />
+              )}
               {calendar && (
                 <Item
                   leading={<Icon size={20}><CalendarDays color={calendar.color} /></Icon>}

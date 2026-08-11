@@ -51,6 +51,11 @@
     "qrHint": "Open your Nextcloud dashboard → tap your avatar → \"Log in via QR code\""
   },
   "calendar": {
+    "unavailable": {
+      "title": "Calendar not set up",
+      "body": "The Calendar app isn't enabled on this Nextcloud instance. Ask your administrator to enable it.",
+      "retry": "Retry"
+    },
     "today": "Today",
     "day": "Day",
     "week": "Week",
@@ -188,6 +193,12 @@
       "openSettings": "Open system settings",
       "channelName": "Event alerts"
     },
+    "widgets": {
+      "title": "Widgets",
+      "calendars": "Calendars on widgets",
+      "calendarsHint": "Choose which calendars appear on the home screen widgets and the live activity.",
+      "calendarHidden": "Hidden from the agenda"
+    },
     "alerts": {
       "timed": "Default alert",
       "allDay": "All-day events",
@@ -211,8 +222,8 @@
         "sameDay": "On the day (9:00)"
       },
       "useDefault": "Default",
-      "timedHint": "Used by events that carry no alert of their own.",
-      "allDayHint": "Fires at 9:00 on the chosen day."
+      "timedHint": "Default reminder for events without one of their own. Events that already have a reminder keep it.",
+      "allDayHint": "Default reminder for all-day events without one of their own, fired at 9:00 on the chosen day."
     },
     "account": {
       "title": "Account",

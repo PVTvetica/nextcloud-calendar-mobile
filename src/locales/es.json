@@ -51,6 +51,11 @@
     "qrHint": "Abre tu panel de Nextcloud → toca tu avatar → «Iniciar sesión mediante código QR»"
   },
   "calendar": {
+    "unavailable": {
+      "title": "Calendario no configurado",
+      "body": "La aplicación Calendario no está habilitada en esta instancia de Nextcloud. Pide a tu administrador que la habilite.",
+      "retry": "Reintentar"
+    },
     "today": "Hoy",
     "day": "Día",
     "week": "Semana",
@@ -188,6 +193,12 @@
       "openSettings": "Abrir ajustes del sistema",
       "channelName": "Alertas de eventos"
     },
+    "widgets": {
+      "title": "Widgets",
+      "calendars": "Calendarios en los widgets",
+      "calendarsHint": "Elige qué calendarios aparecen en los widgets de la pantalla de inicio y en la actividad en directo.",
+      "calendarHidden": "Oculto de la agenda"
+    },
     "alerts": {
       "timed": "Alerta predeterminada",
       "allDay": "Eventos de todo el día",
@@ -211,8 +222,8 @@
         "sameDay": "El mismo día (9:00)"
       },
       "useDefault": "Predeterminado",
-      "timedHint": "Se aplica a los eventos sin alerta propia.",
-      "allDayHint": "Se activa a las 9:00 del día elegido."
+      "timedHint": "Recordatorio predeterminado para eventos sin uno propio. Los que ya tienen recordatorio conservan el suyo.",
+      "allDayHint": "Recordatorio predeterminado para eventos de todo el día sin uno propio, a las 9:00 del día elegido."
     },
     "account": {
       "title": "Cuenta",

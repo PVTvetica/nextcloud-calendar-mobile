@@ -14,7 +14,7 @@ export const useAccountStore = create<AccountState>()(
   persist(
     (set) => ({
       activeAccountId: null,
-      capabilities: { calendarEnabled: true, talkEnabled: false },
+      capabilities: { talkEnabled: false, calendarApp: 'unknown' },
       setActiveAccountId: (id) => set({ activeAccountId: id }),
       setCapabilities: (caps) => set({ capabilities: caps }),
     }),
@@ -23,6 +23,7 @@ export const useAccountStore = create<AccountState>()(
       storage: createJSONStorage(() => legacyBackedStorage(['activeAccountId'])),
       partialize: (state) => ({
         activeAccountId: state.activeAccountId,
+        capabilities: state.capabilities,
       }),
     }
   )

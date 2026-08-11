@@ -51,6 +51,11 @@
     "qrHint": "Apri la dashboard di Nextcloud → tocca il tuo avatar → \"Accedi tramite codice QR\""
   },
   "calendar": {
+    "unavailable": {
+      "title": "Calendario non configurato",
+      "body": "L'app Calendario non è abilitata su questa istanza Nextcloud. Chiedi al tuo amministratore di abilitarla.",
+      "retry": "Riprova"
+    },
     "today": "Oggi",
     "day": "Giorno",
     "week": "Settimana",
@@ -188,6 +193,12 @@
       "openSettings": "Apri impostazioni di sistema",
       "channelName": "Avvisi eventi"
     },
+    "widgets": {
+      "title": "Widget",
+      "calendars": "Calendari nei widget",
+      "calendarsHint": "Scegli quali calendari appaiono nei widget della schermata home e nell'attività in tempo reale.",
+      "calendarHidden": "Nascosto dall'agenda"
+    },
     "alerts": {
       "timed": "Avviso predefinito",
       "allDay": "Eventi di tutto il giorno",
@@ -211,8 +222,8 @@
         "sameDay": "Il giorno stesso (9:00)"
       },
       "useDefault": "Predefinito",
-      "timedHint": "Si applica agli eventi senza un avviso proprio.",
-      "allDayHint": "Si attiva alle 9:00 del giorno scelto."
+      "timedHint": "Promemoria predefinito per gli eventi senza uno proprio. Quelli che ne hanno già uno lo mantengono.",
+      "allDayHint": "Promemoria predefinito per gli eventi di un giorno intero senza uno proprio, alle 9:00 del giorno scelto."
     },
     "account": {
       "title": "Account",

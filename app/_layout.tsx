@@ -9,6 +9,7 @@ import { RootNavigator } from '@/components/RootNavigator';
 import FakeSplash from '@/components/FakeSplash';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
 import '@/utils/i18n';
+import { useCapabilitiesSync } from '@/hooks/useCapabilitiesSync';
 import { useLanguageSync } from '@/hooks/useLanguageSync';
 import { useWidgetSync } from '@/features/widget';
 import { useEventAlerts } from '@/features/notifications/useEventAlerts';
@@ -31,6 +32,7 @@ function ThemedStatusBar() {
 
 export default function RootLayout() {
   const { isAppReady } = useAppInitialization();
+  useCapabilitiesSync();
   useLanguageSync();
   useOrientationLock();
   useWidgetSync();

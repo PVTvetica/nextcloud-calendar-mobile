@@ -25,6 +25,7 @@ export function SettingsPage({ title, children }: Props) {
           style={styles.flex}
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
+          contentInsetAdjustmentBehavior="automatic"
         >
           <View style={styles.column}>{children}</View>
         </ScrollView>

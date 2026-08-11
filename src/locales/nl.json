@@ -51,6 +51,11 @@
     "qrHint": "Open je Nextcloud-dashboard → tik op je avatar → \"Aanmelden via QR-code\""
   },
   "calendar": {
+    "unavailable": {
+      "title": "Agenda niet ingesteld",
+      "body": "De Agenda-app is niet ingeschakeld op deze Nextcloud-instantie. Vraag je beheerder om deze in te schakelen.",
+      "retry": "Opnieuw proberen"
+    },
     "today": "Vandaag",
     "day": "Dag",
     "week": "Week",
@@ -188,6 +193,12 @@
       "openSettings": "Systeeminstellingen openen",
       "channelName": "Afspraakmeldingen"
     },
+    "widgets": {
+      "title": "Widgets",
+      "calendars": "Agenda's op widgets",
+      "calendarsHint": "Kies welke agenda's verschijnen op de startscherm-widgets en de live-activiteit.",
+      "calendarHidden": "Verborgen uit de agenda"
+    },
     "alerts": {
       "timed": "Standaardmelding",
       "allDay": "Hele dag",
@@ -211,8 +222,8 @@
         "sameDay": "Op de dag zelf (9:00)"
       },
       "useDefault": "Standaard",
-      "timedHint": "Geldt voor afspraken zonder eigen melding.",
-      "allDayHint": "Gaat af om 9:00 op de gekozen dag."
+      "timedHint": "Standaardmelding voor afspraken zonder eigen melding. Afspraken met een eigen melding behouden die.",
+      "allDayHint": "Standaardmelding voor hele-dag-afspraken zonder eigen melding, om 9:00 op de gekozen dag."
     },
     "account": {
       "title": "Account",
