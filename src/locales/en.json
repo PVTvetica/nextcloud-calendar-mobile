@@ -188,6 +188,12 @@
       "openSettings": "Open system settings",
       "channelName": "Event alerts"
     },
+    "widgets": {
+      "title": "Widgets",
+      "calendars": "Calendars on widgets",
+      "calendarsHint": "Choose which calendars appear on the home screen widgets and the live activity.",
+      "calendarHidden": "Hidden from the agenda"
+    },
     "alerts": {
       "timed": "Default alert",
       "allDay": "All-day events",

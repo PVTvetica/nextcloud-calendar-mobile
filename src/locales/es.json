@@ -188,6 +188,12 @@
       "openSettings": "Abrir ajustes del sistema",
       "channelName": "Alertas de eventos"
     },
+    "widgets": {
+      "title": "Widgets",
+      "calendars": "Calendarios en los widgets",
+      "calendarsHint": "Elige qué calendarios aparecen en los widgets de la pantalla de inicio y en la actividad en directo.",
+      "calendarHidden": "Oculto de la agenda"
+    },
     "alerts": {
       "timed": "Alerta predeterminada",
       "allDay": "Eventos de todo el día",

@@ -188,6 +188,12 @@
       "openSettings": "Systeeminstellingen openen",
       "channelName": "Afspraakmeldingen"
     },
+    "widgets": {
+      "title": "Widgets",
+      "calendars": "Agenda's op widgets",
+      "calendarsHint": "Kies welke agenda's verschijnen op de startscherm-widgets en de live-activiteit.",
+      "calendarHidden": "Verborgen uit de agenda"
+    },
     "alerts": {
       "timed": "Standaardmelding",
       "allDay": "Hele dag",

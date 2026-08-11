@@ -3,6 +3,7 @@ import { Appearance } from 'react-native';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 import { useAccountStore } from '@/stores/accountStore';
+import { useCalendarStore } from '@/stores/calendarStore';
 
 import { readUpcomingEvents } from '../core/readEvents';
 import { buildAgendaTimeline } from '../core/agendaSnapshot';
@@ -20,7 +21,9 @@ async function runSync(now: Date): Promise<void> {
   try {
     if (!useAccountStore.getState().activeAccountId) return;
 
-    const events = await readUpcomingEvents(AGENDA_DAYS, now);
+    const widgetDisabled = useCalendarStore.getState().widgetDisabledCalendarIds;
+    const events = (await readUpcomingEvents(AGENDA_DAYS, now))
+      .filter((event) => !widgetDisabled.includes(event.calendarId));
     const locale = useSettingsStore.getState().language;
     const scheme = Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
 
