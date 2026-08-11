@@ -33,6 +33,7 @@ export default function SettingsScreen() {
           style={styles.flex}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
+          contentInsetAdjustmentBehavior="automatic"
         >
           <List>
             <Item
