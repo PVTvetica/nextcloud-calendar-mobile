@@ -51,6 +51,11 @@
     "qrHint": "Öffnen Sie Ihr Nextcloud-Dashboard → tippen Sie auf Ihren Avatar → „Per QR-Code anmelden“"
   },
   "calendar": {
+    "unavailable": {
+      "title": "Kalender nicht eingerichtet",
+      "body": "Die Kalender-App ist auf dieser Nextcloud-Instanz nicht aktiviert. Bitte deinen Administrator, sie zu aktivieren.",
+      "retry": "Erneut versuchen"
+    },
     "today": "Heute",
     "day": "Tag",
     "week": "Woche",

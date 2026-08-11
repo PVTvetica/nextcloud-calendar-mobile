@@ -64,10 +64,17 @@ describe('homeWidget (ios)', () => {
     expect(mockUpdateTimeline).not.toHaveBeenCalled();
   });
 
-  it('clears the widget by pushing a null snapshot', async () => {
+  it('clears the widget with an empty (non-null) snapshot timeline', async () => {
+    // Pushing a null snapshot crashes the native render, so clearing replaces
+    // the timeline with a single event-less snapshot the widget can render.
     const { homeWidget } = require('@/features/widget/surfaces/homeWidget/homeWidget.ios');
     await homeWidget.clear();
 
-    expect(mockUpdateSnapshot).toHaveBeenCalledWith({ snapshot: null });
+    expect(mockUpdateTimeline).toHaveBeenCalledTimes(1);
+    const scheduled = mockUpdateTimeline.mock.calls[0][0];
+    expect(scheduled).toHaveLength(1);
+    expect(scheduled[0].props.snapshot).not.toBeNull();
+    expect(scheduled[0].props.snapshot.events).toEqual([]);
+    expect(scheduled[0].props.snapshot.sections).toEqual([]);
   });
 });

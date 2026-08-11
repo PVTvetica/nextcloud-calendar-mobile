@@ -14,6 +14,7 @@ const REFRESH_MS = 60_000;
 
 export function useWidgetSync(): void {
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
+  const calendarApp = useAccountStore((s) => s.capabilities.calendarApp);
   const hiddenCalendarIds = useCalendarStore((s) => s.hiddenCalendarIds);
   const notifDisabledCalendarIds = useCalendarStore((s) => s.notifDisabledCalendarIds);
   const widgetDisabledCalendarIds = useCalendarStore((s) => s.widgetDisabledCalendarIds);
@@ -21,7 +22,7 @@ export function useWidgetSync(): void {
 
   useEffect(() => {
     if (activeAccountId) void syncWidget();
-  }, [hiddenCalendarIds, notifDisabledCalendarIds, widgetDisabledCalendarIds, activeAccountId]);
+  }, [hiddenCalendarIds, notifDisabledCalendarIds, widgetDisabledCalendarIds, activeAccountId, calendarApp]);
 
   useEffect(() => {
     const prevAccount = prevAccountRef.current;

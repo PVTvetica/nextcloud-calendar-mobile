@@ -51,6 +51,11 @@
     "qrHint": "Ouvrez votre tableau de bord Nextcloud → appuyez sur votre avatar → « Se connecter via QR code »"
   },
   "calendar": {
+    "unavailable": {
+      "title": "Calendrier non configuré",
+      "body": "L'application Calendrier n'est pas activée sur cette instance Nextcloud. Contactez votre administrateur pour l'activer.",
+      "retry": "Réessayer"
+    },
     "today": "Aujourd'hui",
     "day": "Jour",
     "week": "Semaine",

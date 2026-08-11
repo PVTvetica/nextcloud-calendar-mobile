@@ -21,6 +21,12 @@ async function runSync(now: Date): Promise<void> {
   try {
     if (!useAccountStore.getState().activeAccountId) return;
 
+    if (useAccountStore.getState().capabilities.calendarApp === 'unconfigured') {
+      await homeWidget.clear();
+      await liveActivity.clear();
+      return;
+    }
+
     const { widgetDisabledCalendarIds, notifDisabledCalendarIds } = useCalendarStore.getState();
     const events = (await readUpcomingEvents(AGENDA_DAYS, now))
       .filter((event) => !widgetDisabledCalendarIds.includes(event.calendarId));

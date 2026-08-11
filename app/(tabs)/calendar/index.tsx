@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
+import { useAccountStore } from '@/stores/accountStore';
 import { useCalendarStore } from '@/stores/calendarStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { ViewContainer, Spinner } from '@/ui/components';
@@ -27,6 +28,7 @@ import { toGridEvents, type GridEvent } from '@/features/calendar/utils/toGridEv
 import { eventToInput } from '@/features/calendar/utils/eventToInput';
 import { decideMoveEventScope } from '@/features/calendar/utils/moveEventScope';
 import { isCalMode, type CalMode } from '@/features/calendar/constants';
+import { CalendarUnavailable } from '@/features/calendar/components/CalendarUnavailable';
 import { useUpdateEvent } from '@/features/event/hooks/useMutateEvent';
 import { askRecurrenceScope } from '@/features/event/recurrenceScope';
 
@@ -36,6 +38,7 @@ export default function CalendarScreen() {
   const router = useRouter();
   const { t } = useTranslation();
 
+  const calendarApp = useAccountStore((s) => s.capabilities.calendarApp);
   const weekStartsOn = useSettingsStore((s) => s.weekStartsOn);
   const language = useSettingsStore((s) => s.language);
   const hiddenCalendarIds = useCalendarStore((s) => s.hiddenCalendarIds);
@@ -130,6 +133,10 @@ export default function CalendarScreen() {
     }
     return monthYear;
   }, [date, agendaVisibleDate, viewMode, language, t]);
+
+  if (calendarApp === 'unconfigured') {
+    return <CalendarUnavailable />;
+  }
 
   return (
     <ViewContainer>

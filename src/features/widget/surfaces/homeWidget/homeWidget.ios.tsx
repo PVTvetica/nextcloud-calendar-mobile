@@ -1,4 +1,5 @@
 import React from 'react';
+import { Appearance } from 'react-native';
 import { HStack, Link, RoundedRectangle, Text, VStack } from '@expo/ui/swift-ui';
 import { containerBackground, font, foregroundStyle, frame, padding } from '@expo/ui/swift-ui/modifiers';
 import type { WidgetEnvironment } from 'expo-widgets';
@@ -45,7 +46,7 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
   }
 
   function emptyLabel(snapshot: AgendaSnapshot | null) {
-    return snapshot?.relativeLabel ?? AGENDA_EMPTY_LABEL;
+    return snapshot?.relativeLabel || AGENDA_EMPTY_LABEL;
   }
 
   function compactEvents(snapshot: AgendaSnapshot | null, limit: number) {
@@ -188,6 +189,19 @@ function CalendarWidget(props: { snapshot: AgendaSnapshot | null }, env: WidgetE
 
 const widget = createWidget<{ snapshot: AgendaSnapshot | null }>(WIDGET_NAME, CalendarWidget);
 
+function emptySnapshot(): AgendaSnapshot {
+  return {
+    generatedAtIso: new Date().toISOString(),
+    timeZone: '',
+    scheme: Appearance.getColorScheme() === 'dark' ? 'dark' : 'light',
+    dayLabel: '',
+    dayNumber: '',
+    relativeLabel: '',
+    events: [],
+    sections: [],
+  };
+}
+
 export const homeWidget: WidgetSurface<AgendaTimelineEntry[]> = {
   id: 'homeWidget',
   isSupported: () => true,
@@ -196,7 +210,7 @@ export const homeWidget: WidgetSurface<AgendaTimelineEntry[]> = {
     widget.updateTimeline(entries.map((e) => ({ date: new Date(e.atIso), props: { snapshot: e.snapshot } })));
   },
   clear: async () => {
-    widget.updateSnapshot({ snapshot: null });
+    widget.updateTimeline([{ date: new Date(), props: { snapshot: emptySnapshot() } }]);
   },
 };
 
