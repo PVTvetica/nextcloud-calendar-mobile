@@ -222,8 +222,8 @@
         "sameDay": "El mismo día (9:00)"
       },
       "useDefault": "Predeterminado",
-      "timedHint": "Se aplica a los eventos sin alerta propia.",
-      "allDayHint": "Se activa a las 9:00 del día elegido."
+      "timedHint": "Recordatorio predeterminado para eventos sin uno propio. Los que ya tienen recordatorio conservan el suyo.",
+      "allDayHint": "Recordatorio predeterminado para eventos de todo el día sin uno propio, a las 9:00 del día elegido."
     },
     "account": {
       "title": "Cuenta",

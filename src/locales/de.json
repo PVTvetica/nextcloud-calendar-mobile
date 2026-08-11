@@ -222,8 +222,8 @@
         "sameDay": "Am selben Tag (9:00)"
       },
       "useDefault": "Standard",
-      "timedHint": "Gilt für Termine ohne eigene Erinnerung.",
-      "allDayHint": "Wird am gewählten Tag um 9:00 ausgelöst."
+      "timedHint": "Standarderinnerung für Termine ohne eigene Erinnerung. Termine mit eigener Erinnerung behalten sie.",
+      "allDayHint": "Standarderinnerung für ganztägige Termine ohne eigene, ausgelöst um 9:00 am gewählten Tag."
     },
     "account": {
       "title": "Konto",

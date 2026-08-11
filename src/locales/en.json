@@ -222,8 +222,8 @@
         "sameDay": "On the day (9:00)"
       },
       "useDefault": "Default",
-      "timedHint": "Used by events that carry no alert of their own.",
-      "allDayHint": "Fires at 9:00 on the chosen day."
+      "timedHint": "Default reminder for events without one of their own. Events that already have a reminder keep it.",
+      "allDayHint": "Default reminder for all-day events without one of their own, fired at 9:00 on the chosen day."
     },
     "account": {
       "title": "Account",

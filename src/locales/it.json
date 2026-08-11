@@ -222,8 +222,8 @@
         "sameDay": "Il giorno stesso (9:00)"
       },
       "useDefault": "Predefinito",
-      "timedHint": "Si applica agli eventi senza un avviso proprio.",
-      "allDayHint": "Si attiva alle 9:00 del giorno scelto."
+      "timedHint": "Promemoria predefinito per gli eventi senza uno proprio. Quelli che ne hanno già uno lo mantengono.",
+      "allDayHint": "Promemoria predefinito per gli eventi di un giorno intero senza uno proprio, alle 9:00 del giorno scelto."
     },
     "account": {
       "title": "Account",
