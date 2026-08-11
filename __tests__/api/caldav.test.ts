@@ -234,3 +234,80 @@ describe('fetchCalendars', () => {
     expect(cal.sourceUrl).toBe('https://ics.example.com/f?a=1&b=2');
   });
 });
+
+describe('Nextcloud installed in a subdirectory', () => {
+  const subAccount: Account = {
+    id: 'acc-2',
+    displayName: 'Subfolder',
+    baseUrl: 'https://cloud.example.com/nextcloud',
+    username: 'john',
+    appPassword: 'xxxx',
+    davUserId: 'john',
+  };
+  const subCal: CalendarMeta = {
+    id: 'cal-sub',
+    accountId: 'acc-2',
+    displayName: 'Personal',
+    color: '#1976d2',
+    ctag: '1',
+    url: 'https://cloud.example.com/nextcloud/remote.php/dav/calendars/john/personal/',
+    slug: 'personal',
+  };
+
+  it('syncCollection does not duplicate the subfolder in changed/deleted hrefs', async () => {
+    const xml = `<?xml version="1.0"?>
+<d:multistatus xmlns:d="DAV:">
+  <d:response>
+    <d:href>/nextcloud/remote.php/dav/calendars/john/personal/a.ics</d:href>
+    <d:propstat><d:status>HTTP/1.1 200 OK</d:status></d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/nextcloud/remote.php/dav/calendars/john/personal/gone.ics</d:href>
+    <d:status>HTTP/1.1 404 Not Found</d:status>
+  </d:response>
+  <d:sync-token>http://sabre.io/ns/sync/1</d:sync-token>
+</d:multistatus>`;
+    mockFetch.mockResolvedValue({ status: 207, text: async () => xml });
+
+    const res = await syncCollection(subAccount, subCal, undefined);
+
+    expect(res.changed).toEqual(['https://cloud.example.com/nextcloud/remote.php/dav/calendars/john/personal/a.ics']);
+    expect(res.deleted).toEqual(['https://cloud.example.com/nextcloud/remote.php/dav/calendars/john/personal/gone.ics']);
+  });
+
+  it('fetchCalendars builds the calendar url without duplicating the subfolder', async () => {
+    const xml = `<?xml version="1.0"?>
+<d:multistatus xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav">
+  <d:response>
+    <d:href>/nextcloud/remote.php/dav/calendars/john/personal/</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:resourcetype><d:collection/><c:calendar/></d:resourcetype>
+        <d:displayname>Personal</d:displayname>
+        <cs:getctag>42</cs:getctag>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+</d:multistatus>`;
+    mockFetch.mockResolvedValue({ status: 207, text: async () => xml });
+
+    const [cal] = await fetchCalendars(subAccount);
+
+    expect(cal.url).toBe('https://cloud.example.com/nextcloud/remote.php/dav/calendars/john/personal/');
+  });
+
+  it('fetchEventsByHrefs builds event hrefs without duplicating the subfolder', async () => {
+    const ics = 'BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:a\r\nSUMMARY:a\r\nDTSTART:20260615T090000Z\r\nDTEND:20260615T100000Z\r\nEND:VEVENT\r\nEND:VCALENDAR';
+    const xml = `<d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav"><d:response><d:href>/nextcloud/remote.php/dav/calendars/john/personal/a.ics</d:href><d:propstat><d:prop><cal:calendar-data>${ics}</cal:calendar-data></d:prop></d:propstat></d:response></d:multistatus>`;
+    mockFetch.mockResolvedValue({ status: 207, text: async () => xml });
+
+    const events = await fetchEventsByHrefs(
+      subAccount, subCal,
+      ['https://cloud.example.com/nextcloud/remote.php/dav/calendars/john/personal/a.ics'],
+      new Date('2026-01-01T00:00:00Z'), new Date('2026-12-31T00:00:00Z'),
+    );
+
+    expect(events[0].href).toBe('https://cloud.example.com/nextcloud/remote.php/dav/calendars/john/personal/a.ics');
+  });
+});
