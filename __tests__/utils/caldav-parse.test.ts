@@ -248,3 +248,43 @@ describe('extractDtstartDtend', () => {
     expect(extractDtstartDtend('')).toBeUndefined();
   });
 });
+
+describe('VALARM parsing — alarmMinutes', () => {
+  const calMeta = { calendarId: 'cal-1', accountId: 'acc-1', color: '#0082c9' };
+
+  const withAlarm = (trigger: string) => `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:alarm-1
+SUMMARY:Reminder
+DTSTART:20260115T100000Z
+DTEND:20260115T110000Z
+BEGIN:VALARM
+ACTION:DISPLAY
+${trigger}
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+
+  const minutesFor = (trigger: string) =>
+    parseIcsObjects([{ ics: withAlarm(trigger), href: '/cal/a.ics' }], calMeta)[0].alarmMinutes;
+
+  it('parses a relative "before" trigger to positive minutes', () => {
+    expect(minutesFor('TRIGGER:-PT15M')).toBe(15);
+    expect(minutesFor('TRIGGER:-P1D')).toBe(1440);
+  });
+
+  it('parses a relative "after start" trigger to negative minutes', () => {
+    expect(minutesFor('TRIGGER:PT9H')).toBe(-540);
+  });
+
+  it('parses an absolute DATE-TIME trigger relative to the event start', () => {
+    expect(minutesFor('TRIGGER;VALUE=DATE-TIME:20260115T094500Z')).toBe(15);
+    expect(minutesFor('TRIGGER;VALUE=DATE-TIME:20260115T120000Z')).toBe(-120);
+  });
+
+  it('reports no alarm when the event carries no VALARM', () => {
+    const [event] = parseIcsObjects([{ ics: sampleIcs, href: '/cal/event.ics' }], calMeta);
+    expect(event.alarmMinutes).toBeUndefined();
+  });
+});

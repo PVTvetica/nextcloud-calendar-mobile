@@ -18,6 +18,20 @@ function firstAlarmMinutes(vevent: ICAL.Component): number | undefined {
   const alarm = vevent.getFirstSubcomponent('valarm');
   const trigger = alarm?.getFirstProperty('trigger');
   if (!trigger) return undefined;
+
+  const value = trigger.getFirstValue();
+
+  if (value instanceof ICAL.Duration) {
+    return -Math.round(value.toSeconds() / 60);
+  }
+
+  if (value instanceof ICAL.Time) {
+    const start = vevent.getFirstPropertyValue('dtstart');
+    if (start instanceof ICAL.Time) {
+      return Math.round((start.toJSDate().getTime() - value.toJSDate().getTime()) / 60_000);
+    }
+  }
+
   const minutes = triggerToMinutes(trigger.toICALString().replace(/^TRIGGER[^:]*:/i, ''));
   return minutes ?? undefined;
 }

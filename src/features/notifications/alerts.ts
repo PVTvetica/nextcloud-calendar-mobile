@@ -23,9 +23,11 @@ export function allDayAlertLabelKey(value: AllDayAlert): string {
 
 export function minutesToTrigger(minutes: number): string {
   if (minutes === 0) return 'PT0S';
-  if (minutes % 1440 === 0) return `-P${minutes / 1440}D`;
-  if (minutes % 60 === 0) return `-PT${minutes / 60}H`;
-  return `-PT${minutes}M`;
+  const sign = minutes > 0 ? '-' : '';
+  const m = Math.abs(minutes);
+  if (m % 1440 === 0) return `${sign}P${m / 1440}D`;
+  if (m % 60 === 0) return `${sign}PT${m / 60}H`;
+  return `${sign}PT${m}M`;
 }
 
 export function triggerToMinutes(trigger: string): number | null {
@@ -39,7 +41,7 @@ export function triggerToMinutes(trigger: string): number | null {
     Number(min ?? 0) +
     Math.round(Number(s ?? 0) / 60);
   if (total === 0) return 0;
-  return sign === '-' ? total : null;
+  return sign === '-' ? total : -total;
 }
 
 export function alertTime(
