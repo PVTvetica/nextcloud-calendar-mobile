@@ -222,8 +222,8 @@
         "sameDay": "Le jour même (9h00)"
       },
       "useDefault": "Par défaut",
-      "timedHint": "S'applique aux événements sans alerte propre.",
-      "allDayHint": "Se déclenche à 9h00 le jour choisi."
+      "timedHint": "Rappel par défaut pour les événements sans rappel propre. Ceux qui en ont un gardent le leur.",
+      "allDayHint": "Rappel par défaut des événements journée entière sans rappel propre, déclenché à 9h00 le jour choisi."
     },
     "account": {
       "title": "Compte",

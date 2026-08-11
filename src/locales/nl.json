@@ -222,8 +222,8 @@
         "sameDay": "Op de dag zelf (9:00)"
       },
       "useDefault": "Standaard",
-      "timedHint": "Geldt voor afspraken zonder eigen melding.",
-      "allDayHint": "Gaat af om 9:00 op de gekozen dag."
+      "timedHint": "Standaardmelding voor afspraken zonder eigen melding. Afspraken met een eigen melding behouden die.",
+      "allDayHint": "Standaardmelding voor hele-dag-afspraken zonder eigen melding, om 9:00 op de gekozen dag."
     },
     "account": {
       "title": "Account",

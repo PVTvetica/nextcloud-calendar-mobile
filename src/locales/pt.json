@@ -222,8 +222,8 @@
         "sameDay": "No próprio dia (9:00)"
       },
       "useDefault": "Predefinido",
-      "timedHint": "Aplica-se a eventos sem alerta próprio.",
-      "allDayHint": "Dispara às 9:00 do dia escolhido."
+      "timedHint": "Lembrete padrão para eventos sem um próprio. Os que já têm lembrete mantêm o seu.",
+      "allDayHint": "Lembrete padrão para eventos de dia inteiro sem um próprio, às 9:00 do dia escolhido."
     },
     "account": {
       "title": "Conta",
