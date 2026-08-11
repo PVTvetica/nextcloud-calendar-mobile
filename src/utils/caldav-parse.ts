@@ -87,14 +87,6 @@ export function parseIcsItem(
       const icalEvent = new ICAL.Event(vevent, { strictExceptions: false });
       const tzid = eventTzid(vevent);
 
-      // const attendees: Attendee[] = dedupeAttendees(
-      //   vevent.getAllProperties('attendee').map((prop: ICAL.Property) => {
-      //     const value = (prop.getFirstValue() as string) ?? '';
-      //     const email = value.replace(/^mailto:/i, '');
-      //     const displayName = (prop.getParameter('cn') as string) ?? undefined;
-      //     return { email, displayName };
-      //   })
-      // );
       const seenAttendees = new Set<string>();
       const attendees: Attendee[] = [];
       for (const prop of vevent.getAllProperties('attendee')) {
