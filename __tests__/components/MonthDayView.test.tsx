@@ -162,10 +162,23 @@ describe('MonthDayView', () => {
     expect(dayjs(onPressDay.mock.calls[0][0]).format('YYYY-MM-DD')).toBe('2026-06-15');
   });
 
+  it('shows at least four events per day without an overflow marker', () => {
+    // Fallback capacity (no measured layout under jest) is 4 slots: four
+    // events fit exactly, no "+N".
+    const four = ['One', 'Two', 'Three', 'Four'].map((summary, i): CalendarEvent => ({
+      ...event, uid: `m${i}`, summary,
+      dtstart: new Date(2026, 5, 15, 9 + i, 0), dtend: new Date(2026, 5, 15, 10 + i, 0),
+    }));
+    const { queryByText } = render(view(june10, four));
+
+    for (const s of ['One', 'Two', 'Three', 'Four']) expect(queryByText(s)).toBeTruthy();
+    expect(queryByText(/^\+\d+$/)).toBeNull();
+  });
+
   it('collapses events beyond the cell capacity into a +N marker', () => {
-    // Fallback capacity (no measured layout under jest) is 3 slots: with four
-    // events the last slot becomes the overflow marker, so 2 chips + "+2".
-    const many = ['One', 'Two', 'Three', 'Four'].map((summary, i): CalendarEvent => ({
+    // Six events at 4 fallback slots: the last slot becomes the overflow
+    // marker, so 3 chips + "+3".
+    const many = ['One', 'Two', 'Three', 'Four', 'Five', 'Six'].map((summary, i): CalendarEvent => ({
       ...event, uid: `m${i}`, summary,
       dtstart: new Date(2026, 5, 15, 9 + i, 0), dtend: new Date(2026, 5, 15, 10 + i, 0),
     }));
@@ -173,9 +186,11 @@ describe('MonthDayView', () => {
 
     expect(queryByText('One')).toBeTruthy();
     expect(queryByText('Two')).toBeTruthy();
-    expect(queryByText('Three')).toBeNull();
+    expect(queryByText('Three')).toBeTruthy();
     expect(queryByText('Four')).toBeNull();
-    expect(queryByText('+2')).toBeTruthy();
+    expect(queryByText('Five')).toBeNull();
+    expect(queryByText('Six')).toBeNull();
+    expect(queryByText('+3')).toBeTruthy();
   });
 
   it('sorts all-day chips before timed chips on the same day', () => {

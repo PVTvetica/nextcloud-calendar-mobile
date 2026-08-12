@@ -16,15 +16,17 @@ dayjs.extend(localizedFormat);
 // instantly rather than spring across a long stretch of empty months.
 const MAX_ANIMATED_JUMP_MONTHS = 2;
 
-// Cell geometry for fitting event chips under the day number. Before the first
-// onLayout has measured the grid, FALLBACK_CHIP_SLOTS keeps chips rendering
-// (also the path taken under jest, where onLayout never fires).
-const DAY_NUMBER_BLOCK_HEIGHT = 34;
-const CHIP_HEIGHT = 15;
+// Cell geometry for fitting event chips under the day number. Kept compact
+// (small day number, flat chips) so a typical phone fits at least 4 chips per
+// cell even in a 6-week month. Before the first onLayout has measured the
+// grid, FALLBACK_CHIP_SLOTS keeps chips rendering (also the path taken under
+// jest, where onLayout never fires).
+const DAY_NUMBER_BLOCK_HEIGHT = 26;
+const CHIP_HEIGHT = 14;
 const CHIP_GAP = 2;
 const MIN_CHIP_SLOTS = 1;
-const MAX_CHIP_SLOTS = 6;
-const FALLBACK_CHIP_SLOTS = 3;
+const MAX_CHIP_SLOTS = 8;
+const FALLBACK_CHIP_SLOTS = 4;
 
 interface Props {
   date: Date;
@@ -359,8 +361,8 @@ const styles = StyleSheet.create({
   monthPage: { flex: 1 },
   weekRow: { flex: 1, flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth },
   dayCell: { flex: 1, paddingTop: 2, overflow: 'hidden' },
-  dayCircle: { width: 28, height: 28, borderRadius: 14, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
-  dayNumber: { fontSize: 14, textAlign: 'center' },
+  dayCircle: { width: 22, height: 22, borderRadius: 11, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
+  dayNumber: { fontSize: 12, textAlign: 'center' },
   chipColumn: { alignSelf: 'stretch', paddingHorizontal: 2, gap: CHIP_GAP, marginTop: 2 },
   chip: { height: CHIP_HEIGHT, borderRadius: 4, paddingHorizontal: 4, justifyContent: 'center' },
   chipText: { fontSize: 10, fontWeight: '500' },
