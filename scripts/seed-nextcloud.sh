@@ -218,7 +218,6 @@ build_ics() {
   [[ -n "$description" ]] && out+="DESCRIPTION:$(esc "$description")"$'\n'
   [[ -n "$rrule" ]]       && out+="RRULE:$rrule"$'\n'
 
-  # ORGANIZER only alongside ATTENDEE: a lone ORGANIZER locks calendar co-editors out.
   if (( nattendees > 0 )); then
     out+="ORGANIZER;CN=$NC_USER:mailto:$EMAIL"$'\n'
 
