@@ -1,4 +1,5 @@
-export const APP_SCHEME = 'nextcloud-calendar';
+// Must stay in sync with `scheme` in app.config.ts and the tracked AndroidManifest.xml.
+export const APP_SCHEME = 'nextcloud-calendar-fork';
 
 export interface AgendaEventItem {
   uid: string;

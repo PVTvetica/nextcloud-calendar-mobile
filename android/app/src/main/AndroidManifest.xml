@@ -28,28 +28,28 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="nextcloud-calendar"/>
-        <data android:scheme="exp+nextcloud-calendar"/>
+        <data android:scheme="nextcloud-calendar-fork"/>
+        <data android:scheme="exp+nextcloud-calendar-fork"/>
       </intent-filter>
     </activity>
-    <receiver android:name=".widget.CalendarSmallWidget" android:exported="false" android:label="Nextcloud Calendar">
+    <receiver android:name=".widget.CalendarSmallWidget" android:exported="false" android:label="Nextcloud Calendar Fork">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
-        <action android:name="com.soluce.nextcloudcalendar.WIDGET_CLICK"/>
+        <action android:name="com.custom.nextcloudcalendar.WIDGET_CLICK"/>
       </intent-filter>
       <meta-data android:name="android.appwidget.provider" android:resource="@xml/widgetprovider_calendarsmallwidget"/>
     </receiver>
-    <receiver android:name=".widget.CalendarMediumWidget" android:exported="false" android:label="Nextcloud Calendar">
+    <receiver android:name=".widget.CalendarMediumWidget" android:exported="false" android:label="Nextcloud Calendar Fork">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
-        <action android:name="com.soluce.nextcloudcalendar.WIDGET_CLICK"/>
+        <action android:name="com.custom.nextcloudcalendar.WIDGET_CLICK"/>
       </intent-filter>
       <meta-data android:name="android.appwidget.provider" android:resource="@xml/widgetprovider_calendarmediumwidget"/>
     </receiver>
-    <receiver android:name=".widget.CalendarLargeWidget" android:exported="false" android:label="Nextcloud Calendar">
+    <receiver android:name=".widget.CalendarLargeWidget" android:exported="false" android:label="Nextcloud Calendar Fork">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
-        <action android:name="com.soluce.nextcloudcalendar.WIDGET_CLICK"/>
+        <action android:name="com.custom.nextcloudcalendar.WIDGET_CLICK"/>
       </intent-filter>
       <meta-data android:name="android.appwidget.provider" android:resource="@xml/widgetprovider_calendarlargewidget"/>
     </receiver>

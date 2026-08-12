@@ -1,5 +1,5 @@
 {
-  "name": "nextcloud-calendar",
+  "name": "nextcloud-calendar-fork",
   "version": "1.5.0",
   "main": "expo-router/entry",
   "expo": {

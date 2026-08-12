@@ -2,7 +2,8 @@ import { createMMKV, type MMKV } from 'react-native-mmkv';
 
 import type { AgendaSnapshot, AgendaTimelineEntry, LiveEventState } from '../core/types';
 
-export const WIDGET_MMKV_ID = 'group.com.soluce.nextcloud-calendar';
+// Must stay in sync with the iOS `groupIdentifier` / app-group entitlement in app.config.ts.
+export const WIDGET_MMKV_ID = 'group.com.custom.nextcloud-calendar';
 
 let instance: MMKV | null = null;
 function store(): MMKV {

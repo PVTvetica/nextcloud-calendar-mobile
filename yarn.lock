@@ -8518,9 +8518,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nextcloud-calendar@workspace:.":
+"nextcloud-calendar-fork@workspace:.":
   version: 0.0.0-use.local
-  resolution: "nextcloud-calendar@workspace:."
+  resolution: "nextcloud-calendar-fork@workspace:."
   dependencies:
     "@expo/metro-runtime": "npm:~57.0.6"
     "@expo/vector-icons": "npm:^15.1.1"

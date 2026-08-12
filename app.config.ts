@@ -11,9 +11,9 @@ if (![major, minor, patch].every(Number.isInteger)) {
 const versionCode = major * 10000 + minor * 100 + patch;
 
 const config: ExpoConfig = {
-  name: 'Nextcloud Calendar',
-  slug: 'nextcloud-calendar',
-  scheme: 'nextcloud-calendar',
+  name: 'Nextcloud Calendar Fork',
+  slug: 'nextcloud-calendar-fork',
+  scheme: 'nextcloud-calendar-fork',
   version,
   orientation: 'default',
   userInterfaceStyle: 'automatic',
@@ -23,20 +23,20 @@ const config: ExpoConfig = {
 
   ios: {
     supportsTablet: true,
-    bundleIdentifier: 'com.soluce.nextcloud-calendar',
+    bundleIdentifier: 'com.custom.nextcloud-calendar',
     icon: './assets/icon-ios.icon',
     infoPlist: {
-      CFBundleDisplayName: 'Nextcloud Calendar',
+      CFBundleDisplayName: 'Nextcloud Calendar Fork',
       LSApplicationQueriesSchemes: ['nextcloudtalk'],
       ITSAppUsesNonExemptEncryption: false,
     },
     entitlements: {
-      'com.apple.security.application-groups': ['group.com.soluce.nextcloud-calendar'],
+      'com.apple.security.application-groups': ['group.com.custom.nextcloud-calendar'],
     },
   },
 
   android: {
-    package: 'com.soluce.nextcloudcalendar',
+    package: 'com.custom.nextcloudcalendar',
     versionCode,
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
@@ -49,12 +49,8 @@ const config: ExpoConfig = {
     favicon: './assets/favicon.png',
   },
 
-  extra: {
-    eas: {
-      projectId: 'b344d590-32ff-417f-8c5a-f8e453288f60',
-    },
-  },
-  owner: 'soluce',
+  // Fork note: the upstream EAS project (owner "soluce", its projectId) was removed.
+  // Run `eas init` once to link this fork to your own Expo account before using EAS builds.
 
   plugins: [
     '@morrowdigital/watermelondb-expo-plugin',
@@ -89,12 +85,12 @@ const config: ExpoConfig = {
     [
       'expo-widgets',
       {
-        bundleIdentifier: "com.soluce.nextcloud-calendar.ExpoWidgetsTarget",
-        groupIdentifier: 'group.com.soluce.nextcloud-calendar',
+        bundleIdentifier: "com.custom.nextcloud-calendar.ExpoWidgetsTarget",
+        groupIdentifier: 'group.com.custom.nextcloud-calendar',
         widgets: [
           {
             name: 'NextcloudCalendarWidget',
-            displayName: 'Nextcloud Calendar',
+            displayName: 'Nextcloud Calendar Fork',
             description: 'Your upcoming events',
             contentMarginsDisabled: true,
             supportedFamilies: [
@@ -115,7 +111,7 @@ const config: ExpoConfig = {
         widgets: [
           {
             name: 'CalendarSmallWidget',
-            label: 'Nextcloud Calendar',
+            label: 'Nextcloud Calendar Fork',
             minWidth: '110dp',
             minHeight: '110dp',
             targetCellWidth: 2,
@@ -127,7 +123,7 @@ const config: ExpoConfig = {
           },
           {
             name: 'CalendarMediumWidget',
-            label: 'Nextcloud Calendar',
+            label: 'Nextcloud Calendar Fork',
             minWidth: '250dp',
             minHeight: '110dp',
             targetCellWidth: 4,
@@ -139,7 +135,7 @@ const config: ExpoConfig = {
           },
           {
             name: 'CalendarLargeWidget',
-            label: 'Nextcloud Calendar',
+            label: 'Nextcloud Calendar Fork',
             minWidth: '250dp',
             minHeight: '250dp',
             targetCellWidth: 4,
