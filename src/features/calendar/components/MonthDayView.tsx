@@ -1,14 +1,13 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, FlatList, StyleSheet,
-  useWindowDimensions,
+  View, Text, TouchableOpacity, StyleSheet, type LayoutChangeEvent,
 } from 'react-native';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
-import { useTranslation } from 'react-i18next';
 import { useTheme } from 'expo-router';
 import InfinitePager, { type InfinitePagerImperativeApi } from 'react-native-infinite-pager';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { contrastFor } from '@/features/calendar/utils/eventInk';
 import type { CalendarEvent } from '@/types';
 
 dayjs.extend(localizedFormat);
@@ -17,14 +16,23 @@ dayjs.extend(localizedFormat);
 // instantly rather than spring across a long stretch of empty months.
 const MAX_ANIMATED_JUMP_MONTHS = 2;
 
+// Cell geometry for fitting event chips under the day number. Before the first
+// onLayout has measured the grid, FALLBACK_CHIP_SLOTS keeps chips rendering
+// (also the path taken under jest, where onLayout never fires).
+const DAY_NUMBER_BLOCK_HEIGHT = 34;
+const CHIP_HEIGHT = 15;
+const CHIP_GAP = 2;
+const MIN_CHIP_SLOTS = 1;
+const MAX_CHIP_SLOTS = 6;
+const FALLBACK_CHIP_SLOTS = 3;
+
 interface Props {
   date: Date;
   events: CalendarEvent[];
   weekStartsOn: 0 | 1;
   jump: { nonce: number; target: Date };
-  onSelectDate: (d: Date) => void;
+  onPressDay: (d: Date) => void;
   onMonthChange: (d: Date) => void;
-  onPressEvent: (e: CalendarEvent) => void;
   onPressCell: (d: Date) => void;
 }
 
@@ -82,21 +90,34 @@ interface MonthGridProps {
   weeks: (dayjs.Dayjs | null)[][];
   selected: dayjs.Dayjs;
   today: dayjs.Dayjs;
-  dotMap: Map<string, Set<string>>;
+  eventsByDay: Map<string, CalendarEvent[]>;
+  pageHeight: number;
   colors: ReturnType<typeof useTheme>['colors'];
+  onLayout: (e: LayoutChangeEvent) => void;
   onDayPress: (d: dayjs.Dayjs) => void;
   onPressCell: (d: Date) => void;
 }
 
-// One month's 6-week grid. Rendered per pager page so a horizontal swipe slides a
-// full month in and out under the finger instead of the old swipe-then-jump.
+// One month's grid, Google-style: every day cell lists its events as colored
+// title chips, so the whole month is scannable at a glance. Rendered per pager
+// page so a horizontal swipe slides a full month in and out under the finger.
 const MonthGrid = memo(function MonthGrid({
-  weeks, selected, today, dotMap, colors, onDayPress, onPressCell,
+  weeks, selected, today, eventsByDay, pageHeight, colors, onLayout, onDayPress, onPressCell,
 }: MonthGridProps) {
+  // How many chips fit under the day number in one cell of *this* month
+  // (row count varies between 4 and 6 per month).
+  const chipSlots = useMemo(() => {
+    if (pageHeight <= 0 || weeks.length === 0) return FALLBACK_CHIP_SLOTS;
+    const cellHeight = pageHeight / weeks.length;
+    const free = cellHeight - DAY_NUMBER_BLOCK_HEIGHT + CHIP_GAP;
+    const slots = Math.floor(free / (CHIP_HEIGHT + CHIP_GAP));
+    return Math.max(MIN_CHIP_SLOTS, Math.min(MAX_CHIP_SLOTS, slots));
+  }, [pageHeight, weeks.length]);
+
   return (
-    <View style={styles.monthPage}>
+    <View style={styles.monthPage} onLayout={onLayout}>
       {weeks.map((week, wi) => (
-        <View key={wi} style={styles.weekRow}>
+        <View key={wi} style={[styles.weekRow, { borderTopColor: colors.border }]}>
           {week.map((d, di) => {
             if (d === null) {
               return <View key={di} style={styles.dayCell} />;
@@ -104,7 +125,12 @@ const MonthGrid = memo(function MonthGrid({
             const key = d.format('YYYY-MM-DD');
             const isToday = d.isSame(today, 'day');
             const isSelected = d.isSame(selected, 'day');
-            const dots = Array.from(dotMap.get(key) ?? []).slice(0, 3);
+            const dayEvents = eventsByDay.get(key) ?? [];
+            // When not everything fits, the last slot is given to the "+N"
+            // overflow marker instead of a chip.
+            const visibleCount = dayEvents.length <= chipSlots ? dayEvents.length : chipSlots - 1;
+            const chips = dayEvents.slice(0, visibleCount);
+            const overflow = dayEvents.length - visibleCount;
 
             return (
               <TouchableOpacity
@@ -132,10 +158,30 @@ const MonthGrid = memo(function MonthGrid({
                     {d.date()}
                   </Text>
                 </View>
-                <View style={styles.dotsRow}>
-                  {dots.map((color, ci) => (
-                    <View key={ci} style={[styles.dot, { backgroundColor: color }]} />
+                <View style={styles.chipColumn}>
+                  {chips.map((ev, ci) => (
+                    <View
+                      key={`${ev.calendarId}-${ev.uid}-${ci}`}
+                      style={[styles.chip, { backgroundColor: ev.color }]}
+                    >
+                      <Text
+                        numberOfLines={1}
+                        allowFontScaling={false}
+                        style={[styles.chipText, { color: contrastFor(ev.color).text }]}
+                      >
+                        {ev.summary}
+                      </Text>
+                    </View>
                   ))}
+                  {overflow > 0 && (
+                    <Text
+                      numberOfLines={1}
+                      allowFontScaling={false}
+                      style={[styles.overflowText, { color: colors.textSecondary }]}
+                    >
+                      +{overflow}
+                    </Text>
+                  )}
                 </View>
               </TouchableOpacity>
             );
@@ -146,41 +192,38 @@ const MonthGrid = memo(function MonthGrid({
   );
 });
 
-function MonthDayViewImpl({ date, events, weekStartsOn, jump, onSelectDate, onMonthChange, onPressEvent, onPressCell }: Props) {
+function MonthDayViewImpl({ date, events, weekStartsOn, jump, onPressDay, onMonthChange, onPressCell }: Props) {
   const theme = useTheme();
-  const { t } = useTranslation();
   const language = useSettingsStore((s) => s.language);
-  const { height } = useWindowDimensions();
 
   const selected = useMemo(() => dayjs(date), [date]);
 
-  const dotMap = useMemo(() => {
-    const map = new Map<string, Set<string>>();
-    const add = (key: string, color: string) => {
-      let set = map.get(key);
-      if (!set) { set = new Set(); map.set(key, set); }
-      set.add(color);
-    };
-
+  const eventsByDay = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>();
     for (const ev of events) {
-      for (const key of eventDayKeys(ev)) add(key, ev.color);
+      for (const key of eventDayKeys(ev)) {
+        let list = map.get(key);
+        if (!list) { list = []; map.set(key, list); }
+        list.push(ev);
+      }
+    }
+    // Google order: all-day (and multi-day) chips on top, timed events after,
+    // each group chronologically.
+    for (const list of map.values()) {
+      list.sort((a, b) => {
+        if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
+        return a.dtstart.getTime() - b.dtstart.getTime();
+      });
     }
     return map;
   }, [events]);
-
-  const dayEvents = useMemo(() => {
-    const sel = selected.format('YYYY-MM-DD');
-    return events
-      .filter((e) => eventCoversDay(e, sel))
-      .sort((a, b) => a.dtstart.getTime() - b.dtstart.getTime());
-  }, [events, selected]);
 
   const todayKey = dayjs().format('YYYY-MM-DD');
   const today = useMemo(() => dayjs(todayKey), [todayKey]);
 
   const handleDayPress = useCallback((d: dayjs.Dayjs) => {
-    onSelectDate(d.toDate());
-  }, [onSelectDate]);
+    onPressDay(d.toDate());
+  }, [onPressDay]);
 
   const dayHeaders = useMemo(() => {
     const headers: string[] = [];
@@ -191,7 +234,13 @@ function MonthDayViewImpl({ date, events, weekStartsOn, jump, onSelectDate, onMo
     return headers;
   }, [weekStartsOn, language]);
 
-  const gridHeight = height * 0.44;
+  // Measured height of a pager page; all pages share the same size. Drives how
+  // many chips fit per cell. 0 until the first layout pass (fallback slots).
+  const [pageHeight, setPageHeight] = useState(0);
+  const handlePageLayout = useCallback((e: LayoutChangeEvent) => {
+    const h = e.nativeEvent.layout.height;
+    setPageHeight((prev) => (Math.abs(prev - h) > 1 ? h : prev));
+  }, []);
 
   // The pager pages by whole months: page `index` renders the month `index`
   // months from `localAnchor`. localAnchor is only reset on an external jump
@@ -266,67 +315,34 @@ function MonthDayViewImpl({ date, events, weekStartsOn, jump, onSelectDate, onMo
         weeks={weeks}
         selected={selected}
         today={today}
-        dotMap={dotMap}
+        eventsByDay={eventsByDay}
+        pageHeight={pageHeight}
         colors={theme.colors}
+        onLayout={handlePageLayout}
         onDayPress={handleDayPress}
         onPressCell={onPressCell}
       />
     );
-  }, [localAnchor, weekStartsOn, selected, today, dotMap, theme.colors, handleDayPress, onPressCell]);
+  }, [localAnchor, weekStartsOn, selected, today, eventsByDay, pageHeight, theme.colors, handlePageLayout, handleDayPress, onPressCell]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.grid, { height: gridHeight, borderBottomColor: theme.colors.border }]}>
-        <View style={styles.dowRow}>
-          {dayHeaders.map((d, i) => (
-            <Text key={i} style={[styles.dowLabel, { color: theme.colors.textTertiary }]}>{d}</Text>
-          ))}
-        </View>
-
-        <View style={styles.pagerWrap}>
-          <InfinitePager
-            key={pagerKey}
-            ref={pagerRef}
-            style={styles.fill}
-            pageWrapperStyle={styles.fill}
-            renderPage={renderPage}
-            onPageChange={handlePageChange}
-            pageBuffer={1}
-          />
-        </View>
+      <View style={styles.dowRow}>
+        {dayHeaders.map((d, i) => (
+          <Text key={i} style={[styles.dowLabel, { color: theme.colors.textTertiary }]}>{d}</Text>
+        ))}
       </View>
 
-      <View style={styles.dayList}>
-        <Text style={[styles.dayListHeader, { color: theme.colors.textSecondary }]}>
-          {selected.locale(language).format('dddd, LL')}
-        </Text>
-        {dayEvents.length === 0 ? (
-          <Text style={[styles.emptyText, { color: theme.colors.textTertiary }]}>{t('calendar.noEvents')}</Text>
-        ) : (
-          <FlatList
-            data={dayEvents}
-            keyExtractor={(e, i) => `${e.calendarId}-${e.uid}-${e.dtstart.getTime()}-${i}`}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[styles.eventRow, { borderLeftColor: item.color, backgroundColor: theme.colors.surface }]}
-                onPress={() => onPressEvent(item)}
-              >
-                <View style={[styles.eventColorBar, { backgroundColor: item.color }]} />
-                <View style={styles.eventInfo}>
-                  <Text style={[styles.eventTitle, { color: theme.colors.text }]} numberOfLines={1}>
-                    {item.summary}
-                  </Text>
-                  <Text style={[styles.eventTime, { color: theme.colors.textSecondary }]}>
-                    {item.allDay
-                      ? t('calendar.allDay')
-                      : `${dayjs(item.dtstart).locale(language).format('LT')} – ${dayjs(item.dtend).locale(language).format('LT')}`}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            )}
-            contentContainerStyle={{ paddingBottom: 16 }}
-          />
-        )}
+      <View style={styles.pagerWrap}>
+        <InfinitePager
+          key={pagerKey}
+          ref={pagerRef}
+          style={styles.fill}
+          pageWrapperStyle={styles.fill}
+          renderPage={renderPage}
+          onPageChange={handlePageChange}
+          pageBuffer={1}
+        />
       </View>
     </View>
   );
@@ -337,23 +353,16 @@ export const MonthDayView = memo(MonthDayViewImpl);
 const styles = StyleSheet.create({
   container: { flex: 1 },
   fill: { flex: 1 },
-  grid: { borderBottomWidth: StyleSheet.hairlineWidth },
   dowRow: { flexDirection: 'row', paddingVertical: 6 },
   dowLabel: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '600', textTransform: 'uppercase' },
   pagerWrap: { flex: 1 },
   monthPage: { flex: 1 },
-  weekRow: { flex: 1, flexDirection: 'row' },
-  dayCell: { flex: 1, alignItems: 'center', paddingTop: 2 },
-  dayCircle: { width: 28, height: 28, borderRadius: 14, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  weekRow: { flex: 1, flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth },
+  dayCell: { flex: 1, paddingTop: 2, overflow: 'hidden' },
+  dayCircle: { width: 28, height: 28, borderRadius: 14, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
   dayNumber: { fontSize: 14, textAlign: 'center' },
-  dotsRow: { flexDirection: 'row', gap: 2, marginTop: 2 },
-  dot: { width: 5, height: 5, borderRadius: 3 },
-  dayList: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },
-  dayListHeader: { fontSize: 13, fontWeight: '600', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
-  emptyText: { fontSize: 15, textAlign: 'center', marginTop: 32 },
-  eventRow: { flexDirection: 'row', borderRadius: 8, marginBottom: 8, overflow: 'hidden' },
-  eventColorBar: { width: 4 },
-  eventInfo: { flex: 1, padding: 10 },
-  eventTitle: { fontSize: 15, fontWeight: '500' },
-  eventTime: { fontSize: 12, marginTop: 2 },
+  chipColumn: { alignSelf: 'stretch', paddingHorizontal: 2, gap: CHIP_GAP, marginTop: 2 },
+  chip: { height: CHIP_HEIGHT, borderRadius: 4, paddingHorizontal: 4, justifyContent: 'center' },
+  chipText: { fontSize: 10, fontWeight: '500' },
+  overflowText: { fontSize: 10, fontWeight: '600', paddingHorizontal: 4 },
 });

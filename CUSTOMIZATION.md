@@ -108,7 +108,7 @@ Es existieren genau **fünf** Views (`VIEW_MODES` in `src/features/calendar/cons
 | Ansicht / Aufgabe | Datei(en) |
 |---|---|
 | Screen-Komposition | `app/(tabs)/calendar/index.tsx` — mountet alle Views gleichzeitig in `ViewLayer`-Wrappern (Sichtbarkeits-Toggle statt Unmount); Event-Press → `/event/[uid]`, Slot-Press/FAB → `/event/new?date=…` |
-| Monatsansicht | `src/features/calendar/components/MonthDayView.tsx` — InfinitePager aus Monatsgrids (max. 3 Event-Dots pro Tag, Grid = 44 % Bildschirmhöhe) + FlatList der Tages-Events darunter; Long-Press auf Tag → neues Event |
+| Monatsansicht | `src/features/calendar/components/MonthDayView.tsx` — Google-Stil (Fork-Anpassung): InfinitePager aus vollflächigen Monatsgrids, Events als farbige Titel-Chips direkt in den Tageszellen (Chip-Anzahl dynamisch aus der Zellhöhe, Überlauf als „+N"; All-Day vor timed sortiert); Tap auf Tag → Tagesansicht (`openDay` in `useCalendarNavigation`), Long-Press → neues Event |
 | Woche / 3-Tage / Tag | `src/features/calendar/components/TimeGridView.tsx` (Container: vertikaler Scroll, Pinch-Zoom, zwei per Shared Value synchronisierte Pager) → `TimeGridPage.tsx` (Seiten-Layout + Drag) → `DayColumn.tsx` (Spalte, Now-Line, Slot-Tap); Spaltenzahl via `daysPerPage()` in `utils/grid.ts` (7/3/1) |
 | Grid-Zubehör | `TimeGridHeader.tsx` (Tageszeile + All-Day-Chips), `GridLines.tsx` (Stundenlinien), `HourRail.tsx` (Stundenbeschriftung links) |
 | Agenda ("schedule") | `src/features/calendar/components/AgendaView.tsx` — SectionList heute + 120 Tage (`DAYS_AHEAD`); Vergangenheit ist nicht erreichbar |

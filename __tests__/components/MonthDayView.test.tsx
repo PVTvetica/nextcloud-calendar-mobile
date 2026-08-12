@@ -1,5 +1,5 @@
 import React from 'react';
-import { render as rtlRender } from '@testing-library/react-native';
+import { render as rtlRender, fireEvent } from '@testing-library/react-native';
 import { ThemeWrapper } from '../helpers/theme';
 import dayjs from 'dayjs';
 
@@ -29,7 +29,6 @@ jest.mock('react-native-infinite-pager', () => {
 });
 
 const june10 = new Date(2026, 5, 10);
-const june15 = new Date(2026, 5, 15);
 
 const event: CalendarEvent = {
   uid: 'e1', href: '/e1.ics', calendarId: 'c1', accountId: 'a1',
@@ -38,16 +37,15 @@ const event: CalendarEvent = {
   allDay: false, color: '#0082c9', attendees: [], isRecurring: false,
 };
 
-function view(date: Date) {
+function view(date: Date, events: CalendarEvent[] = [event], onPressDay = jest.fn()) {
   return (
     <MonthDayView
       date={date}
-      events={[event]}
+      events={events}
       weekStartsOn={0}
       jump={{ nonce: 0, target: date }}
-      onSelectDate={jest.fn()}
+      onPressDay={onPressDay}
       onMonthChange={jest.fn()}
-      onPressEvent={jest.fn()}
       onPressCell={jest.fn()}
     />
   );
@@ -142,16 +140,54 @@ describe('eventDayKeys', () => {
 });
 
 describe('MonthDayView', () => {
-  it('derives the selected day from the date prop and follows prop changes', () => {
-    const { getByText, queryByText, rerender } = render(view(june10));
-
-    expect(getByText(dayjs(june10).format('dddd, LL'))).toBeTruthy();
-    expect(queryByText('Birthday Party')).toBeNull();
-
-    rerender(view(june15));
-
-    expect(getByText(dayjs(june15).format('dddd, LL'))).toBeTruthy();
+  it('renders an event as a title chip inside the month grid', () => {
+    // The chip is part of the grid cell, visible regardless of which day is
+    // currently focused.
+    const { queryByText } = render(view(june10));
     expect(queryByText('Birthday Party')).toBeTruthy();
+  });
+
+  it('does not render chips for events outside the shown month', () => {
+    const { queryByText } = render(view(new Date(2026, 6, 18)));
+    expect(queryByText('Birthday Party')).toBeNull();
+  });
+
+  it('reports a tapped day through onPressDay', () => {
+    const onPressDay = jest.fn();
+    const { getByText } = render(view(june10, [event], onPressDay));
+
+    fireEvent.press(getByText('15'));
+
+    expect(onPressDay).toHaveBeenCalledTimes(1);
+    expect(dayjs(onPressDay.mock.calls[0][0]).format('YYYY-MM-DD')).toBe('2026-06-15');
+  });
+
+  it('collapses events beyond the cell capacity into a +N marker', () => {
+    // Fallback capacity (no measured layout under jest) is 3 slots: with four
+    // events the last slot becomes the overflow marker, so 2 chips + "+2".
+    const many = ['One', 'Two', 'Three', 'Four'].map((summary, i): CalendarEvent => ({
+      ...event, uid: `m${i}`, summary,
+      dtstart: new Date(2026, 5, 15, 9 + i, 0), dtend: new Date(2026, 5, 15, 10 + i, 0),
+    }));
+    const { queryByText } = render(view(june10, many));
+
+    expect(queryByText('One')).toBeTruthy();
+    expect(queryByText('Two')).toBeTruthy();
+    expect(queryByText('Three')).toBeNull();
+    expect(queryByText('Four')).toBeNull();
+    expect(queryByText('+2')).toBeTruthy();
+  });
+
+  it('sorts all-day chips before timed chips on the same day', () => {
+    const allDay: CalendarEvent = {
+      ...event, uid: 'ad1', summary: 'All Day',
+      dtstart: new Date(2026, 5, 15), dtend: new Date(2026, 5, 15), allDay: true,
+    };
+    // Passed in timed-first order; the all-day chip must still render first.
+    const { getAllByText } = render(view(june10, [event, allDay]));
+
+    const labels = getAllByText(/^(All Day|Birthday Party)$/).map((n) => n.props.children);
+    expect(labels).toEqual(['All Day', 'Birthday Party']);
   });
 
   it('reports the first day of the paged-to month through onMonthChange', () => {
@@ -163,9 +199,8 @@ describe('MonthDayView', () => {
         events={[event]}
         weekStartsOn={0}
         jump={{ nonce: 0, target: june10 }}
-        onSelectDate={jest.fn()}
+        onPressDay={jest.fn()}
         onMonthChange={onMonthChange}
-        onPressEvent={jest.fn()}
         onPressCell={jest.fn()}
       />
     );
@@ -195,38 +230,13 @@ describe('MonthDayView multi-day all-day events', () => {
     allDay: true, color: '#e74c3c', attendees: [], isRecurring: false,
   };
 
-  function allDayView(date: Date) {
-    return (
-      <MonthDayView
-        date={date}
-        events={[conference]}
-        weekStartsOn={0}
-        jump={{ nonce: 0, target: date }}
-        onSelectDate={jest.fn()}
-        onMonthChange={jest.fn()}
-        onPressEvent={jest.fn()}
-        onPressCell={jest.fn()}
-      />
-    );
-  }
-
-  it('lists the event on its start day', () => {
-    expect(render(allDayView(new Date(2026, 5, 15))).queryByText('Conference')).toBeTruthy();
+  it('shows one chip per covered day (start, middle, inclusive end)', () => {
+    const { getAllByText } = render(view(june10, [conference]));
+    expect(getAllByText('Conference')).toHaveLength(3);
   });
 
-  it('lists the event on a middle day it spans', () => {
-    expect(render(allDayView(new Date(2026, 5, 16))).queryByText('Conference')).toBeTruthy();
-  });
-
-  it('lists the event on its inclusive last day', () => {
-    expect(render(allDayView(new Date(2026, 5, 17))).queryByText('Conference')).toBeTruthy();
-  });
-
-  it('does not list the event the day before it starts', () => {
-    expect(render(allDayView(new Date(2026, 5, 14))).queryByText('Conference')).toBeNull();
-  });
-
-  it('does not list the event the day after it ends', () => {
-    expect(render(allDayView(new Date(2026, 5, 18))).queryByText('Conference')).toBeNull();
+  it('shows no chip in a month the event does not touch', () => {
+    const { queryByText } = render(view(new Date(2026, 6, 18), [conference]));
+    expect(queryByText('Conference')).toBeNull();
   });
 });

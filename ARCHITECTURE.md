@@ -101,7 +101,7 @@ Deep-Link-Basis ist das Scheme `nextcloud-calendar-fork` (registriert in `app.co
 ## 4. Screens
 
 - **Auth**: `app/(auth)/setup.tsx` — Server-URL/Benutzername/App-Passwort-Formular (URL wird normalisiert, https erzwungen) plus QR-Scanner (`src/features/account/components/QrLoginScanner.tsx`, expo-camera). Zurück-Button nur bei >1 Account.
-- **Kalender**: `app/(tabs)/calendar/index.tsx` — komponiert `MonthDayView`, `AgendaView` und `TimeGridView` (alle gleichzeitig gemountet, Sichtbarkeit über `ViewLayer`), `CalendarTopBar`, custom `CalendarDrawer`, `CalendarFab`; zeigt `CalendarUnavailable` bei Server-Capability `calendarApp === 'unconfigured'` und `OfflineBanner` bei Offline.
+- **Kalender**: `app/(tabs)/calendar/index.tsx` — komponiert `MonthDayView` (Fork-Anpassung: Google-Stil-Monatsraster mit Event-Chips in den Zellen, Tap auf Tag öffnet die Tagesansicht via `openDay`), `AgendaView` und `TimeGridView` (alle gleichzeitig gemountet, Sichtbarkeit über `ViewLayer`), `CalendarTopBar`, custom `CalendarDrawer`, `CalendarFab`; zeigt `CalendarUnavailable` bei Server-Capability `calendarApp === 'unconfigured'` und `OfflineBanner` bei Offline.
 - **Settings**: Hub + Unterscreens (Tabelle oben), gebaut auf `src/features/settings/components/SettingsPage.tsx` / `SettingsLink.tsx`. Account-Detail rendert bei verlorenen Credentials (`useAccountAuthStatus`, 401/403) die `AccountReconnectForm`.
 - **Event-Screens**: Detail (`[uid]`), Edit, New — liegen außerhalb der Tabs auf dem Root-Stack und werden als Full-Screen-Cards gepusht. Detail enthält einen Stack-Dedup-Effekt (`navigation.reset()` bei doppelter Route) und einen Talk-Join-Button (Android: `intent://`-URL auf die externe App `com.nextcloud.talk2`, Browser-Fallback).
 

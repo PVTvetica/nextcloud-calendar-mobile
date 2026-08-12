@@ -53,6 +53,13 @@ export function useCalendarNavigation() {
     setViewMode(target);
   }, [setViewMode, setDate]);
 
+  // Month view, Google-style: tapping a day cell opens that day in the day view.
+  const openDay = useCallback((d: Date) => {
+    setAnchorDate(d);
+    setDate(d);
+    setViewMode('day');
+  }, [setDate, setViewMode]);
+
   const goToday = useCallback(() => {
     const now = new Date();
     setDate(now);
@@ -74,6 +81,7 @@ export function useCalendarNavigation() {
     setAgendaVisibleDate,
     agendaRef,
     switchMode,
+    openDay,
     goToday,
     onPageChange,
   };
