@@ -5,7 +5,7 @@
     <img src="/.github/assets/banner.png" alt="Banner">
   </a>
 
-# Nextcloud Calendar Mobile (unofficial)
+# Nextcloud Calendar Fork
 
 A mobile calendar client for Nextcloud, built with React Native & Expo.
 
@@ -16,6 +16,26 @@ A mobile calendar client for Nextcloud, built with React Native & Expo.
 [![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey?)](https://expo.dev/eas)
 
 </div>
+
+---
+
+## 🔱 About this fork
+
+> This repository is an **independent fork** of
+> [SoluceTechnologies/nextcloud-calendar-mobile](https://github.com/SoluceTechnologies/nextcloud-calendar-mobile)
+> ("Nextcloud Calendar Mobile" by Soluce Technologies), used as a base for custom development.
+>
+> - **License:** [GPL-3.0](LICENSE) — inherited unchanged from the original project. All original
+>   copyright notices and credits are preserved.
+> - **Not official:** This fork is **not an official Nextcloud app** and is not affiliated with,
+>   reviewed, or endorsed by Nextcloud GmbH — nor is it maintained by Soluce Technologies.
+> - **Identity:** To allow installation alongside the original app, this fork uses the temporary
+>   Android application ID `com.custom.nextcloudcalendar` and the app name *Nextcloud Calendar Fork*.
+> - **Docs:** See [DEVELOPMENT.md](DEVELOPMENT.md) (setup & builds), [ARCHITECTURE.md](ARCHITECTURE.md)
+>   (code map) and [CUSTOMIZATION.md](CUSTOMIZATION.md) (where to change what).
+>
+> All credit for the original application belongs to the upstream authors. The store links and
+> release badges below refer to the **original upstream app**, not to this fork.
 
 ---
 
