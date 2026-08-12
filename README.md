@@ -106,3 +106,27 @@ Widgets are kept up to date through the app's background sync, and tapping an ev
 ## 🤝 Open to Collaboration
 
 This project is free and open source. If you're interested in contributing, have a partnership opportunity in mind, or want to discuss how this could fit your organization's workflow, feel free to reach out. All conversations welcome.
+
+---
+
+## 📱 Screenshots
+
+<div align="center">
+
+| Connect to Nextcloud | Calendar view | Calendars drawer |
+| :---: | :---: | :---: |
+| <img src="/.github/assets/setup.png" alt="Connect to Nextcloud" width="230" /> | <img src="/.github/assets/calendar.png" alt="Calendar view" width="230" /> | <img src="/.github/assets/drawer.png" alt="Calendars drawer" width="230" /> |
+
+| New event | Accounts | Account detail |
+| :---: | :---: | :---: |
+| <img src="/.github/assets/new-event.png" alt="New event" width="230" /> | <img src="/.github/assets/accounts.png" alt="Accounts" width="230" /> | <img src="/.github/assets/account-detail.png" alt="Account detail" width="230" /> |
+
+| Settings | Appearance | Calendar settings |
+| :---: | :---: | :---: |
+| <img src="/.github/assets/settings.png" alt="Settings" width="230" /> | <img src="/.github/assets/settings-appearance.png" alt="Appearance settings" width="230" /> | <img src="/.github/assets/settings-calendar.png" alt="Calendar settings" width="230" /> |
+
+| Notifications | Widgets | Accessibility |
+| :---: | :---: | :---: |
+| <img src="/.github/assets/settings-notifications.png" alt="Notification settings" width="230" /> | <img src="/.github/assets/settings-widgets.png" alt="Widget settings" width="230" /> | <img src="/.github/assets/settings-accessbility.png" alt="Accessibility settings" width="230" /> |
+
+</div>
