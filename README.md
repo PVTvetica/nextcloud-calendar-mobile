@@ -63,6 +63,26 @@ Use in production at your own discretion, and pin to a specific commit or tag if
 
 ---
 
+## 🎬 Demo
+
+<div align="center">
+
+| Switch views | Drag event | Resize event |
+| :---: | :---: | :---: |
+| <img src="/.github/assets/change-view.gif" alt="Switch between calendar views" width="230" /> | <img src="/.github/assets/drag.gif" alt="Drag an event" width="230" /> | <img src="/.github/assets/resize-event.gif" alt="Resize an event" width="230" /> |
+
+| Calendars drawer | Zoom / resize grid | Settings |
+| :---: | :---: | :---: |
+| <img src="/.github/assets/drawer.gif" alt="Calendars drawer" width="230" /> | <img src="/.github/assets/resize.gif" alt="Resize the calendar grid" width="230" /> | <img src="/.github/assets/settings.gif" alt="Settings" width="230" /> |
+
+| Pick widget calendar | | |
+| :---: | :---: | :---: |
+| <img src="/.github/assets/select-calendar-widget.gif" alt="Select the calendar shown in the widget" width="230" /> | | |
+
+</div>
+
+---
+
 ## ✨ Features
 
 ### Multiple Calendar Views
