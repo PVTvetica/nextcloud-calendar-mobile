@@ -218,13 +218,15 @@ build_ics() {
   [[ -n "$description" ]] && out+="DESCRIPTION:$(esc "$description")"$'\n'
   [[ -n "$rrule" ]]       && out+="RRULE:$rrule"$'\n'
 
-  out+="ORGANIZER;CN=$NC_USER:mailto:$EMAIL"$'\n'
+  if (( nattendees > 0 )); then
+    out+="ORGANIZER;CN=$NC_USER:mailto:$EMAIL"$'\n'
 
-  local i cn mail
-  for (( i = 0; i < nattendees; i++ )); do
-    IFS='|' read -r cn mail <<< "${ATTENDEES[$(( (RANDOM + i) % ${#ATTENDEES[@]} ))]}"
-    out+="ATTENDEE;CN=$cn;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:$mail"$'\n'
-  done
+    local i cn mail
+    for (( i = 0; i < nattendees; i++ )); do
+      IFS='|' read -r cn mail <<< "${ATTENDEES[$(( (RANDOM + i) % ${#ATTENDEES[@]} ))]}"
+      out+="ATTENDEE;CN=$cn;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:$mail"$'\n'
+    done
+  fi
 
   out+="STATUS:$status"$'\n'
   out+="END:VEVENT"$'\n'
@@ -303,12 +305,13 @@ for entry in "${CALENDARS[@]:0:$NCAL}"; do
     echo "  [dry] MKCALENDAR $slug ($name, $color)"
   else
     code=$(make_calendar "$slug" "$name" "$color")
-    if [[ "$code" != "201" && "$code" != "405" ]]; then
-      FAILURES+=("MKCALENDAR $slug -> $code ${LAST_BODY:0:160}")
-      echo "  ! calendar $slug -> $code (skipped)"
-      continue
-    fi
-    echo "  + calendar $slug -> $code"
+    case "$code" in
+      201) echo "  + calendar $slug -> created" ;;
+      405) echo "  = calendar $slug -> exists" ;;
+      *)   FAILURES+=("MKCALENDAR $slug -> $code ${LAST_BODY:0:160}")
+           echo "  ! calendar $slug -> $code (skipped)"
+           continue ;;
+    esac
   fi
 
   n=0
