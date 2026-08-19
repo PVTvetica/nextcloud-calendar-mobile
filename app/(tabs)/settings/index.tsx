@@ -3,7 +3,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
-  Accessibility, Bell, CalendarDays, ChevronRight, Info, LayoutGrid, Palette, UserRound,
+  Accessibility, Bell, CalendarCheck, CalendarDays, ChevronRight, Info, LayoutGrid, Palette,
+  UserRound,
 } from 'lucide-react-native';
 
 import { useAccountStore } from '@/stores/accountStore';
@@ -69,6 +70,11 @@ export default function SettingsScreen() {
                 title={t('settings.calendar')}
                 icon={<CalendarDays />}
                 onPress={() => router.push('/(tabs)/settings/calendar')}
+              />
+              <SettingsLink
+                title={t('booking.settingsTitle')}
+                icon={<CalendarCheck />}
+                onPress={() => router.push('/(tabs)/settings/booking')}
               />
               <SettingsLink
                 title={t('settings.accessibility.title')}

@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "language": "Idioma",
     "cancel": "Cancelar",
@@ -16,7 +16,8 @@
   },
   "tabs": {
     "calendar": "Calendario",
-    "settings": "Ajustes"
+    "settings": "Ajustes",
+    "booking": "Reservas"
   },
   "setup": {
     "brand": "Calendario",
@@ -272,6 +273,41 @@
       "days": "en {{value}} días",
       "today": "Hoy",
       "tomorrow": "Mañana"
+    }
+  },
+  "booking": {
+    "title": "Reservas",
+    "settingsTitle": "Reservas",
+    "free": "Libre",
+    "summary": "{{free}} de {{total}} huecos libres",
+    "daySummary": "{{free}}/{{total}} libres",
+    "noSlots": "Sin horarios configurados",
+    "noAccount": "Añade una cuenta de Nextcloud para ver tus huecos reservables.",
+    "emptyScheduleHint": "Aún no hay horarios reservables para esta semana.",
+    "openSettings": "Configurar horarios",
+    "previousWeek": "Semana anterior",
+    "nextWeek": "Semana siguiente",
+    "blockTitle": "Bloquear hueco",
+    "blockConfirm": "Bloquear hueco",
+    "reasonLabel": "Motivo",
+    "customLabel": "Título propio",
+    "customPlaceholder": "p. ej. Dentista",
+    "targetCalendar": "Se creará en «{{name}}»",
+    "calendarSection": "Calendario de destino",
+    "calendarSectionHint": "Los huecos bloqueados se crean como eventos en este calendario.",
+    "durationSection": "Duración del hueco",
+    "durationSectionHint": "Cuánto dura un hueco reservable.",
+    "minutes": "{{minutes}} min",
+    "scheduleSection": "Horarios reservables",
+    "scheduleSectionHint": "Horas de inicio por día. Toca una hora para eliminarla.",
+    "addTime": "Añadir",
+    "addTimeConfirm": "Añadir hora",
+    "resetSchedule": "Restablecer valores",
+    "reasons": {
+      "sport": "Deporte",
+      "vacation": "Vacaciones",
+      "sick": "Enfermo",
+      "custom": "Otro"
     }
   }
 }

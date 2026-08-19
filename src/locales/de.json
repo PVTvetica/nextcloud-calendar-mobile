@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "language": "Sprache",
     "cancel": "Abbrechen",
@@ -16,7 +16,8 @@
   },
   "tabs": {
     "calendar": "Kalender",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "booking": "Buchung"
   },
   "setup": {
     "brand": "Kalender",
@@ -272,6 +273,41 @@
       "days": "in {{value}} Tagen",
       "today": "Heute",
       "tomorrow": "Morgen"
+    }
+  },
+  "booking": {
+    "title": "Buchung",
+    "settingsTitle": "Buchung",
+    "free": "Frei",
+    "summary": "{{free}} von {{total}} Terminen frei",
+    "daySummary": "{{free}}/{{total}} frei",
+    "noSlots": "Keine Zeiten konfiguriert",
+    "noAccount": "Füge ein Nextcloud-Konto hinzu, um deine buchbaren Termine zu sehen.",
+    "emptyScheduleHint": "Für diese Woche sind noch keine buchbaren Zeiten konfiguriert.",
+    "openSettings": "Zeiten festlegen",
+    "previousWeek": "Vorherige Woche",
+    "nextWeek": "Nächste Woche",
+    "blockTitle": "Termin sperren",
+    "blockConfirm": "Termin sperren",
+    "reasonLabel": "Begründung",
+    "customLabel": "Eigener Titel",
+    "customPlaceholder": "z. B. Zahnarzt",
+    "targetCalendar": "Wird in „{{name}}“ erstellt",
+    "calendarSection": "Zielkalender",
+    "calendarSectionHint": "Gesperrte Termine werden als Einträge in diesem Kalender erstellt.",
+    "durationSection": "Termindauer",
+    "durationSectionHint": "Wie lange ein buchbarer Termin dauert.",
+    "minutes": "{{minutes}} Min.",
+    "scheduleSection": "Buchbare Zeiten",
+    "scheduleSectionHint": "Startzeiten je Wochentag. Zum Entfernen auf eine Zeit tippen.",
+    "addTime": "Hinzufügen",
+    "addTimeConfirm": "Zeit hinzufügen",
+    "resetSchedule": "Auf Standard zurücksetzen",
+    "reasons": {
+      "sport": "Sport",
+      "vacation": "Urlaub",
+      "sick": "Krank",
+      "custom": "Sonstiges"
     }
   }
 }

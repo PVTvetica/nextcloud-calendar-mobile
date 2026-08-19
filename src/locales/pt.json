@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "language": "Idioma",
     "cancel": "Cancelar",
@@ -16,7 +16,8 @@
   },
   "tabs": {
     "calendar": "Calendário",
-    "settings": "Definições"
+    "settings": "Definições",
+    "booking": "Reservas"
   },
   "setup": {
     "brand": "Calendário",
@@ -272,6 +273,41 @@
       "days": "em {{value}} dias",
       "today": "Hoje",
       "tomorrow": "Amanhã"
+    }
+  },
+  "booking": {
+    "title": "Reservas",
+    "settingsTitle": "Reservas",
+    "free": "Livre",
+    "summary": "{{free}} de {{total}} horários livres",
+    "daySummary": "{{free}}/{{total}} livres",
+    "noSlots": "Nenhum horário configurado",
+    "noAccount": "Adicione uma conta Nextcloud para ver os seus horários reserváveis.",
+    "emptyScheduleHint": "Ainda não há horários reserváveis para esta semana.",
+    "openSettings": "Configurar horários",
+    "previousWeek": "Semana anterior",
+    "nextWeek": "Semana seguinte",
+    "blockTitle": "Bloquear horário",
+    "blockConfirm": "Bloquear horário",
+    "reasonLabel": "Motivo",
+    "customLabel": "Título próprio",
+    "customPlaceholder": "ex.: Dentista",
+    "targetCalendar": "Será criado em «{{name}}»",
+    "calendarSection": "Calendário de destino",
+    "calendarSectionHint": "Os horários bloqueados são criados como eventos neste calendário.",
+    "durationSection": "Duração do horário",
+    "durationSectionHint": "Quanto tempo dura um horário reservável.",
+    "minutes": "{{minutes}} min",
+    "scheduleSection": "Horários reserváveis",
+    "scheduleSectionHint": "Horas de início por dia. Toque numa hora para a remover.",
+    "addTime": "Adicionar",
+    "addTimeConfirm": "Adicionar hora",
+    "resetSchedule": "Repor predefinições",
+    "reasons": {
+      "sport": "Desporto",
+      "vacation": "Férias",
+      "sick": "Doente",
+      "custom": "Outro"
     }
   }
 }

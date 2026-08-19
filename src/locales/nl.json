@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "language": "Taal",
     "cancel": "Annuleren",
@@ -16,7 +16,8 @@
   },
   "tabs": {
     "calendar": "Agenda",
-    "settings": "Instellingen"
+    "settings": "Instellingen",
+    "booking": "Boeking"
   },
   "setup": {
     "brand": "Agenda",
@@ -272,6 +273,41 @@
       "days": "over {{value}} dagen",
       "today": "Vandaag",
       "tomorrow": "Morgen"
+    }
+  },
+  "booking": {
+    "title": "Boeking",
+    "settingsTitle": "Boeking",
+    "free": "Vrij",
+    "summary": "{{free}} van {{total}} tijdvakken vrij",
+    "daySummary": "{{free}}/{{total}} vrij",
+    "noSlots": "Geen tijden ingesteld",
+    "noAccount": "Voeg een Nextcloud-account toe om je boekbare tijdvakken te zien.",
+    "emptyScheduleHint": "Nog geen boekbare tijden ingesteld voor deze week.",
+    "openSettings": "Tijden instellen",
+    "previousWeek": "Vorige week",
+    "nextWeek": "Volgende week",
+    "blockTitle": "Tijdvak blokkeren",
+    "blockConfirm": "Tijdvak blokkeren",
+    "reasonLabel": "Reden",
+    "customLabel": "Eigen titel",
+    "customPlaceholder": "bijv. Tandarts",
+    "targetCalendar": "Wordt aangemaakt in “{{name}}”",
+    "calendarSection": "Doelagenda",
+    "calendarSectionHint": "Geblokkeerde tijdvakken worden als afspraken in deze agenda gemaakt.",
+    "durationSection": "Duur tijdvak",
+    "durationSectionHint": "Hoe lang één boekbaar tijdvak duurt.",
+    "minutes": "{{minutes}} min",
+    "scheduleSection": "Boekbare tijden",
+    "scheduleSectionHint": "Starttijden per weekdag. Tik op een tijd om deze te verwijderen.",
+    "addTime": "Toevoegen",
+    "addTimeConfirm": "Tijd toevoegen",
+    "resetSchedule": "Standaardwaarden herstellen",
+    "reasons": {
+      "sport": "Sport",
+      "vacation": "Vakantie",
+      "sick": "Ziek",
+      "custom": "Overig"
     }
   }
 }

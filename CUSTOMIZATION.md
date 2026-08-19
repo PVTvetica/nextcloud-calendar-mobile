@@ -219,6 +219,25 @@ Kein Pull-to-Refresh, kein Push, kein Etag-/Konfliktabgleich (last-writer-wins).
 
 ---
 
+## 4a. Buchungsübersicht anpassen (Fork-Feature)
+
+| Aufgabe | Datei |
+|---|---|
+| Standard-Zeiten / Slot-Dauer / Sperr-Gründe | `src/features/booking/constants.ts` (`DEFAULT_SCHEDULE`, `DEFAULT_SLOT_MINUTES`, `SLOT_MINUTE_PRESETS`, `BLOCK_REASON_IDS`) |
+| Regel „frei vs. belegt" | `src/features/booking/utils/slots.ts` → `slotBusyEvents` (hier steht auch der bewusste `allDay`-Ausschluss) |
+| Wochenraster / welche Tage erscheinen | `slots.ts` → `buildWeekBoard` (Tage ohne Zeiten werden ausgelassen) |
+| Aussehen einer Slot-Zeile | `src/features/booking/components/BookingSlotRow.tsx` |
+| Sperr-Dialog (Gründe, Freitext) | `src/features/booking/components/BlockSlotSheet.tsx` |
+| Was beim Sperren im Kalender landet | `src/features/booking/utils/blockEvent.ts` → `buildBlockEventInput` |
+| Screen-Aufbau, Wochennavigation | `app/(tabs)/booking.tsx` |
+| Einstellungen | `app/(tabs)/settings/booking.tsx` |
+
+**Neuen Sperr-Grund hinzufügen:** Id in `BLOCK_REASON_IDS` ergänzen und den Key `booking.reasons.<id>` in allen 8 Locales anlegen — sonst zeigt der Chip den rohen Key.
+
+**Ganztägige Termine doch blockieren lassen:** in `slotBusyEvents` die Zeile `if (e.allDay) return false;` entfernen; die Tests in `__tests__/features/booking/slots.test.ts` erwarten das aktuelle Verhalten und müssen mit angepasst werden.
+
+**Ausgeblendete Kalender ignorieren:** in `src/features/booking/hooks/useBookingWeek.ts` `hiddenCalendarIds` aus `useCalendarStore` einlesen und die Events wie in `useCalendarData.ts` filtern.
+
 ## 5. Neue Features hinzufügen
 
 **Architektur-Muster des Repos:**

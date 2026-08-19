@@ -8,6 +8,7 @@ import {
   refreshAccountProfiles,
 } from '@/services/nextcloud/auth';
 import { useAccountStore } from '@/stores/accountStore';
+import { useBookingStore } from '@/stores/bookingStore';
 import { useCalendarStore } from '@/stores/calendarStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { setAccounts } from '@/hooks/useAccounts';
@@ -38,6 +39,7 @@ export function useAppInitialization() {
           useAccountStore.persist.rehydrate(),
           useCalendarStore.persist.rehydrate(),
           useSettingsStore.persist.rehydrate(),
+          useBookingStore.persist.rehydrate(),
         ]);
         await initializeDatabaseOnStartup();
 

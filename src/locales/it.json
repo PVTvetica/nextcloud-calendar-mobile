@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "language": "Lingua",
     "cancel": "Annulla",
@@ -16,7 +16,8 @@
   },
   "tabs": {
     "calendar": "Calendario",
-    "settings": "Impostazioni"
+    "settings": "Impostazioni",
+    "booking": "Prenotazioni"
   },
   "setup": {
     "brand": "Calendario",
@@ -272,6 +273,41 @@
       "days": "tra {{value}} giorni",
       "today": "Oggi",
       "tomorrow": "Domani"
+    }
+  },
+  "booking": {
+    "title": "Prenotazioni",
+    "settingsTitle": "Prenotazioni",
+    "free": "Libero",
+    "summary": "{{free}} di {{total}} slot liberi",
+    "daySummary": "{{free}}/{{total}} liberi",
+    "noSlots": "Nessun orario configurato",
+    "noAccount": "Aggiungi un account Nextcloud per vedere i tuoi slot prenotabili.",
+    "emptyScheduleHint": "Nessun orario prenotabile configurato per questa settimana.",
+    "openSettings": "Configura orari",
+    "previousWeek": "Settimana precedente",
+    "nextWeek": "Settimana successiva",
+    "blockTitle": "Blocca slot",
+    "blockConfirm": "Blocca slot",
+    "reasonLabel": "Motivo",
+    "customLabel": "Titolo personalizzato",
+    "customPlaceholder": "es. Dentista",
+    "targetCalendar": "Verrà creato in «{{name}}»",
+    "calendarSection": "Calendario di destinazione",
+    "calendarSectionHint": "Gli slot bloccati vengono creati come eventi in questo calendario.",
+    "durationSection": "Durata dello slot",
+    "durationSectionHint": "Quanto dura uno slot prenotabile.",
+    "minutes": "{{minutes}} min",
+    "scheduleSection": "Orari prenotabili",
+    "scheduleSectionHint": "Orari di inizio per giorno. Tocca un orario per rimuoverlo.",
+    "addTime": "Aggiungi",
+    "addTimeConfirm": "Aggiungi orario",
+    "resetSchedule": "Ripristina predefiniti",
+    "reasons": {
+      "sport": "Sport",
+      "vacation": "Ferie",
+      "sick": "Malattia",
+      "custom": "Altro"
     }
   }
 }

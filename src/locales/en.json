@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "language": "Language",
     "cancel": "Cancel",
@@ -16,7 +16,8 @@
   },
   "tabs": {
     "calendar": "Calendar",
-    "settings": "Settings"
+    "settings": "Settings",
+    "booking": "Booking"
   },
   "setup": {
     "brand": "Calendar",
@@ -272,6 +273,41 @@
       "days": "in {{value}} days",
       "today": "Today",
       "tomorrow": "Tomorrow"
+    }
+  },
+  "booking": {
+    "title": "Booking",
+    "settingsTitle": "Booking",
+    "free": "Free",
+    "summary": "{{free}} of {{total}} slots free",
+    "daySummary": "{{free}}/{{total}} free",
+    "noSlots": "No slots configured",
+    "noAccount": "Add a Nextcloud account to see your bookable slots.",
+    "emptyScheduleHint": "No bookable times configured for this week yet.",
+    "openSettings": "Configure slots",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "blockTitle": "Block slot",
+    "blockConfirm": "Block slot",
+    "reasonLabel": "Reason",
+    "customLabel": "Own title",
+    "customPlaceholder": "e.g. Dentist",
+    "targetCalendar": "Will be created in “{{name}}”",
+    "calendarSection": "Target calendar",
+    "calendarSectionHint": "Blocked slots are created as events in this calendar.",
+    "durationSection": "Slot length",
+    "durationSectionHint": "How long one bookable slot lasts.",
+    "minutes": "{{minutes}} min",
+    "scheduleSection": "Bookable times",
+    "scheduleSectionHint": "Start times per weekday. Tap a time to remove it.",
+    "addTime": "Add",
+    "addTimeConfirm": "Add time",
+    "resetSchedule": "Reset to defaults",
+    "reasons": {
+      "sport": "Sport",
+      "vacation": "Holiday",
+      "sick": "Sick",
+      "custom": "Other"
     }
   }
 }

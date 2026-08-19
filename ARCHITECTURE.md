@@ -24,6 +24,7 @@ NextcloudCalendar/
 │   ├── database/                 # WatermelonDB: Schema, Modelle, Sync, Mapper, Hooks
 │   ├── features/
 │   │   ├── account/              # Account-UI, QR-Scanner, Reconnect, Avatar
+│   │   ├── booking/              # Buchungsübersicht (Fork-Feature): Slots, Wochenboard, Sperren
 │   │   ├── calendar/             # Kalenderansichten (Monat/Time-Grid/Agenda), Drag & Drop
 │   │   ├── event/                # EventForm, Mutations-Hooks, Recurrence-Scopes
 │   │   ├── notifications/        # Lokale Erinnerungen (expo-notifications)
@@ -87,6 +88,8 @@ Deep-Link-Basis ist das Scheme `nextcloud-calendar-fork` (registriert in `app.co
 | `/settings/widgets` | `app/(tabs)/settings/widgets.tsx` | Wrapper um `WidgetCalendarSettings` |
 | `/settings/accounts` | `app/(tabs)/settings/accounts.tsx` | Account-Liste, Account hinzufügen |
 | `/settings/account/[id]` | `app/(tabs)/settings/account/[id].tsx` | Account-Detail, Reconnect, Löschen |
+| `/booking` | `app/(tabs)/booking.tsx` | **Fork-Feature:** Buchungsübersicht (Wochenraster fester Slots, freie Slots sperrbar) |
+| `/settings/booking` | `app/(tabs)/settings/booking.tsx` | **Fork-Feature:** Zielkalender, Slot-Dauer, buchbare Zeiten je Wochentag |
 | `/settings/about` | `app/(tabs)/settings/about.tsx` | Version + GitHub-Links (noch Upstream-URLs) |
 | `/event/[uid]` | `app/event/[uid].tsx` | Event-Detail (auch Ziel der Widget-Deep-Links `nextcloud-calendar-fork://event/<uid>`) |
 | `/event/edit/[uid]` | `app/event/edit/[uid].tsx` | Edit-Formular; liest `?scope=` (`this` \| `thisAndFollowing` \| default `all`) |
@@ -221,6 +224,30 @@ Kern: `src/features/event/hooks/useMutateEvent.ts` (`useCreateEvent` / `useUpdat
 - **Delete** (`app/event/[uid].tsx`): Scope-Prompt (`askRecurrenceScope`, `src/features/event/recurrenceScope.ts`) + Bestätigung; Server: `DELETE` (`all`/nicht-recurring), `injectExdate` (`this`), `truncateRruleUntil` (`thisAndFollowing`).
 - **Scope-Entscheidung**: `decideMoveEventScope` (`src/features/calendar/utils/moveEventScope.ts`) — nicht-recurring → `all`; RRULE, die der bewusst strikte Parser `parseRrule` (`src/features/calendar/utils/parseRrule.ts`, nur FREQ/INTERVAL/BYDAY/COUNT/UNTIL) nicht versteht → stillschweigend `this`; sonst Nutzer-Prompt.
 - **Formular** (`src/features/event/components/EventForm.tsx`): Titel, Kalender-Chips (Default bevorzugt Slug `personal`), All-Day-Toggle, plattformspezifische Datums-/Zeit-Picker (iOS inline compact, Android zweistufiger Dialog), `RecurrencePicker` (nur FREQ + weekly BYDAY, Intervall immer 1), `AlertPicker` (ein einzelner Reminder), E-Mail-Attendees, `TalkToggle`. Organizer wird aus dem Account abgeleitet (`src/features/event/utils/organizer.ts`) und bei Updates vom Server-Event übernommen.
+
+## 11a. Buchungsübersicht (Fork-Feature)
+
+Eigener Tab, der pro Woche feste, konfigurierbare Slots gegen die Kalenderdaten prüft.
+
+| Baustein | Datei |
+|---|---|
+| Screen (Wochennavigation, Tagesabschnitte, Sperr-Sheet) | `app/(tabs)/booking.tsx` |
+| Einstellungen (Zielkalender, Slot-Dauer, Zeiten je Wochentag) | `app/(tabs)/settings/booking.tsx` |
+| Reine Slot-Logik (Zeitparsing, Wochenraster, Überlappung) | `src/features/booking/utils/slots.ts` |
+| Event-Bau + Kalenderwahl beim Sperren | `src/features/booking/utils/blockEvent.ts` |
+| Wochendaten (Events + Sync + Board) | `src/features/booking/hooks/useBookingWeek.ts` |
+| Slot-Zeile / Sperr-Sheet | `src/features/booking/components/BookingSlotRow.tsx`, `BlockSlotSheet.tsx` |
+| Persistenz (Schedule, Slot-Dauer, Zielkalender) | `src/stores/bookingStore.ts` (MMKV-Key `booking-store`, rehydriert in `useAppInitialization`) |
+| Defaults + Sperr-Gründe | `src/features/booking/constants.ts` |
+| i18n | Gruppe `booking` + `tabs.booking` in allen 8 `src/locales/*.json` |
+
+Festgelegtes Verhalten:
+
+- **Belegt** ist ein Slot, sobald ein **zeitgebundener** Termin ihn überlappt (auch teilweise). Ganztägige Termine werden bewusst ignoriert (Geburtstage/Feiertage sollen keine Slots blockieren) — `slotBusyEvents`.
+- Geprüft werden **alle Kalender des aktiven Kontos**, auch im Drawer ausgeblendete: `useBookingWeek` wendet `hiddenCalendarIds` absichtlich **nicht** an.
+- **Sperren** legt einen normalen zeitgebundenen Termin über den Slot an (`useCreateEvent`), ohne Teilnehmer und ohne Talk-Raum. Zielkalender: der in den Einstellungen gewählte, sonst der erste beschreibbare (`resolveBookingCalendar`).
+- Tap auf einen belegten Slot öffnet den zugehörigen Termin (`/event/[uid]`).
+- Sync: eigenes 7-Tage-Fenster mit `deleteMissing=false` (Löschungen bleiben Sache des Kalender-Screens).
 
 ## 12. Hintergrund-Synchronisation
 

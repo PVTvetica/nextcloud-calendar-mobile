@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "language": "Langue",
     "cancel": "Annuler",
@@ -16,7 +16,8 @@
   },
   "tabs": {
     "calendar": "Calendrier",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "booking": "Réservation"
   },
   "setup": {
     "brand": "Calendrier",
@@ -272,6 +273,41 @@
       "days": "dans {{value}} jours",
       "today": "Aujourd'hui",
       "tomorrow": "Demain"
+    }
+  },
+  "booking": {
+    "title": "Réservation",
+    "settingsTitle": "Réservation",
+    "free": "Libre",
+    "summary": "{{free}} créneaux libres sur {{total}}",
+    "daySummary": "{{free}}/{{total}} libres",
+    "noSlots": "Aucun créneau configuré",
+    "noAccount": "Ajoutez un compte Nextcloud pour voir vos créneaux réservables.",
+    "emptyScheduleHint": "Aucun créneau réservable configuré pour cette semaine.",
+    "openSettings": "Configurer les créneaux",
+    "previousWeek": "Semaine précédente",
+    "nextWeek": "Semaine suivante",
+    "blockTitle": "Bloquer le créneau",
+    "blockConfirm": "Bloquer le créneau",
+    "reasonLabel": "Motif",
+    "customLabel": "Titre personnalisé",
+    "customPlaceholder": "ex. Dentiste",
+    "targetCalendar": "Sera créé dans « {{name}} »",
+    "calendarSection": "Agenda de destination",
+    "calendarSectionHint": "Les créneaux bloqués sont créés comme événements dans cet agenda.",
+    "durationSection": "Durée du créneau",
+    "durationSectionHint": "Durée d’un créneau réservable.",
+    "minutes": "{{minutes}} min",
+    "scheduleSection": "Créneaux réservables",
+    "scheduleSectionHint": "Heures de début par jour. Touchez une heure pour la supprimer.",
+    "addTime": "Ajouter",
+    "addTimeConfirm": "Ajouter l’heure",
+    "resetSchedule": "Réinitialiser",
+    "reasons": {
+      "sport": "Sport",
+      "vacation": "Vacances",
+      "sick": "Malade",
+      "custom": "Autre"
     }
   }
 }

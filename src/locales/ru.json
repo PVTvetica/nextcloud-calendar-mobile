@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "language": "Язык",
     "cancel": "Отмена",
@@ -16,7 +16,8 @@
   },
   "tabs": {
     "calendar": "Календарь",
-    "settings": "Настройки"
+    "settings": "Настройки",
+    "booking": "Запись"
   },
   "setup": {
     "brand": "Календарь",
@@ -272,6 +273,41 @@
       "days": "через {{value}} дн.",
       "today": "Сегодня",
       "tomorrow": "Завтра"
+    }
+  },
+  "booking": {
+    "title": "Запись",
+    "settingsTitle": "Запись",
+    "free": "Свободно",
+    "summary": "Свободно {{free}} из {{total}}",
+    "daySummary": "{{free}}/{{total}} свободно",
+    "noSlots": "Время не настроено",
+    "noAccount": "Добавьте учётную запись Nextcloud, чтобы видеть доступное время.",
+    "emptyScheduleHint": "На эту неделю доступное время ещё не настроено.",
+    "openSettings": "Настроить время",
+    "previousWeek": "Предыдущая неделя",
+    "nextWeek": "Следующая неделя",
+    "blockTitle": "Заблокировать время",
+    "blockConfirm": "Заблокировать",
+    "reasonLabel": "Причина",
+    "customLabel": "Своё название",
+    "customPlaceholder": "например, стоматолог",
+    "targetCalendar": "Будет создано в «{{name}}»",
+    "calendarSection": "Целевой календарь",
+    "calendarSectionHint": "Заблокированное время создаётся как события в этом календаре.",
+    "durationSection": "Длительность",
+    "durationSectionHint": "Сколько длится один интервал.",
+    "minutes": "{{minutes}} мин",
+    "scheduleSection": "Доступное время",
+    "scheduleSectionHint": "Время начала по дням недели. Нажмите на время, чтобы удалить.",
+    "addTime": "Добавить",
+    "addTimeConfirm": "Добавить время",
+    "resetSchedule": "Сбросить настройки",
+    "reasons": {
+      "sport": "Спорт",
+      "vacation": "Отпуск",
+      "sick": "Болезнь",
+      "custom": "Другое"
     }
   }
 }
